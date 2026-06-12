@@ -6,11 +6,16 @@ import json
 from pathlib import Path
 import re
 
-from api.settings import CHUNKS_FILE, RAW_DATA_DIR
+from api.settings import (
+    CHUNKS_FILE,
+    CHUNK_OVERLAP_WORDS,
+    CHUNK_SIZE_WORDS,
+    CHUNKING_VERSION,
+    RAW_DATA_DIR,
+)
 
 SUPPORTED_EXTENSIONS = {".md", ".txt"}
 IGNORED_FILENAMES = {"README.md", "README.txt"}
-MAX_CHUNK_CHARS = 320
 
 
 @dataclass(frozen=True)
@@ -18,6 +23,10 @@ class LoadedChunk:
     document_id: str
     title: str
     content: str
+    source_path: str
+    chunk_index: int
+    chunk_size_words: int
+    chunk_overlap_words: int
 
 
 def _clean_text(text: str) -> str:
@@ -38,24 +47,29 @@ def _extract_title(path: Path, text: str) -> str:
     return path.stem.replace("_", " ").replace("-", " ").title()
 
 
-def _split_long_block(block: str, max_chars: int = MAX_CHUNK_CHARS) -> list[str]:
-    if len(block) <= max_chars:
-        return [block]
+def _split_text_into_word_chunks(
+    text: str,
+    chunk_size_words: int = CHUNK_SIZE_WORDS,
+    chunk_overlap_words: int = CHUNK_OVERLAP_WORDS,
+) -> list[str]:
+    words = text.split()
+    if not words:
+        return []
 
-    words = block.split()
+    # Keep the overlap smaller than the chunk to guarantee forward progress.
+    normalized_overlap = min(max(chunk_overlap_words, 0), max(chunk_size_words - 1, 0))
+    step = max(1, chunk_size_words - normalized_overlap)
+
     chunks: list[str] = []
-    current_words: list[str] = []
+    for start_index in range(0, len(words), step):
+        end_index = start_index + chunk_size_words
+        chunk_words = words[start_index:end_index]
+        if not chunk_words:
+            break
 
-    for word in words:
-        candidate = " ".join([*current_words, word]).strip()
-        if current_words and len(candidate) > max_chars:
-            chunks.append(" ".join(current_words))
-            current_words = [word]
-            continue
-        current_words.append(word)
-
-    if current_words:
-        chunks.append(" ".join(current_words))
+        chunks.append(" ".join(chunk_words))
+        if end_index >= len(words):
+            break
 
     return chunks
 
@@ -63,32 +77,53 @@ def _split_long_block(block: str, max_chars: int = MAX_CHUNK_CHARS) -> list[str]
 def _build_chunks(path: Path) -> list[LoadedChunk]:
     raw_text = path.read_text(encoding="utf-8", errors="ignore")
     title = _extract_title(path, raw_text)
-    blocks = [
+    cleaned_blocks = [
         _clean_text(block)
         for block in raw_text.split("\n\n")
         if _clean_text(block)
     ]
+    document_text = "\n\n".join(cleaned_blocks)
 
     chunks: list[LoadedChunk] = []
-    for block_index, block in enumerate(blocks, start=1):
-        for part_index, part in enumerate(_split_long_block(block), start=1):
-            chunks.append(
-                LoadedChunk(
-                    document_id=f"{path.stem}-{block_index}-{part_index}",
-                    title=title,
-                    content=part,
-                )
+    for chunk_index, chunk_text in enumerate(_split_text_into_word_chunks(document_text), start=1):
+        chunks.append(
+            LoadedChunk(
+                document_id=f"{path.stem}-{chunk_index:03d}",
+                title=title,
+                content=chunk_text,
+                source_path=str(path),
+                chunk_index=chunk_index,
+                chunk_size_words=CHUNK_SIZE_WORDS,
+                chunk_overlap_words=CHUNK_OVERLAP_WORDS,
             )
+        )
 
     return chunks
+
+
+def _serialize_meta() -> str:
+    return json.dumps(
+        {
+            "record_type": "meta",
+            "chunk_size_words": CHUNK_SIZE_WORDS,
+            "chunk_overlap_words": CHUNK_OVERLAP_WORDS,
+            "chunking_version": CHUNKING_VERSION,
+        },
+        ensure_ascii=False,
+    )
 
 
 def _serialize_chunk(chunk: LoadedChunk) -> str:
     return json.dumps(
         {
+            "record_type": "chunk",
             "document_id": chunk.document_id,
             "title": chunk.title,
             "content": chunk.content,
+            "source_path": chunk.source_path,
+            "chunk_index": chunk.chunk_index,
+            "chunk_size_words": chunk.chunk_size_words,
+            "chunk_overlap_words": chunk.chunk_overlap_words,
         },
         ensure_ascii=False,
     )
@@ -100,6 +135,10 @@ def _deserialize_chunk(line: str) -> LoadedChunk:
         document_id=payload["document_id"],
         title=payload["title"],
         content=payload["content"],
+        source_path=payload["source_path"],
+        chunk_index=payload["chunk_index"],
+        chunk_size_words=payload["chunk_size_words"],
+        chunk_overlap_words=payload["chunk_overlap_words"],
     )
 
 
@@ -125,7 +164,23 @@ def _processed_data_is_stale(raw_data_dir: Path, chunks_file: Path) -> bool:
         if path.stat().st_mtime > chunks_mtime:
             return True
 
-    return False
+    with chunks_file.open("r", encoding="utf-8") as file_handle:
+        first_non_empty_line = next((line for line in file_handle if line.strip()), "")
+
+    if not first_non_empty_line:
+        return bool(_iter_supported_raw_files(raw_data_dir))
+
+    try:
+        metadata = json.loads(first_non_empty_line)
+    except json.JSONDecodeError:
+        return True
+
+    return metadata != {
+        "record_type": "meta",
+        "chunk_size_words": CHUNK_SIZE_WORDS,
+        "chunk_overlap_words": CHUNK_OVERLAP_WORDS,
+        "chunking_version": CHUNKING_VERSION,
+    }
 
 
 def build_processed_chunks(
@@ -139,6 +194,8 @@ def build_processed_chunks(
 
     chunks_file.parent.mkdir(parents=True, exist_ok=True)
     with chunks_file.open("w", encoding="utf-8") as file_handle:
+        file_handle.write(_serialize_meta())
+        file_handle.write("\n")
         for chunk in chunks:
             file_handle.write(_serialize_chunk(chunk))
             file_handle.write("\n")
@@ -159,7 +216,7 @@ def load_chunks(
         return tuple(
             _deserialize_chunk(line)
             for line in file_handle
-            if line.strip()
+            if line.strip() and json.loads(line).get("record_type") == "chunk"
         )
 
 
