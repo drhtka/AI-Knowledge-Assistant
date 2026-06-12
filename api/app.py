@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,10 +20,17 @@ from api.schemas import (
 from api.settings import STATIC_DIR, TEMPLATES_DIR
 
 
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    load_chunks()
+    yield
+
+
 app = FastAPI(
     title="AI Knowledge Assistant API",
     version="0.1.0",
     description="Compact scaffold for a production-like RAG portfolio project.",
+    lifespan=lifespan,
 )
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

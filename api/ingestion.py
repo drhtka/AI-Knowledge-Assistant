@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+import json
 from pathlib import Path
 import re
 
-from api.settings import RAW_DATA_DIR
+from api.settings import CHUNKS_FILE, RAW_DATA_DIR
 
 SUPPORTED_EXTENSIONS = {".md", ".txt"}
 IGNORED_FILENAMES = {"README.md", "README.txt"}
@@ -82,25 +83,84 @@ def _build_chunks(path: Path) -> list[LoadedChunk]:
     return chunks
 
 
-@lru_cache(maxsize=1)
-def load_chunks(raw_data_dir: Path = RAW_DATA_DIR) -> tuple[LoadedChunk, ...]:
-    # Cache the baseline corpus in memory for the current process.
+def _serialize_chunk(chunk: LoadedChunk) -> str:
+    return json.dumps(
+        {
+            "document_id": chunk.document_id,
+            "title": chunk.title,
+            "content": chunk.content,
+        },
+        ensure_ascii=False,
+    )
+
+
+def _deserialize_chunk(line: str) -> LoadedChunk:
+    payload = json.loads(line)
+    return LoadedChunk(
+        document_id=payload["document_id"],
+        title=payload["title"],
+        content=payload["content"],
+    )
+
+
+def _iter_supported_raw_files(raw_data_dir: Path) -> list[Path]:
+    if not raw_data_dir.exists():
+        return []
+
+    return [
+        path
+        for path in sorted(raw_data_dir.rglob("*"))
+        if path.is_file()
+        and path.name not in IGNORED_FILENAMES
+        and path.suffix.lower() in SUPPORTED_EXTENSIONS
+    ]
+
+
+def _processed_data_is_stale(raw_data_dir: Path, chunks_file: Path) -> bool:
+    if not chunks_file.exists():
+        return True
+
+    chunks_mtime = chunks_file.stat().st_mtime
+    for path in _iter_supported_raw_files(raw_data_dir):
+        if path.stat().st_mtime > chunks_mtime:
+            return True
+
+    return False
+
+
+def build_processed_chunks(
+    raw_data_dir: Path = RAW_DATA_DIR,
+    chunks_file: Path = CHUNKS_FILE,
+) -> tuple[LoadedChunk, ...]:
     chunks: list[LoadedChunk] = []
 
-    if not raw_data_dir.exists():
-        return ()
-
-    for path in sorted(raw_data_dir.rglob("*")):
-        if not path.is_file():
-            continue
-        if path.name in IGNORED_FILENAMES:
-            continue
-        if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
-            continue
-
+    for path in _iter_supported_raw_files(raw_data_dir):
         chunks.extend(_build_chunks(path))
 
+    chunks_file.parent.mkdir(parents=True, exist_ok=True)
+    with chunks_file.open("w", encoding="utf-8") as file_handle:
+        for chunk in chunks:
+            file_handle.write(_serialize_chunk(chunk))
+            file_handle.write("\n")
+
     return tuple(chunks)
+
+
+@lru_cache(maxsize=1)
+def load_chunks(
+    raw_data_dir: Path = RAW_DATA_DIR,
+    chunks_file: Path = CHUNKS_FILE,
+) -> tuple[LoadedChunk, ...]:
+    # Cache the processed baseline corpus in memory for the current process.
+    if _processed_data_is_stale(raw_data_dir=raw_data_dir, chunks_file=chunks_file):
+        return build_processed_chunks(raw_data_dir=raw_data_dir, chunks_file=chunks_file)
+
+    with chunks_file.open("r", encoding="utf-8") as file_handle:
+        return tuple(
+            _deserialize_chunk(line)
+            for line in file_handle
+            if line.strip()
+        )
 
 
 def clear_chunks_cache() -> None:
@@ -118,4 +178,5 @@ def save_uploaded_document(filename: str, content: bytes, raw_data_dir: Path = R
     target_path = raw_data_dir / safe_name
     target_path.write_text(content.decode("utf-8", errors="ignore"), encoding="utf-8")
     clear_chunks_cache()
+    build_processed_chunks(raw_data_dir=raw_data_dir)
     return target_path
