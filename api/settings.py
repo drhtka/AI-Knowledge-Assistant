@@ -14,3 +14,4 @@ CHUNKS_FILE = PROCESSED_DATA_DIR / "chunks.jsonl"
 CHUNK_SIZE_WORDS = 80
 CHUNK_OVERLAP_WORDS = 20
 CHUNKING_VERSION = "word-overlap-v1"
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
