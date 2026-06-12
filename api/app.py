@@ -1,12 +1,20 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from api.ingestion import load_chunks, save_uploaded_document
 from api.retrieval import ask, search
-from api.schemas import AskRequest, AskResponse, HealthResponse, SearchRequest, SearchResponse
+from api.schemas import (
+    AskRequest,
+    AskResponse,
+    HealthResponse,
+    IngestResponse,
+    SearchRequest,
+    SearchResponse,
+)
 from api.settings import STATIC_DIR, TEMPLATES_DIR
 
 
@@ -68,6 +76,29 @@ def health() -> HealthResponse:
 @app.post("/search", response_model=SearchResponse)
 def search_endpoint(request: SearchRequest) -> SearchResponse:
     return search(question=request.question, top_k=request.top_k)
+
+
+@app.post("/ingest", response_model=IngestResponse)
+async def ingest_endpoint(file: UploadFile = File(...)) -> IngestResponse:
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required.")
+
+    file_content = await file.read()
+    if not file_content.strip():
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    try:
+        stored_path = save_uploaded_document(file.filename, file_content)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    chunks_loaded = sum(1 for chunk in load_chunks() if chunk.document_id.startswith(stored_path.stem))
+    return IngestResponse(
+        status="ok",
+        filename=file.filename,
+        stored_path=str(stored_path),
+        chunks_loaded=chunks_loaded,
+    )
 
 
 @app.post("/ask", response_model=AskResponse)

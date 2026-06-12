@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+import re
 
 from api.settings import RAW_DATA_DIR
 
@@ -20,6 +21,11 @@ class LoadedChunk:
 
 def _clean_text(text: str) -> str:
     return " ".join(text.split())
+
+
+def _sanitize_filename(filename: str) -> str:
+    sanitized = re.sub(r"[^A-Za-z0-9._-]+", "_", filename).strip("._")
+    return sanitized or "uploaded_document.txt"
 
 
 def _extract_title(path: Path, text: str) -> str:
@@ -95,3 +101,21 @@ def load_chunks(raw_data_dir: Path = RAW_DATA_DIR) -> tuple[LoadedChunk, ...]:
         chunks.extend(_build_chunks(path))
 
     return tuple(chunks)
+
+
+def clear_chunks_cache() -> None:
+    load_chunks.cache_clear()
+
+
+def save_uploaded_document(filename: str, content: bytes, raw_data_dir: Path = RAW_DATA_DIR) -> Path:
+    safe_name = _sanitize_filename(filename)
+    suffix = Path(safe_name).suffix.lower()
+    if suffix not in SUPPORTED_EXTENSIONS:
+        raise ValueError("Only .txt and .md files are supported.")
+
+    raw_data_dir.mkdir(parents=True, exist_ok=True)
+
+    target_path = raw_data_dir / safe_name
+    target_path.write_text(content.decode("utf-8", errors="ignore"), encoding="utf-8")
+    clear_chunks_cache()
+    return target_path

@@ -37,3 +37,10 @@ class AskResponse(BaseModel):
     answer: str
     sources: list[str]
     chunks: list[SearchHit]
+
+
+class IngestResponse(BaseModel):
+    status: str
+    filename: str
+    stored_path: str
+    chunks_loaded: int
