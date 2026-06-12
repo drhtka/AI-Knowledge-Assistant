@@ -1,0 +1,95 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b1020;
+    color: #e6edf7;
+}
+
+main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 20px 56px;
+}
+
+h1,
+h2,
+h3 {
+    margin-top: 0;
+}
+
+.intro,
+.meta,
+code,
+pre {
+    color: #c6d0e1;
+}
+
+.layout-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+}
+
+.content-card {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #e6edf7;
+    margin-bottom: 14px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+button {
+    border: 1px solid #334155;
+    background: #111827;
+    color: #e6edf7;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.list-reset {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.list-reset li {
+    padding: 10px 0;
+    border-bottom: 1px solid #1f2937;
+}
+
+pre {
+    overflow-x: auto;
+    background: #020617;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+@media (max-width: 860px) {
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ page_title }}</title>
+        <link
+            rel="stylesheet"
+            href="{{ request.url_for('static', path='css/index.css') }}"
+        />
+    </head>
+    <body>
+        <main>
+            <h1>AI Knowledge Assistant</h1>
+            <p class="intro">
+                Compact scaffold for ingestion, retrieval, grounded answers, and
+                a portfolio-ready FastAPI UI.
+            </p>
+
+            <section class="layout-grid">
+                <article class="content-card">
+                    <h2>Ask</h2>
+                    <form id="question-form" method="get" action="/">
+                        <label for="question">Question</label>
+                        <input
+                            id="question"
+                            name="question"
+                            value="{{ question }}"
+                            placeholder="How should I evaluate retrieval quality?"
+                            required
+                        />
+
+                        <label for="top_k">Top K</label>
+                        <input
+                            id="top_k"
+                            name="top_k"
+                            type="number"
+                            min="1"
+                            max="10"
+                            value="{{ top_k }}"
+                        />
+
+                        <div class="actions">
+                            <button type="submit">Run</button>
+                            <button type="button" id="clear-form">Clear</button>
+                        </div>
+                    </form>
+                </article>
+
+                <article class="content-card">
+                    <h2>Demo Prompts</h2>
+                    <div class="actions">
+                        {% for item in demo_prompts %}
+                        <button
+                            type="button"
+                            data-demo-question="{{ item.question }}"
+                        >
+                            {{ item.label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+
+                    <h2>Project Layout</h2>
+                    <ul class="list-reset">
+                        <li><code>api/</code> app, schemas, retrieval baseline</li>
+                        <li><code>data/</code> local corpora and eval sets</li>
+                        <li><code>notebooks/</code> experiments</li>
+                        <li><code>src/</code> future ingestion and indexing modules</li>
+                    </ul>
+                </article>
+            </section>
+
+            <article class="content-card">
+                <h2>Answer</h2>
+                {% if ask_result %}
+                <p>{{ ask_result.answer }}</p>
+                <h3>Sources</h3>
+                <ul class="list-reset">
+                    {% for source in ask_result.sources %}
+                    <li>{{ source }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="meta">
+                    Run a question to see a grounded answer preview.
+                </p>
+                {% endif %}
+            </article>
+
+            <article class="content-card">
+                <h2>Retrieved Chunks</h2>
+                {% if search_result and search_result.hits %}
+                <ul class="list-reset">
+                    {% for hit in search_result.hits %}
+                    <li>
+                        <strong>{{ hit.title }}</strong><br />
+                        <span class="meta">score={{ hit.score }}</span><br />
+                        {{ hit.snippet }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="meta">No chunks yet.</p>
+                {% endif %}
+            </article>
+
+            <section class="layout-grid">
+                <article class="content-card">
+                    <h2>Search JSON</h2>
+                    <pre>{{ search_result_json | tojson(indent=2) }}</pre>
+                </article>
+                <article class="content-card">
+                    <h2>Ask JSON</h2>
+                    <pre>{{ ask_result_json | tojson(indent=2) }}</pre>
+                </article>
+            </section>
+        </main>
+        <script
+            src="{{ request.url_for('static', path='js/index.js') }}"
+            defer
+        ></script>
+    </body>
+</html>
