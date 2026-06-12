@@ -2,37 +2,21 @@ from __future__ import annotations
 
 from api.ingestion import load_chunks
 from api.schemas import AskResponse, SearchHit, SearchResponse
-
-
-def _tokenize(text: str) -> set[str]:
-    return {
-        token.strip(".,:;!?()[]").lower()
-        for token in text.split()
-        if token.strip()
-    }
+from api.vector_search import rank_chunks_by_similarity
 
 
 def search(question: str, top_k: int) -> SearchResponse:
-    query_tokens = _tokenize(question)
-    hits: list[SearchHit] = []
-
-    for chunk in load_chunks():
-        chunk_tokens = _tokenize(f"{chunk.title} {chunk.content}")
-        overlap = len(query_tokens & chunk_tokens)
-        if overlap == 0:
-            continue
-
-        hits.append(
-            SearchHit(
-                document_id=chunk.document_id,
-                title=chunk.title,
-                snippet=chunk.content,
-                score=round(overlap / max(len(query_tokens), 1), 3),
-            )
+    hits = [
+        SearchHit(
+            document_id=chunk.document_id,
+            title=chunk.title,
+            snippet=chunk.content,
+            score=round(score, 3),
         )
+        for chunk, score in rank_chunks_by_similarity(question=question, chunks=load_chunks())[:top_k]
+    ]
 
-    hits.sort(key=lambda item: item.score, reverse=True)
-    return SearchResponse(question=question, top_k=top_k, hits=hits[:top_k])
+    return SearchResponse(question=question, top_k=top_k, hits=hits)
 
 
 def ask(question: str, top_k: int) -> AskResponse:
