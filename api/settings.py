@@ -12,8 +12,6 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 CHUNKS_FILE = PROCESSED_DATA_DIR / "chunks.jsonl"
-CHUNK_SIZE_WORDS = 80
-CHUNK_OVERLAP_WORDS = 20
 CHUNKING_VERSION = "word-overlap-v1"
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
@@ -23,6 +21,20 @@ def _env_flag(name: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+CHUNK_SIZE_WORDS = _env_int("CHUNK_SIZE_WORDS", 80)
+CHUNK_OVERLAP_WORDS = _env_int("CHUNK_OVERLAP_WORDS", 20)
 
 
 LLM_ENABLED = _env_flag("LLM_ENABLED", default=False)
