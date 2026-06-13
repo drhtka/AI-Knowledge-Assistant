@@ -76,6 +76,37 @@
                         {% endfor %}
                     </div>
 
+                    <div class="feature-block">
+                        <h2>Upload Documents</h2>
+                        <p class="feature-intro">
+                            Add new local knowledge to the assistant before asking a question.
+                        </p>
+                        <form id="upload-form">
+                            <label for="upload_file">Document</label>
+                            <input
+                                id="upload_file"
+                                name="file"
+                                type="file"
+                                accept=".txt,.md"
+                                required
+                            />
+                            <p class="meta">
+                                Supported formats: <code>.txt</code> and
+                                <code>.md</code>
+                            </p>
+                            <div class="actions">
+                                <button type="submit" id="upload-button">
+                                    Upload Document
+                                </button>
+                            </div>
+                        </form>
+                        <div id="upload-result" class="upload-result meta">
+                            Upload a document to update the local knowledge base.
+                        </div>
+                    </div>
+
+                    <div class="section-divider"></div>
+
                     <h2>Web Search</h2>
                     <form method="get" action="/">
                         <label for="web_question">Web Question</label>
@@ -100,30 +131,6 @@
                             <button type="submit">Search Web</button>
                         </div>
                     </form>
-
-                    <h2>Upload Documents</h2>
-                    <form id="upload-form">
-                        <label for="upload_file">Document</label>
-                        <input
-                            id="upload_file"
-                            name="file"
-                            type="file"
-                            accept=".txt,.md"
-                            required
-                        />
-                        <p class="meta">
-                            Supported formats: <code>.txt</code> and
-                            <code>.md</code>
-                        </p>
-                        <div class="actions">
-                            <button type="submit" id="upload-button">
-                                Upload
-                            </button>
-                        </div>
-                    </form>
-                    <div id="upload-result" class="upload-result meta">
-                        Upload a document to update the local knowledge base.
-                    </div>
 
                     <h2>Project Layout</h2>
                     <ul class="list-reset">
