@@ -19,7 +19,12 @@ from api.schemas import (
     WebSearchRequest,
     WebSearchResponse,
 )
-from api.settings import STATIC_DIR, TEMPLATES_DIR
+from api.settings import (
+    CHUNK_OVERLAP_WORDS,
+    CHUNK_SIZE_WORDS,
+    STATIC_DIR,
+    TEMPLATES_DIR,
+)
 from api.web_search import web_search
 
 
@@ -88,6 +93,12 @@ def index(request: Request) -> HTMLResponse:
             "top_k": top_k,
             "retrieval_mode": retrieval_mode,
             "retrieval_mode_options": RETRIEVAL_MODE_OPTIONS,
+            "system_config": {
+                "default_retrieval_mode": "auto",
+                "chunk_size_words": CHUNK_SIZE_WORDS,
+                "chunk_overlap_words": CHUNK_OVERLAP_WORDS,
+                "available_retrieval_modes": RETRIEVAL_MODE_OPTIONS,
+            },
             "web_question": web_question,
             "web_top_k": web_top_k,
             "demo_prompts": DEMO_PROMPTS,

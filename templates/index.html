@@ -119,6 +119,34 @@
                             modules
                         </li>
                     </ul>
+
+                    <h2>System Config</h2>
+                    <ul class="list-reset">
+                        <li>
+                            <strong>Default retrieval mode:</strong>
+                            <code
+                                >{{ system_config.default_retrieval_mode
+                                }}</code
+                            >
+                        </li>
+                        <li>
+                            <strong>Chunk size:</strong>
+                            <code>{{ system_config.chunk_size_words }}</code>
+                            words
+                        </li>
+                        <li>
+                            <strong>Chunk overlap:</strong>
+                            <code>{{ system_config.chunk_overlap_words }}</code>
+                            words
+                        </li>
+                        <li>
+                            <strong>Available modes:</strong>
+                            {% for mode in
+                            system_config.available_retrieval_modes %}
+                            <code>{{ mode }}</code>{% if not loop.last %}, {%
+                            endif %} {% endfor %}
+                        </li>
+                    </ul>
                 </article>
             </section>
 
