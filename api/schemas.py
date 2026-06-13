@@ -47,3 +47,23 @@ class IngestResponse(BaseModel):
     filename: str
     stored_path: str
     chunks_loaded: int
+
+
+class WebSearchRequest(BaseModel):
+    question: str = Field(min_length=3, max_length=500)
+    top_k: int = Field(default=5, ge=1, le=10)
+
+
+class WebSearchHit(BaseModel):
+    title: str
+    link: str
+    snippet: str
+    source: str
+    position: int
+
+
+class WebSearchResponse(BaseModel):
+    question: str
+    top_k: int
+    engine: str
+    hits: list[WebSearchHit]

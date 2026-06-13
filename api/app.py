@@ -16,8 +16,11 @@ from api.schemas import (
     IngestResponse,
     SearchRequest,
     SearchResponse,
+    WebSearchRequest,
+    WebSearchResponse,
 )
 from api.settings import STATIC_DIR, TEMPLATES_DIR
+from api.web_search import web_search
 
 
 @asynccontextmanager
@@ -85,6 +88,14 @@ def health() -> HealthResponse:
 @app.post("/search", response_model=SearchResponse)
 def search_endpoint(request: SearchRequest) -> SearchResponse:
     return search(question=request.question, top_k=request.top_k)
+
+
+@app.post("/web-search", response_model=WebSearchResponse)
+def web_search_endpoint(request: WebSearchRequest) -> WebSearchResponse:
+    try:
+        return web_search(question=request.question, top_k=request.top_k)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/ingest", response_model=IngestResponse)

@@ -31,3 +31,9 @@ LLM_API_BASE = os.getenv("LLM_API_BASE", "https://api.openai.com/v1").rstrip("/"
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 LLM_TIMEOUT_SEC = float(os.getenv("LLM_TIMEOUT_SEC", "20"))
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "220"))
+
+SERPAPI_ENABLED = _env_flag("SERPAPI_ENABLED", default=False)
+SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", "")
+SERPAPI_ENGINE = os.getenv("SERPAPI_ENGINE", "google")
+SERPAPI_NUM_RESULTS = int(os.getenv("SERPAPI_NUM_RESULTS", "5"))
+SERPAPI_TIMEOUT_SEC = float(os.getenv("SERPAPI_TIMEOUT_SEC", "15"))
