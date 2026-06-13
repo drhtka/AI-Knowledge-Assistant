@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -79,6 +80,45 @@ def _build_mode_comparison(question: str, top_k: int) -> list[dict[str, object]]
     return comparisons
 
 
+async def _ingest_uploaded_file(file: UploadFile) -> IngestResponse:
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required.")
+
+    file_content = await file.read()
+    if not file_content.strip():
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    try:
+        stored_path = save_uploaded_document(file.filename, file_content)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    chunks_loaded = sum(1 for chunk in load_chunks() if chunk.document_id.startswith(stored_path.stem))
+    return IngestResponse(
+        status="ok",
+        filename=file.filename,
+        source_name=stored_path.name,
+        file_type=stored_path.suffix.lower().lstrip(".") or "unknown",
+        stored_path=str(stored_path),
+        chunks_loaded=chunks_loaded,
+    )
+
+
+def _build_upload_feedback(request: Request) -> dict[str, object] | None:
+    upload_status = request.query_params.get("upload_status", "")
+    if not upload_status:
+        return None
+
+    return {
+        "status": upload_status,
+        "filename": request.query_params.get("uploaded_filename", ""),
+        "source_name": request.query_params.get("uploaded_source_name", ""),
+        "file_type": request.query_params.get("uploaded_file_type", ""),
+        "chunks_loaded": request.query_params.get("uploaded_chunks_loaded", "0"),
+        "error": request.query_params.get("upload_error", ""),
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
     question = request.query_params.get("question", "")
@@ -101,6 +141,7 @@ def index(request: Request) -> HTMLResponse:
         except ValueError as exc:
             web_search_error = str(exc)
     mode_comparison = _build_mode_comparison(question, top_k) if question else []
+    upload_feedback = _build_upload_feedback(request)
 
     return templates.TemplateResponse(
         request=request,
@@ -122,6 +163,7 @@ def index(request: Request) -> HTMLResponse:
             "search_result": search_result,
             "ask_result": ask_result,
             "mode_comparison": mode_comparison,
+            "upload_feedback": upload_feedback,
             "web_search_result": web_search_result,
             "web_search_error": web_search_error,
             "search_result_json": search_result.model_dump(mode="json") if search_result else {},
@@ -169,27 +211,32 @@ def web_search_endpoint(request: WebSearchRequest) -> WebSearchResponse:
 
 @app.post("/ingest", response_model=IngestResponse)
 async def ingest_endpoint(file: UploadFile = File(...)) -> IngestResponse:
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="Filename is required.")
+    return await _ingest_uploaded_file(file)
 
-    file_content = await file.read()
-    if not file_content.strip():
-        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
+@app.post("/upload")
+async def upload_page_endpoint(file: UploadFile = File(...)) -> RedirectResponse:
     try:
-        stored_path = save_uploaded_document(file.filename, file_content)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        result = await _ingest_uploaded_file(file)
+    except HTTPException as exc:
+        query = urlencode(
+            {
+                "upload_status": "error",
+                "upload_error": str(exc.detail),
+            },
+        )
+        return RedirectResponse(url=f"/?{query}", status_code=303)
 
-    chunks_loaded = sum(1 for chunk in load_chunks() if chunk.document_id.startswith(stored_path.stem))
-    return IngestResponse(
-        status="ok",
-        filename=file.filename,
-        source_name=stored_path.name,
-        file_type=stored_path.suffix.lower().lstrip(".") or "unknown",
-        stored_path=str(stored_path),
-        chunks_loaded=chunks_loaded,
+    query = urlencode(
+        {
+            "upload_status": "ok",
+            "uploaded_filename": result.filename,
+            "uploaded_source_name": result.source_name,
+            "uploaded_file_type": result.file_type,
+            "uploaded_chunks_loaded": result.chunks_loaded,
+        },
     )
+    return RedirectResponse(url=f"/?{query}", status_code=303)
 
 
 @app.post("/ask", response_model=AskResponse)

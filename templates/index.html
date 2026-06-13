@@ -80,7 +80,12 @@
                         <p class="feature-intro">
                             Add local source material before asking a question.
                         </p>
-                        <form id="upload-form">
+                        <form
+                            id="upload-form"
+                            method="post"
+                            action="/upload"
+                            enctype="multipart/form-data"
+                        >
                             <label for="upload_file">Document</label>
                             <input
                                 id="upload_file"
@@ -100,7 +105,46 @@
                             </div>
                         </form>
                         <div id="upload-result" class="upload-result meta">
-                            Upload a document to refresh the local knowledge base.
+                            {% if upload_feedback and upload_feedback.status == "ok"
+                            %}
+                            <div class="upload-result upload-result-card success-text">
+                                <strong>Document uploaded successfully</strong>
+                                <p class="meta">
+                                    file={{ upload_feedback.source_name }} |
+                                    type={{ upload_feedback.file_type }} |
+                                    chunks={{ upload_feedback.chunks_loaded }}
+                                </p>
+                                <p class="meta">
+                                    The document is now part of the local retrieval index.
+                                </p>
+                                <div class="actions">
+                                    <button
+                                        type="button"
+                                        data-demo-question="What is {{ upload_feedback.source_name }} about?"
+                                    >
+                                        What is this document about?
+                                    </button>
+                                    <button
+                                        type="button"
+                                        data-demo-question="What are the key points in {{ upload_feedback.source_name }}?"
+                                    >
+                                        Key points
+                                    </button>
+                                    <button
+                                        type="button"
+                                        data-demo-question="Summarize {{ upload_feedback.source_name }} in simple terms."
+                                    >
+                                        Simple summary
+                                    </button>
+                                </div>
+                            </div>
+                            {% elif upload_feedback and upload_feedback.status ==
+                            "error" %}
+                            <div class="upload-result error-text">
+                                {{ upload_feedback.error }}
+                            </div>
+                            {% else %} Upload a document to refresh the local
+                            knowledge base. {% endif %}
                         </div>
                     </div>
 
