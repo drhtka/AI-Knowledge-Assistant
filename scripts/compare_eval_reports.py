@@ -2,15 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from scripts.evaluate_retrieval import EVAL_REPORTS_DIR
+EVAL_REPORTS_DIR = PROJECT_ROOT / "data" / "eval" / "reports"
 
 
 METRICS = ("hit_rate_at_1", "recall_at_k", "mrr", "average_top_score")
