@@ -89,7 +89,7 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
         const fileInput = uploadForm.elements.namedItem("file");
         if (!(fileInput instanceof HTMLInputElement) || !fileInput.files || fileInput.files.length === 0) {
             uploadResult.className = "upload-result error-text";
-            uploadResult.textContent = "Choose a .txt or .md file first.";
+            uploadResult.textContent = "Choose a .txt, .md, or .pdf file first.";
             return;
         }
 

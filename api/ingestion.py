@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from io import BytesIO
 from functools import lru_cache
 import json
 from pathlib import Path
@@ -13,7 +14,7 @@ from api.settings import (
     RAW_DATA_DIR,
 )
 
-SUPPORTED_EXTENSIONS = {".md", ".txt"}
+SUPPORTED_EXTENSIONS = {".md", ".pdf", ".txt"}
 IGNORED_FILENAMES = {"README.md", "README.txt"}
 
 
@@ -44,6 +45,28 @@ def _extract_title(path: Path, text: str) -> str:
             return stripped.lstrip("#").strip()
 
     return path.stem.replace("_", " ").replace("-", " ").title()
+
+
+def _extract_pdf_text_from_bytes(content: bytes) -> str:
+    try:
+        from pypdf import PdfReader
+    except ImportError as exc:
+        raise ValueError("PDF support is not available because pypdf is not installed.") from exc
+
+    try:
+        reader = PdfReader(BytesIO(content))
+    except Exception as exc:  # pragma: no cover - library-specific parsing failures
+        raise ValueError("The uploaded PDF could not be parsed.") from exc
+
+    extracted_pages = [(page.extract_text() or "").strip() for page in reader.pages]
+    return "\n\n".join(page_text for page_text in extracted_pages if page_text)
+
+
+def _read_document_text(path: Path) -> str:
+    if path.suffix.lower() == ".pdf":
+        return _extract_pdf_text_from_bytes(path.read_bytes())
+
+    return path.read_text(encoding="utf-8", errors="ignore")
 
 
 def _split_text_into_word_chunks(
@@ -90,7 +113,7 @@ def _build_chunks(
     if chunk_overlap_words is None:
         chunk_overlap_words = int(config["chunk_overlap_words"])
 
-    raw_text = path.read_text(encoding="utf-8", errors="ignore")
+    raw_text = _read_document_text(path)
     title = _extract_title(path, raw_text)
     cleaned_blocks = [
         _clean_text(block)
@@ -275,12 +298,20 @@ def save_uploaded_document(filename: str, content: bytes, raw_data_dir: Path = R
     safe_name = _sanitize_filename(filename)
     suffix = Path(safe_name).suffix.lower()
     if suffix not in SUPPORTED_EXTENSIONS:
-        raise ValueError("Only .txt and .md files are supported.")
+        raise ValueError("Only .txt, .md, and .pdf files are supported.")
+
+    if suffix == ".pdf":
+        extracted_text = _extract_pdf_text_from_bytes(content)
+        if not _clean_text(extracted_text):
+            raise ValueError("The uploaded PDF does not contain extractable text.")
 
     raw_data_dir.mkdir(parents=True, exist_ok=True)
 
     target_path = raw_data_dir / safe_name
-    target_path.write_text(content.decode("utf-8", errors="ignore"), encoding="utf-8")
+    if suffix == ".pdf":
+        target_path.write_bytes(content)
+    else:
+        target_path.write_text(content.decode("utf-8", errors="ignore"), encoding="utf-8")
     clear_chunks_cache()
     build_processed_chunks(raw_data_dir=raw_data_dir)
     return target_path
