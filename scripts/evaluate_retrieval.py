@@ -9,13 +9,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from api.ingestion import load_chunks
+from api.ingestion import build_experiment_chunks, load_chunks
 from api.vector_search import rank_chunks_by_similarity
 
 
 EVAL_DATASET_PATH = PROJECT_ROOT / "data" / "eval" / "retrieval_eval.json"
 DEFAULT_TOP_K = 3
 EVAL_MODES = ("tfidf", "embeddings", "auto")
+CHUNKING_CONFIGS = (
+    {"label": "default_80_20", "chunk_size_words": 80, "chunk_overlap_words": 20},
+    {"label": "small_50_10", "chunk_size_words": 50, "chunk_overlap_words": 10},
+    {"label": "large_120_30", "chunk_size_words": 120, "chunk_overlap_words": 30},
+)
 
 
 def _load_eval_dataset(dataset_path: Path) -> list[dict[str, str]]:
@@ -28,10 +33,11 @@ def _match_rank(
     expected_document_prefix: str,
     top_k: int,
     mode: str,
+    chunks,
 ) -> tuple[int | None, float]:
     ranked_hits = rank_chunks_by_similarity(
         question=question,
-        chunks=load_chunks(),
+        chunks=chunks,
         mode=mode,
     )[:top_k]
 
@@ -46,7 +52,7 @@ def _match_rank(
     return None, 0.0
 
 
-def _evaluate_mode(top_k: int, mode: str) -> dict:
+def _evaluate_mode(top_k: int, mode: str, chunks) -> dict:
     dataset = _load_eval_dataset(EVAL_DATASET_PATH)
     per_question: list[dict] = []
 
@@ -61,6 +67,7 @@ def _evaluate_mode(top_k: int, mode: str) -> dict:
             expected_document_prefix=item["expected_document_prefix"],
             top_k=top_k,
             mode=mode,
+            chunks=chunks,
         )
         top_score_sum += top_score
 
@@ -96,10 +103,34 @@ def _evaluate_mode(top_k: int, mode: str) -> dict:
 
 
 def evaluate_retrieval(top_k: int = DEFAULT_TOP_K) -> dict:
-    reports = [_evaluate_mode(top_k=top_k, mode=mode) for mode in EVAL_MODES]
+    default_chunks = load_chunks()
+    reports = [
+        _evaluate_mode(top_k=top_k, mode=mode, chunks=default_chunks)
+        for mode in EVAL_MODES
+    ]
+
+    chunking_reports = []
+    for config in CHUNKING_CONFIGS:
+        experiment_chunks = build_experiment_chunks(
+            chunk_size_words=config["chunk_size_words"],
+            chunk_overlap_words=config["chunk_overlap_words"],
+        )
+        chunking_reports.append(
+            {
+                "label": config["label"],
+                "chunk_size_words": config["chunk_size_words"],
+                "chunk_overlap_words": config["chunk_overlap_words"],
+                "modes": [
+                    _evaluate_mode(top_k=top_k, mode=mode, chunks=experiment_chunks)
+                    for mode in EVAL_MODES
+                ],
+            }
+        )
+
     return {
         "top_k": top_k,
         "modes": reports,
+        "chunking_experiments": chunking_reports,
     }
 
 

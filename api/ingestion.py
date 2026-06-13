@@ -74,7 +74,11 @@ def _split_text_into_word_chunks(
     return chunks
 
 
-def _build_chunks(path: Path) -> list[LoadedChunk]:
+def _build_chunks(
+    path: Path,
+    chunk_size_words: int = CHUNK_SIZE_WORDS,
+    chunk_overlap_words: int = CHUNK_OVERLAP_WORDS,
+) -> list[LoadedChunk]:
     raw_text = path.read_text(encoding="utf-8", errors="ignore")
     title = _extract_title(path, raw_text)
     cleaned_blocks = [
@@ -85,7 +89,14 @@ def _build_chunks(path: Path) -> list[LoadedChunk]:
     document_text = "\n\n".join(cleaned_blocks)
 
     chunks: list[LoadedChunk] = []
-    for chunk_index, chunk_text in enumerate(_split_text_into_word_chunks(document_text), start=1):
+    for chunk_index, chunk_text in enumerate(
+        _split_text_into_word_chunks(
+            document_text,
+            chunk_size_words=chunk_size_words,
+            chunk_overlap_words=chunk_overlap_words,
+        ),
+        start=1,
+    ):
         chunks.append(
             LoadedChunk(
                 document_id=f"{path.stem}-{chunk_index:03d}",
@@ -93,8 +104,8 @@ def _build_chunks(path: Path) -> list[LoadedChunk]:
                 content=chunk_text,
                 source_path=str(path),
                 chunk_index=chunk_index,
-                chunk_size_words=CHUNK_SIZE_WORDS,
-                chunk_overlap_words=CHUNK_OVERLAP_WORDS,
+                chunk_size_words=chunk_size_words,
+                chunk_overlap_words=chunk_overlap_words,
             )
         )
 
@@ -200,6 +211,23 @@ def build_processed_chunks(
             file_handle.write(_serialize_chunk(chunk))
             file_handle.write("\n")
 
+    return tuple(chunks)
+
+
+def build_experiment_chunks(
+    raw_data_dir: Path = RAW_DATA_DIR,
+    chunk_size_words: int = CHUNK_SIZE_WORDS,
+    chunk_overlap_words: int = CHUNK_OVERLAP_WORDS,
+) -> tuple[LoadedChunk, ...]:
+    chunks: list[LoadedChunk] = []
+    for path in _iter_supported_raw_files(raw_data_dir):
+        chunks.extend(
+            _build_chunks(
+                path,
+                chunk_size_words=chunk_size_words,
+                chunk_overlap_words=chunk_overlap_words,
+            )
+        )
     return tuple(chunks)
 
 
