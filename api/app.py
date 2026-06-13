@@ -102,7 +102,11 @@ def health() -> HealthResponse:
 
 @app.post("/search", response_model=SearchResponse)
 def search_endpoint(request: SearchRequest) -> SearchResponse:
-    return search(question=request.question, top_k=request.top_k)
+    return search(
+        question=request.question,
+        top_k=request.top_k,
+        retrieval_mode=request.retrieval_mode,
+    )
 
 
 @app.post("/web-search", response_model=WebSearchResponse)
@@ -138,4 +142,8 @@ async def ingest_endpoint(file: UploadFile = File(...)) -> IngestResponse:
 
 @app.post("/ask", response_model=AskResponse)
 def ask_endpoint(request: AskRequest) -> AskResponse:
-    return ask(question=request.question, top_k=request.top_k)
+    return ask(
+        question=request.question,
+        top_k=request.top_k,
+        retrieval_mode=request.retrieval_mode,
+    )

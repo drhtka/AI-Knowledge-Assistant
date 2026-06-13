@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+RetrievalModeValue = Literal["auto", "tfidf", "embeddings"]
 
 
 class HealthResponse(BaseModel):
@@ -12,6 +16,7 @@ class HealthResponse(BaseModel):
 class SearchRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     top_k: int = Field(default=3, ge=1, le=10)
+    retrieval_mode: RetrievalModeValue = "auto"
 
 
 class SearchHit(BaseModel):
@@ -24,12 +29,14 @@ class SearchHit(BaseModel):
 class SearchResponse(BaseModel):
     question: str
     top_k: int
+    retrieval_mode: RetrievalModeValue
     hits: list[SearchHit]
 
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     top_k: int = Field(default=3, ge=1, le=10)
+    retrieval_mode: RetrievalModeValue = "auto"
 
 
 class AskResponse(BaseModel):
@@ -37,6 +44,7 @@ class AskResponse(BaseModel):
     answer: str
     sources: list[str]
     chunks: list[SearchHit]
+    retrieval_mode: RetrievalModeValue
     confidence: float
     latency_ms: int
     answer_mode: str
