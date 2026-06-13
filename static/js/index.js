@@ -3,6 +3,8 @@ const clearFormButton = document.getElementById("clear-form");
 const demoButtons = document.querySelectorAll("[data-demo-question]");
 const uploadForm = document.getElementById("upload-form");
 const uploadResult = document.getElementById("upload-result");
+const chunkingPresetForm = document.getElementById("chunking-preset-form");
+const chunkingResult = document.getElementById("chunking-result");
 
 demoButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -75,6 +77,46 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
         } catch {
             uploadResult.className = "upload-result error-text";
             uploadResult.textContent = "Upload failed because the server did not respond.";
+        }
+    });
+}
+
+if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof HTMLElement) {
+    chunkingPresetForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const presetInput = chunkingPresetForm.elements.namedItem("chunking_preset");
+        if (!(presetInput instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        chunkingResult.className = "upload-result meta";
+        chunkingResult.textContent = "Applying chunking preset and rebuilding chunks...";
+
+        try {
+            const response = await fetch("/chunking-config", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ preset: presetInput.value }),
+            });
+            const payload = await response.json();
+
+            if (!response.ok) {
+                const errorMessage = payload.detail ?? "Chunking preset update failed.";
+                chunkingResult.className = "upload-result error-text";
+                chunkingResult.textContent = errorMessage;
+                return;
+            }
+
+            chunkingResult.className = "upload-result success-text";
+            chunkingResult.textContent =
+                `Applied ${payload.current_preset}: chunk_size=${payload.chunk_size_words}, overlap=${payload.chunk_overlap_words}.`;
+            window.location.reload();
+        } catch {
+            chunkingResult.className = "upload-result error-text";
+            chunkingResult.textContent = "Preset update failed because the server did not respond.";
         }
     });
 }

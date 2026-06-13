@@ -7,11 +7,14 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from api.ingestion import load_chunks, save_uploaded_document
+from api.chunking_config import get_chunking_config, set_chunking_preset
+from api.ingestion import build_processed_chunks, clear_chunks_cache, load_chunks, save_uploaded_document
 from api.retrieval import ask, search
 from api.schemas import (
     AskRequest,
     AskResponse,
+    ChunkingConfigResponse,
+    ChunkingConfigUpdateRequest,
     HealthResponse,
     IngestResponse,
     SearchRequest,
@@ -20,8 +23,6 @@ from api.schemas import (
     WebSearchResponse,
 )
 from api.settings import (
-    CHUNK_OVERLAP_WORDS,
-    CHUNK_SIZE_WORDS,
     STATIC_DIR,
     TEMPLATES_DIR,
 )
@@ -112,9 +113,8 @@ def index(request: Request) -> HTMLResponse:
             "retrieval_mode_options": RETRIEVAL_MODE_OPTIONS,
             "system_config": {
                 "default_retrieval_mode": "auto",
-                "chunk_size_words": CHUNK_SIZE_WORDS,
-                "chunk_overlap_words": CHUNK_OVERLAP_WORDS,
                 "available_retrieval_modes": RETRIEVAL_MODE_OPTIONS,
+                **get_chunking_config(),
             },
             "web_question": web_question,
             "web_top_k": web_top_k,
@@ -134,6 +134,20 @@ def index(request: Request) -> HTMLResponse:
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     return HealthResponse(status="ok", ready=True, project="ai_knowledge_assistant")
+
+
+@app.get("/chunking-config", response_model=ChunkingConfigResponse)
+def chunking_config_endpoint() -> ChunkingConfigResponse:
+    return ChunkingConfigResponse(**get_chunking_config())
+
+
+@app.post("/chunking-config", response_model=ChunkingConfigResponse)
+def update_chunking_config_endpoint(request: ChunkingConfigUpdateRequest) -> ChunkingConfigResponse:
+    updated_config = set_chunking_preset(request.preset)
+    clear_chunks_cache()
+    build_processed_chunks()
+    clear_chunks_cache()
+    return ChunkingConfigResponse(**updated_config)
 
 
 @app.post("/search", response_model=SearchResponse)

@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 RetrievalModeValue = Literal["auto", "tfidf", "embeddings"]
+ChunkingPresetValue = Literal["baseline_120_30", "legacy_80_20", "small_50_10"]
 
 
 class HealthResponse(BaseModel):
@@ -55,6 +56,17 @@ class IngestResponse(BaseModel):
     filename: str
     stored_path: str
     chunks_loaded: int
+
+
+class ChunkingConfigUpdateRequest(BaseModel):
+    preset: ChunkingPresetValue
+
+
+class ChunkingConfigResponse(BaseModel):
+    current_preset: ChunkingPresetValue
+    chunk_size_words: int
+    chunk_overlap_words: int
+    available_presets: list[ChunkingPresetValue]
 
 
 class WebSearchRequest(BaseModel):

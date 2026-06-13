@@ -6,10 +6,9 @@ import json
 from pathlib import Path
 import re
 
+from api.chunking_config import get_chunking_config
 from api.settings import (
     CHUNKS_FILE,
-    CHUNK_OVERLAP_WORDS,
-    CHUNK_SIZE_WORDS,
     CHUNKING_VERSION,
     RAW_DATA_DIR,
 )
@@ -49,12 +48,18 @@ def _extract_title(path: Path, text: str) -> str:
 
 def _split_text_into_word_chunks(
     text: str,
-    chunk_size_words: int = CHUNK_SIZE_WORDS,
-    chunk_overlap_words: int = CHUNK_OVERLAP_WORDS,
+    chunk_size_words: int | None = None,
+    chunk_overlap_words: int | None = None,
 ) -> list[str]:
     words = text.split()
     if not words:
         return []
+
+    config = get_chunking_config()
+    if chunk_size_words is None:
+        chunk_size_words = int(config["chunk_size_words"])
+    if chunk_overlap_words is None:
+        chunk_overlap_words = int(config["chunk_overlap_words"])
 
     # Keep the overlap smaller than the chunk to guarantee forward progress.
     normalized_overlap = min(max(chunk_overlap_words, 0), max(chunk_size_words - 1, 0))
@@ -76,9 +81,15 @@ def _split_text_into_word_chunks(
 
 def _build_chunks(
     path: Path,
-    chunk_size_words: int = CHUNK_SIZE_WORDS,
-    chunk_overlap_words: int = CHUNK_OVERLAP_WORDS,
+    chunk_size_words: int | None = None,
+    chunk_overlap_words: int | None = None,
 ) -> list[LoadedChunk]:
+    config = get_chunking_config()
+    if chunk_size_words is None:
+        chunk_size_words = int(config["chunk_size_words"])
+    if chunk_overlap_words is None:
+        chunk_overlap_words = int(config["chunk_overlap_words"])
+
     raw_text = path.read_text(encoding="utf-8", errors="ignore")
     title = _extract_title(path, raw_text)
     cleaned_blocks = [
@@ -113,11 +124,12 @@ def _build_chunks(
 
 
 def _serialize_meta() -> str:
+    config = get_chunking_config()
     return json.dumps(
         {
             "record_type": "meta",
-            "chunk_size_words": CHUNK_SIZE_WORDS,
-            "chunk_overlap_words": CHUNK_OVERLAP_WORDS,
+            "chunk_size_words": config["chunk_size_words"],
+            "chunk_overlap_words": config["chunk_overlap_words"],
             "chunking_version": CHUNKING_VERSION,
         },
         ensure_ascii=False,
@@ -186,10 +198,11 @@ def _processed_data_is_stale(raw_data_dir: Path, chunks_file: Path) -> bool:
     except json.JSONDecodeError:
         return True
 
+    config = get_chunking_config()
     return metadata != {
         "record_type": "meta",
-        "chunk_size_words": CHUNK_SIZE_WORDS,
-        "chunk_overlap_words": CHUNK_OVERLAP_WORDS,
+        "chunk_size_words": config["chunk_size_words"],
+        "chunk_overlap_words": config["chunk_overlap_words"],
         "chunking_version": CHUNKING_VERSION,
     }
 
@@ -216,9 +229,15 @@ def build_processed_chunks(
 
 def build_experiment_chunks(
     raw_data_dir: Path = RAW_DATA_DIR,
-    chunk_size_words: int = CHUNK_SIZE_WORDS,
-    chunk_overlap_words: int = CHUNK_OVERLAP_WORDS,
+    chunk_size_words: int | None = None,
+    chunk_overlap_words: int | None = None,
 ) -> tuple[LoadedChunk, ...]:
+    config = get_chunking_config()
+    if chunk_size_words is None:
+        chunk_size_words = int(config["chunk_size_words"])
+    if chunk_overlap_words is None:
+        chunk_overlap_words = int(config["chunk_overlap_words"])
+
     chunks: list[LoadedChunk] = []
     for path in _iter_supported_raw_files(raw_data_dir):
         chunks.extend(

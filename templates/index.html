@@ -141,6 +141,10 @@
                     <h2>System Config</h2>
                     <ul class="list-reset">
                         <li>
+                            <strong>Current chunking preset:</strong>
+                            <code>{{ system_config.current_preset }}</code>
+                        </li>
+                        <li>
                             <strong>Default retrieval mode:</strong>
                             <code
                                 >{{ system_config.default_retrieval_mode
@@ -165,6 +169,25 @@
                             endif %} {% endfor %}
                         </li>
                     </ul>
+                    <form id="chunking-preset-form">
+                        <label for="chunking_preset">Chunking Preset</label>
+                        <select id="chunking_preset" name="chunking_preset">
+                            {% for preset in system_config.available_presets %}
+                            <option
+                                value="{{ preset }}"
+                                {% if system_config.current_preset == preset %}selected{% endif %}
+                            >
+                                {{ preset }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="actions">
+                            <button type="submit">Apply Preset</button>
+                        </div>
+                    </form>
+                    <div id="chunking-result" class="upload-result meta">
+                        Apply a preset to rebuild chunks with a different chunking baseline.
+                    </div>
                 </article>
             </section>
 
