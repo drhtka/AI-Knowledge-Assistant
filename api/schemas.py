@@ -26,6 +26,8 @@ class SearchHit(BaseModel):
     snippet: str
     score: float
     file_type: str
+    source_name: str
+    chunk_index: int
 
 
 class SearchResponse(BaseModel):

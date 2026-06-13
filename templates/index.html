@@ -251,7 +251,8 @@
                     <li>
                         <strong>{{ hit.title }}</strong><br />
                         <span class="meta"
-                            >type={{ hit.file_type }} | score={{ hit.score }}</span
+                            >file={{ hit.source_name }} | chunk={{ hit.chunk_index
+                            }} | type={{ hit.file_type }} | score={{ hit.score }}</span
                         ><br />
                         {{ hit.snippet }}
                     </li>

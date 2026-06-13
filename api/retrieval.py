@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from time import perf_counter
 
 from api.generation import generate_grounded_answer
@@ -16,6 +17,8 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             snippet=chunk.content,
             score=round(score, 3),
             file_type=chunk.file_type,
+            source_name=Path(chunk.source_path).name,
+            chunk_index=chunk.chunk_index,
         )
         for chunk, score in rank_chunks_by_similarity(
             question=question,
