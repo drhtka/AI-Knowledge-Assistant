@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime, UTC
 from pathlib import Path
 
 
@@ -15,6 +16,7 @@ from api.vector_search import rank_chunks_by_similarity
 
 
 EVAL_DATASET_PATH = PROJECT_ROOT / "data" / "eval" / "retrieval_eval.json"
+EVAL_REPORTS_DIR = PROJECT_ROOT / "data" / "eval" / "reports"
 DEFAULT_TOP_K = 3
 EVAL_MODES = ("tfidf", "embeddings", "auto")
 CHUNKING_CONFIGS = (
@@ -215,9 +217,42 @@ def evaluate_retrieval(top_k: int = DEFAULT_TOP_K) -> dict:
         )
 
     return {
+        "generated_at": datetime.now(UTC).isoformat(),
+        "dataset_path": str(EVAL_DATASET_PATH),
         "top_k": top_k,
         "modes": reports,
         "chunking_experiments": chunking_reports,
+    }
+
+
+def _write_text_file(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def _write_json_file(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def save_report_artifacts(report: dict, reports_dir: Path = EVAL_REPORTS_DIR) -> dict[str, str]:
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    json_report_path = reports_dir / f"retrieval_eval_{timestamp}.json"
+    text_report_path = reports_dir / f"retrieval_eval_{timestamp}.txt"
+    latest_json_path = reports_dir / "latest.json"
+    latest_text_path = reports_dir / "latest.txt"
+
+    text_summary = _build_text_summary(report)
+    _write_json_file(json_report_path, report)
+    _write_text_file(text_report_path, text_summary)
+    _write_json_file(latest_json_path, report)
+    _write_text_file(latest_text_path, text_summary)
+
+    return {
+        "json_report": str(json_report_path),
+        "text_report": str(text_report_path),
+        "latest_json": str(latest_json_path),
+        "latest_text": str(latest_text_path),
     }
 
 
@@ -237,13 +272,30 @@ def _parse_args() -> argparse.Namespace:
         default="text",
         help="Output format for the evaluation report.",
     )
+    parser.add_argument(
+        "--no-save",
+        action="store_true",
+        help="Do not save timestamped and latest evaluation artifacts to disk.",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse_args()
     report = evaluate_retrieval(top_k=args.top_k)
+    saved_paths: dict[str, str] | None = None
+    if not args.no_save:
+        saved_paths = save_report_artifacts(report)
+
     if args.format == "json":
         print(json.dumps(report, indent=2, ensure_ascii=False))
     else:
         print(_build_text_summary(report))
+
+    if saved_paths:
+        print("")
+        print("Saved evaluation artifacts:")
+        print(f"- JSON report: {saved_paths['json_report']}")
+        print(f"- Text report: {saved_paths['text_report']}")
+        print(f"- Latest JSON: {saved_paths['latest_json']}")
+        print(f"- Latest text: {saved_paths['latest_text']}")
