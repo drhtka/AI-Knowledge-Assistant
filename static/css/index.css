@@ -48,7 +48,8 @@ label {
     margin-bottom: 6px;
 }
 
-input {
+input,
+select {
     width: 100%;
     box-sizing: border-box;
     padding: 10px 12px;
@@ -57,6 +58,10 @@ input {
     background: #0f172a;
     color: #e6edf7;
     margin-bottom: 14px;
+}
+
+select {
+    appearance: none;
 }
 
 .actions {

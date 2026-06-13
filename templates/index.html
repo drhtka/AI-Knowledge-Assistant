@@ -40,6 +40,28 @@
                             value="{{ top_k }}"
                         />
 
+                        <label for="retrieval_mode">Retrieval Mode</label>
+                        <select id="retrieval_mode" name="retrieval_mode">
+                            {% for mode in retrieval_mode_options %}
+                            <option
+                                value="{{ mode }}"
+                                {%
+                                if
+                                retrieval_mode=""
+                                ="mode"
+                                %}selected{%
+                                endif
+                                %}
+                            >
+                                {{ mode }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="meta">
+                            Switch between `auto`, `tfidf`, and `embeddings` to
+                            show how retrieval behavior changes.
+                        </p>
+
                         <div class="actions">
                             <button type="submit">Run</button>
                             <button type="button" id="clear-form">Clear</button>
@@ -107,6 +129,7 @@
                 <p class="meta">
                     confidence={{ ask_result.confidence }} | latency_ms={{
                     ask_result.latency_ms }} | mode={{ ask_result.answer_mode }}
+                    | retrieval={{ ask_result.retrieval_mode }}
                 </p>
                 <h3>Sources</h3>
                 <ul class="list-reset">
@@ -123,7 +146,11 @@
 
             <article class="content-card">
                 <h2>Retrieved Chunks</h2>
-                {% if search_result and search_result.hits %}
+                {% if search_result %}
+                <p class="meta">
+                    retrieval_mode={{ search_result.retrieval_mode }}
+                </p>
+                {% endif %} {% if search_result and search_result.hits %}
                 <ul class="list-reset">
                     {% for hit in search_result.hits %}
                     <li>

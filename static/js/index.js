@@ -19,6 +19,7 @@ if (clearFormButton && questionForm) {
     clearFormButton.addEventListener("click", () => {
         const questionInput = questionForm.elements.namedItem("question");
         const topKInput = questionForm.elements.namedItem("top_k");
+        const retrievalModeInput = questionForm.elements.namedItem("retrieval_mode");
 
         if (questionInput instanceof HTMLInputElement) {
             questionInput.value = "";
@@ -26,6 +27,10 @@ if (clearFormButton && questionForm) {
 
         if (topKInput instanceof HTMLInputElement) {
             topKInput.value = "3";
+        }
+
+        if (retrievalModeInput instanceof HTMLSelectElement) {
+            retrievalModeInput.value = "auto";
         }
     });
 }

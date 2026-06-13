@@ -54,18 +54,23 @@ DEMO_PROMPTS = [
     },
 ]
 
+RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
+
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
     question = request.query_params.get("question", "")
     top_k_raw = request.query_params.get("top_k", "3") or "3"
     top_k = max(1, min(10, int(top_k_raw)))
+    retrieval_mode = request.query_params.get("retrieval_mode", "auto") or "auto"
+    if retrieval_mode not in RETRIEVAL_MODE_OPTIONS:
+        retrieval_mode = "auto"
     web_question = request.query_params.get("web_question", "")
     web_top_k_raw = request.query_params.get("web_top_k", "5") or "5"
     web_top_k = max(1, min(10, int(web_top_k_raw)))
 
-    search_result = search(question, top_k) if question else None
-    ask_result = ask(question, top_k) if question else None
+    search_result = search(question, top_k, retrieval_mode=retrieval_mode) if question else None
+    ask_result = ask(question, top_k, retrieval_mode=retrieval_mode) if question else None
     web_search_result = None
     web_search_error = ""
     if web_question:
@@ -81,6 +86,8 @@ def index(request: Request) -> HTMLResponse:
             "page_title": "AI Knowledge Assistant",
             "question": question,
             "top_k": top_k,
+            "retrieval_mode": retrieval_mode,
+            "retrieval_mode_options": RETRIEVAL_MODE_OPTIONS,
             "web_question": web_question,
             "web_top_k": web_top_k,
             "demo_prompts": DEMO_PROMPTS,
