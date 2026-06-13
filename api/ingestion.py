@@ -47,6 +47,16 @@ def _extract_title(path: Path, text: str) -> str:
     return path.stem.replace("_", " ").replace("-", " ").title()
 
 
+def _normalize_pdf_text(text: str) -> str:
+    # Remove hyphenation artifacts produced by PDF line wrapping.
+    normalized = re.sub(r"(?<=\w)-\s*\n\s*(?=\w)", "", text)
+    # Preserve paragraph breaks but flatten line wraps inside paragraphs.
+    normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+    normalized = re.sub(r"(?<!\n)\n(?!\n)", " ", normalized)
+    normalized = re.sub(r"[ \t]{2,}", " ", normalized)
+    return normalized.strip()
+
+
 def _extract_pdf_text_from_bytes(content: bytes) -> str:
     try:
         from pypdf import PdfReader
@@ -58,7 +68,7 @@ def _extract_pdf_text_from_bytes(content: bytes) -> str:
     except Exception as exc:  # pragma: no cover - library-specific parsing failures
         raise ValueError("The uploaded PDF could not be parsed.") from exc
 
-    extracted_pages = [(page.extract_text() or "").strip() for page in reader.pages]
+    extracted_pages = [_normalize_pdf_text((page.extract_text() or "").strip()) for page in reader.pages]
     return "\n\n".join(page_text for page_text in extracted_pages if page_text)
 
 
