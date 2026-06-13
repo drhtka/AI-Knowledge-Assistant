@@ -117,6 +117,14 @@
                                 <p class="meta">
                                     The document is now part of the local retrieval index.
                                 </p>
+                                {% if upload_feedback.preview_text %}
+                                <div class="upload-preview">
+                                    <p class="meta"><strong>Document Preview</strong></p>
+                                    <p class="upload-preview-text">
+                                        {{ upload_feedback.preview_text }}
+                                    </p>
+                                </div>
+                                {% endif %}
                                 <div class="actions">
                                     <button
                                         type="button"

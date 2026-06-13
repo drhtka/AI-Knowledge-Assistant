@@ -145,6 +145,19 @@ button {
     background: rgba(22, 101, 52, 0.14);
 }
 
+.upload-preview {
+    padding: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.upload-preview-text {
+    margin: 0;
+    color: #e6edf7;
+    line-height: 1.5;
+}
+
 pre {
     overflow-x: auto;
     background: #020617;

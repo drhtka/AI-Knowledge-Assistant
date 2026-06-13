@@ -84,6 +84,15 @@ def _read_document_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
+def build_document_preview(path: Path, max_chars: int = 420) -> str:
+    preview_text = _clean_text(_read_document_text(path))
+    if len(preview_text) <= max_chars:
+        return preview_text
+
+    truncated = preview_text[:max_chars].rsplit(" ", 1)[0].strip()
+    return (truncated or preview_text[:max_chars].strip()) + "..."
+
+
 def _split_text_into_word_chunks(
     text: str,
     chunk_size_words: int | None = None,

@@ -48,6 +48,24 @@ function renderUploadSuccess(payload) {
     followUp.className = "meta";
     followUp.textContent = "The document is now part of the local retrieval index.";
 
+    let previewBlock = null;
+    if (typeof payload.preview_text === "string" && payload.preview_text.trim()) {
+        previewBlock = document.createElement("div");
+        previewBlock.className = "upload-preview";
+
+        const previewTitle = document.createElement("p");
+        previewTitle.className = "meta";
+        const previewTitleStrong = document.createElement("strong");
+        previewTitleStrong.textContent = "Document Preview";
+        previewTitle.append(previewTitleStrong);
+
+        const previewText = document.createElement("p");
+        previewText.className = "upload-preview-text";
+        previewText.textContent = payload.preview_text;
+
+        previewBlock.append(previewTitle, previewText);
+    }
+
     const ctaButton = document.createElement("button");
     ctaButton.type = "button";
     ctaButton.textContent = "Ask About This Document";
@@ -77,6 +95,11 @@ function renderUploadSuccess(payload) {
         });
         quickPromptActions.append(promptButton);
     });
+
+    if (previewBlock instanceof HTMLDivElement) {
+        uploadResult.append(title, details, followUp, previewBlock, ctaButton, quickPromptIntro, quickPromptActions);
+        return;
+    }
 
     uploadResult.append(title, details, followUp, ctaButton, quickPromptIntro, quickPromptActions);
 }

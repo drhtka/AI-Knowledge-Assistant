@@ -9,7 +9,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from api.chunking_config import get_chunking_config, set_chunking_preset
-from api.ingestion import build_processed_chunks, clear_chunks_cache, load_chunks, save_uploaded_document
+from api.ingestion import (
+    build_document_preview,
+    build_processed_chunks,
+    clear_chunks_cache,
+    load_chunks,
+    save_uploaded_document,
+)
 from api.retrieval import ask, search
 from api.schemas import (
     AskRequest,
@@ -24,6 +30,7 @@ from api.schemas import (
     WebSearchResponse,
 )
 from api.settings import (
+    RAW_DATA_DIR,
     STATIC_DIR,
     TEMPLATES_DIR,
 )
@@ -101,6 +108,7 @@ async def _ingest_uploaded_file(file: UploadFile) -> IngestResponse:
         file_type=stored_path.suffix.lower().lstrip(".") or "unknown",
         stored_path=str(stored_path),
         chunks_loaded=chunks_loaded,
+        preview_text=build_document_preview(stored_path),
     )
 
 
@@ -109,12 +117,20 @@ def _build_upload_feedback(request: Request) -> dict[str, object] | None:
     if not upload_status:
         return None
 
+    source_name = request.query_params.get("uploaded_source_name", "")
+    preview_text = ""
+    if upload_status == "ok" and source_name:
+        preview_path = RAW_DATA_DIR / source_name
+        if preview_path.exists():
+            preview_text = build_document_preview(preview_path)
+
     return {
         "status": upload_status,
         "filename": request.query_params.get("uploaded_filename", ""),
-        "source_name": request.query_params.get("uploaded_source_name", ""),
+        "source_name": source_name,
         "file_type": request.query_params.get("uploaded_file_type", ""),
         "chunks_loaded": request.query_params.get("uploaded_chunks_loaded", "0"),
+        "preview_text": preview_text,
         "error": request.query_params.get("upload_error", ""),
     }
 

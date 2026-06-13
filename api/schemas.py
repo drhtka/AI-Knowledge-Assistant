@@ -61,6 +61,7 @@ class IngestResponse(BaseModel):
     file_type: str
     stored_path: str
     chunks_loaded: int
+    preview_text: str
 
 
 class ChunkingConfigUpdateRequest(BaseModel):
