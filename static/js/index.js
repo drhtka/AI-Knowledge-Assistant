@@ -6,6 +6,49 @@ const uploadResult = document.getElementById("upload-result");
 const chunkingPresetForm = document.getElementById("chunking-preset-form");
 const chunkingResult = document.getElementById("chunking-result");
 
+function renderUploadStatus(message, className = "upload-result meta") {
+    if (!(uploadResult instanceof HTMLElement)) {
+        return;
+    }
+
+    uploadResult.className = className;
+    uploadResult.textContent = message;
+}
+
+function renderUploadSuccess(payload) {
+    if (!(uploadResult instanceof HTMLElement)) {
+        return;
+    }
+
+    uploadResult.className = "upload-result upload-result-card success-text";
+    uploadResult.replaceChildren();
+
+    const title = document.createElement("strong");
+    title.textContent = "Document uploaded successfully";
+
+    const details = document.createElement("p");
+    details.className = "meta";
+    details.textContent = `${payload.filename} | loaded chunks: ${payload.chunks_loaded}`;
+
+    const ctaButton = document.createElement("button");
+    ctaButton.type = "button";
+    ctaButton.textContent = "Ask About This Document";
+    ctaButton.addEventListener("click", () => {
+        if (!(questionForm instanceof HTMLFormElement)) {
+            return;
+        }
+
+        const questionInput = questionForm.elements.namedItem("question");
+        if (questionInput instanceof HTMLInputElement) {
+            questionInput.value = `What is ${payload.filename} about?`;
+            questionInput.focus();
+            questionInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    });
+
+    uploadResult.append(title, details, ctaButton);
+}
+
 demoButtons.forEach((button) => {
     button.addEventListener("click", () => {
         if (!questionForm) {
@@ -53,8 +96,7 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
 
-        uploadResult.className = "upload-result meta";
-        uploadResult.textContent = "Uploading document and rebuilding chunks...";
+        renderUploadStatus("Uploading document and rebuilding chunks...");
 
         try {
             const response = await fetch("/ingest", {
@@ -65,18 +107,17 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
 
             if (!response.ok) {
                 const errorMessage = payload.detail ?? "Upload failed.";
-                uploadResult.className = "upload-result error-text";
-                uploadResult.textContent = errorMessage;
+                renderUploadStatus(errorMessage, "upload-result error-text");
                 return;
             }
 
-            uploadResult.className = "upload-result success-text";
-            uploadResult.textContent =
-                `Uploaded ${payload.filename}. Loaded chunks: ${payload.chunks_loaded}.`;
+            renderUploadSuccess(payload);
             uploadForm.reset();
         } catch {
-            uploadResult.className = "upload-result error-text";
-            uploadResult.textContent = "Upload failed because the server did not respond.";
+            renderUploadStatus(
+                "Upload failed because the server did not respond.",
+                "upload-result error-text",
+            );
         }
     });
 }

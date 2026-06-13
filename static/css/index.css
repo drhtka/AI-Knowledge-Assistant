@@ -135,6 +135,16 @@ button {
     margin-top: 12px;
 }
 
+.upload-result-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid #166534;
+    border-radius: 12px;
+    background: rgba(22, 101, 52, 0.14);
+}
+
 pre {
     overflow-x: auto;
     background: #020617;
