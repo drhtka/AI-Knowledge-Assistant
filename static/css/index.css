@@ -70,6 +70,19 @@ select {
     flex-wrap: wrap;
 }
 
+.mode-compare-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.mode-compare-card {
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 12px;
+    background: #0f172a;
+}
+
 button {
     border: 1px solid #334155;
     background: #111827;
@@ -111,6 +124,10 @@ pre {
 
 @media (max-width: 860px) {
     .layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mode-compare-grid {
         grid-template-columns: 1fr;
     }
 }

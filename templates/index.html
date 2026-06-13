@@ -191,6 +191,26 @@
             </article>
 
             <article class="content-card">
+                <h2>Mode Comparison</h2>
+                {% if mode_comparison %}
+                <div class="mode-compare-grid">
+                    {% for item in mode_comparison %}
+                    <div class="mode-compare-card">
+                        <h3>{{ item.mode }}</h3>
+                        <p class="meta">top_source={{ item.top_source }}</p>
+                        <p class="meta">top_score={{ item.top_score }}</p>
+                        <p class="meta">hits={{ item.hit_count }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="meta">
+                    Run a question to compare `auto`, `tfidf`, and `embeddings`.
+                </p>
+                {% endif %}
+            </article>
+
+            <article class="content-card">
                 <h2>Retrieved Chunks</h2>
                 {% if search_result %}
                 <p class="meta">

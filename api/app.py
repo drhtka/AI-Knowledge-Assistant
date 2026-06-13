@@ -62,6 +62,22 @@ DEMO_PROMPTS = [
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 
 
+def _build_mode_comparison(question: str, top_k: int) -> list[dict[str, object]]:
+    comparisons: list[dict[str, object]] = []
+    for mode in RETRIEVAL_MODE_OPTIONS:
+        result = search(question, top_k, retrieval_mode=mode)
+        top_hit = result.hits[0] if result.hits else None
+        comparisons.append(
+            {
+                "mode": mode,
+                "top_source": top_hit.title if top_hit else "No match",
+                "top_score": top_hit.score if top_hit else 0.0,
+                "hit_count": len(result.hits),
+            }
+        )
+    return comparisons
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
     question = request.query_params.get("question", "")
@@ -83,6 +99,7 @@ def index(request: Request) -> HTMLResponse:
             web_search_result = web_search(question=web_question, top_k=web_top_k)
         except ValueError as exc:
             web_search_error = str(exc)
+    mode_comparison = _build_mode_comparison(question, top_k) if question else []
 
     return templates.TemplateResponse(
         request=request,
@@ -104,6 +121,7 @@ def index(request: Request) -> HTMLResponse:
             "demo_prompts": DEMO_PROMPTS,
             "search_result": search_result,
             "ask_result": ask_result,
+            "mode_comparison": mode_comparison,
             "web_search_result": web_search_result,
             "web_search_error": web_search_error,
             "search_result_json": search_result.model_dump(mode="json") if search_result else {},
