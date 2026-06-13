@@ -37,6 +37,9 @@ class AskResponse(BaseModel):
     answer: str
     sources: list[str]
     chunks: list[SearchHit]
+    confidence: float
+    latency_ms: int
+    answer_mode: str
 
 
 class IngestResponse(BaseModel):

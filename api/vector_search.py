@@ -1,22 +1,14 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from importlib import metadata
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from packaging.version import InvalidVersion, Version
 
 from api.ingestion import LoadedChunk
 from api.settings import EMBEDDING_MODEL_NAME
-
-try:
-    from sentence_transformers import SentenceTransformer
-except ImportError:  # pragma: no cover - runtime dependency may be installed later
-    SentenceTransformer = None
-
-
-def _chunk_text(chunk: LoadedChunk) -> str:
-    return f"{chunk.title}\n{chunk.content}"
-
 
 @lru_cache(maxsize=1)
 def _build_tfidf_index(
@@ -24,8 +16,8 @@ def _build_tfidf_index(
 ) -> tuple[TfidfVectorizer, object]:
     # Keep a cached vector index for the latest processed corpus.
     documents = [
-        _chunk_text(LoadedChunk(document_id=document_id, title=title, content=content))
-        for document_id, title, content in corpus_signature
+        f"{title}\n{content}"
+        for _, title, content in corpus_signature
     ]
     vectorizer = TfidfVectorizer(lowercase=True, ngram_range=(1, 2))
     matrix = vectorizer.fit_transform(documents)
@@ -33,11 +25,40 @@ def _build_tfidf_index(
 
 
 @lru_cache(maxsize=1)
-def _get_embedding_model(model_name: str) -> SentenceTransformer | None:
-    if SentenceTransformer is None:
+def _embedding_stack_available() -> bool:
+    try:
+        torch_version = Version(metadata.version("torch"))
+        transformers_version = Version(metadata.version("transformers"))
+        numpy_version = Version(metadata.version("numpy"))
+        metadata.version("sentence-transformers")
+    except (metadata.PackageNotFoundError, InvalidVersion):
+        return False
+
+    # Newer Transformers disables older PyTorch versions at import time.
+    if transformers_version >= Version("5.0.0") and torch_version < Version("2.4.0"):
+        return False
+
+    # PyTorch 2.2 wheels in this project are not compatible with NumPy 2.x.
+    if numpy_version >= Version("2.0.0") and torch_version < Version("2.4.0"):
+        return False
+
+    return True
+
+
+@lru_cache(maxsize=1)
+def _get_embedding_model(model_name: str) -> object | None:
+    if not _embedding_stack_available():
         return None
 
-    return SentenceTransformer(model_name)
+    try:
+        from sentence_transformers import SentenceTransformer
+    except Exception:  # pragma: no cover - runtime dependency may be installed later
+        return None
+
+    try:
+        return SentenceTransformer(model_name)
+    except Exception:  # pragma: no cover - model download or initialization may fail at runtime
+        return None
 
 
 @lru_cache(maxsize=1)
@@ -50,8 +71,8 @@ def _build_embedding_index(
         return None
 
     documents = [
-        _chunk_text(LoadedChunk(document_id=document_id, title=title, content=content))
-        for document_id, title, content in corpus_signature
+        f"{title}\n{content}"
+        for _, title, content in corpus_signature
     ]
     return model.encode(documents, convert_to_numpy=True, normalize_embeddings=True)
 
@@ -70,7 +91,7 @@ def rank_chunks_by_similarity(question: str, chunks: tuple[LoadedChunk, ...]) ->
             corpus_signature=corpus_signature,
             model_name=EMBEDDING_MODEL_NAME,
         )
-    except ValueError:
+    except Exception:
         embedding_matrix = None
 
     if embedding_matrix is not None:

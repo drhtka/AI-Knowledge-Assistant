@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from time import perf_counter
+
+from api.generation import generate_grounded_answer
 from api.ingestion import load_chunks
 from api.schemas import AskResponse, SearchHit, SearchResponse
 from api.vector_search import rank_chunks_by_similarity
@@ -20,19 +23,17 @@ def search(question: str, top_k: int) -> SearchResponse:
 
 
 def ask(question: str, top_k: int) -> AskResponse:
+    started_at = perf_counter()
     result = search(question=question, top_k=top_k)
-    if not result.hits:
-        return AskResponse(
-            question=question,
-            answer="No grounded answer yet. Add relevant documents or improve retrieval first.",
-            sources=[],
-            chunks=[],
-        )
+    generated = generate_grounded_answer(question=question, hits=result.hits)
+    latency_ms = int((perf_counter() - started_at) * 1000)
 
-    answer = " ".join(hit.snippet for hit in result.hits[:2])
     return AskResponse(
         question=question,
-        answer=answer,
+        answer=generated.answer,
         sources=[hit.title for hit in result.hits],
         chunks=result.hits,
+        confidence=generated.confidence,
+        latency_ms=latency_ms,
+        answer_mode=generated.answer_mode,
     )

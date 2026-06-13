@@ -74,6 +74,11 @@
                 <h2>Answer</h2>
                 {% if ask_result %}
                 <p>{{ ask_result.answer }}</p>
+                <p class="meta">
+                    confidence={{ ask_result.confidence }} |
+                    latency_ms={{ ask_result.latency_ms }} |
+                    mode={{ ask_result.answer_mode }}
+                </p>
                 <h3>Sources</h3>
                 <ul class="list-reset">
                     {% for source in ask_result.sources %}
