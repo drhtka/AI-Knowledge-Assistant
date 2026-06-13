@@ -42,10 +42,10 @@ uvicorn api.app:app --reload
 Enable LLM-backed grounded answers with environment variables:
 
 ```bash
-export LLM_ENABLED=true
-export LLM_API_KEY=your_api_key
-export LLM_MODEL=gpt-4o-mini
-export LLM_API_BASE=https://api.openai.com/v1
+cp .env.example .env
+set -a
+source .env
+set +a
 ```
 
 If LLM settings are missing or the request fails, the app falls back to the local grounded extractive answer.
