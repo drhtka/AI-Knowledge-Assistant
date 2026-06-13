@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -217,7 +217,7 @@ def evaluate_retrieval(top_k: int = DEFAULT_TOP_K) -> dict:
         )
 
     return {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "dataset_path": str(EVAL_DATASET_PATH),
         "top_k": top_k,
         "modes": reports,
@@ -236,7 +236,7 @@ def _write_json_file(path: Path, payload: dict) -> None:
 
 
 def save_report_artifacts(report: dict, reports_dir: Path = EVAL_REPORTS_DIR) -> dict[str, str]:
-    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     json_report_path = reports_dir / f"retrieval_eval_{timestamp}.json"
     text_report_path = reports_dir / f"retrieval_eval_{timestamp}.txt"
     latest_json_path = reports_dir / "latest.json"
