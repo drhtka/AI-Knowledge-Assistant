@@ -36,3 +36,16 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn api.app:app --reload
 ```
+
+## Optional LLM Mode
+
+Enable LLM-backed grounded answers with environment variables:
+
+```bash
+export LLM_ENABLED=true
+export LLM_API_KEY=your_api_key
+export LLM_MODEL=gpt-4o-mini
+export LLM_API_BASE=https://api.openai.com/v1
+```
+
+If LLM settings are missing or the request fails, the app falls back to the local grounded extractive answer.

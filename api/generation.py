@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from api.llm_client import generate_answer_from_context
 from api.schemas import SearchHit
 
 MIN_TOP_SCORE_FOR_GROUNDED_ANSWER = 0.12
@@ -46,6 +47,15 @@ def generate_grounded_answer(question: str, hits: list[SearchHit]) -> GroundedAn
     # Keep the answer grounded by summarizing only top retrieved snippets.
     top_hits = hits[:2]
     evidence = " ".join(_truncate(hit.snippet) for hit in top_hits)
+
+    llm_answer = generate_answer_from_context(question=normalized_question, context=evidence)
+    if llm_answer:
+        return GroundedAnswerResult(
+            answer=llm_answer,
+            confidence=round(top_score, 3),
+            answer_mode="llm_grounded",
+        )
+
     return GroundedAnswerResult(
         answer=evidence,
         confidence=round(top_score, 3),
