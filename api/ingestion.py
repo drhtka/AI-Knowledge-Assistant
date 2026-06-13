@@ -24,6 +24,7 @@ class LoadedChunk:
     title: str
     content: str
     source_path: str
+    file_type: str
     chunk_index: int
     chunk_size_words: int
     chunk_overlap_words: int
@@ -45,6 +46,10 @@ def _extract_title(path: Path, text: str) -> str:
             return stripped.lstrip("#").strip()
 
     return path.stem.replace("_", " ").replace("-", " ").title()
+
+
+def _file_type_from_path(path: Path) -> str:
+    return path.suffix.lower().lstrip(".") or "unknown"
 
 
 def _normalize_pdf_text(text: str) -> str:
@@ -147,6 +152,7 @@ def _build_chunks(
                 title=title,
                 content=chunk_text,
                 source_path=str(path),
+                file_type=_file_type_from_path(path),
                 chunk_index=chunk_index,
                 chunk_size_words=chunk_size_words,
                 chunk_overlap_words=chunk_overlap_words,
@@ -177,6 +183,7 @@ def _serialize_chunk(chunk: LoadedChunk) -> str:
             "title": chunk.title,
             "content": chunk.content,
             "source_path": chunk.source_path,
+            "file_type": chunk.file_type,
             "chunk_index": chunk.chunk_index,
             "chunk_size_words": chunk.chunk_size_words,
             "chunk_overlap_words": chunk.chunk_overlap_words,
@@ -192,6 +199,7 @@ def _deserialize_chunk(line: str) -> LoadedChunk:
         title=payload["title"],
         content=payload["content"],
         source_path=payload["source_path"],
+        file_type=payload.get("file_type", _file_type_from_path(Path(payload["source_path"]))),
         chunk_index=payload["chunk_index"],
         chunk_size_words=payload["chunk_size_words"],
         chunk_overlap_words=payload["chunk_overlap_words"],

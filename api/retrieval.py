@@ -15,6 +15,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             title=chunk.title,
             snippet=chunk.content,
             score=round(score, 3),
+            file_type=chunk.file_type,
         )
         for chunk, score in rank_chunks_by_similarity(
             question=question,

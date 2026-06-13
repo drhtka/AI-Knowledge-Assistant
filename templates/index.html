@@ -250,7 +250,9 @@
                     {% for hit in search_result.hits %}
                     <li>
                         <strong>{{ hit.title }}</strong><br />
-                        <span class="meta">score={{ hit.score }}</span><br />
+                        <span class="meta"
+                            >type={{ hit.file_type }} | score={{ hit.score }}</span
+                        ><br />
                         {{ hit.snippet }}
                     </li>
                     {% endfor %}
