@@ -94,6 +94,14 @@ button {
     color: #fca5a5;
 }
 
+.success-text {
+    color: #86efac;
+}
+
+.upload-result {
+    margin-top: 12px;
+}
+
 pre {
     overflow-x: auto;
     background: #020617;
