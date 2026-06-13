@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from importlib import metadata
+from typing import Literal
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -9,6 +10,8 @@ from packaging.version import InvalidVersion, Version
 
 from api.ingestion import LoadedChunk
 from api.settings import EMBEDDING_MODEL_NAME
+
+RetrievalMode = Literal["auto", "tfidf", "embeddings"]
 
 @lru_cache(maxsize=1)
 def _build_tfidf_index(
@@ -77,44 +80,15 @@ def _build_embedding_index(
     return model.encode(documents, convert_to_numpy=True, normalize_embeddings=True)
 
 
-def rank_chunks_by_similarity(question: str, chunks: tuple[LoadedChunk, ...]) -> list[tuple[LoadedChunk, float]]:
-    if not question.strip() or not chunks:
-        return []
-
-    corpus_signature = tuple(
+def _corpus_signature(chunks: tuple[LoadedChunk, ...]) -> tuple[tuple[str, str, str], ...]:
+    return tuple(
         (chunk.document_id, chunk.title, chunk.content)
         for chunk in chunks
     )
 
-    try:
-        embedding_matrix = _build_embedding_index(
-            corpus_signature=corpus_signature,
-            model_name=EMBEDDING_MODEL_NAME,
-        )
-    except Exception:
-        embedding_matrix = None
 
-    if embedding_matrix is not None:
-        model = _get_embedding_model(EMBEDDING_MODEL_NAME)
-        if model is not None:
-            query_vector = model.encode(
-                [question],
-                convert_to_numpy=True,
-                normalize_embeddings=True,
-            )
-            similarity_scores = cosine_similarity(query_vector, embedding_matrix).ravel()
-        else:
-            similarity_scores = []
-    else:
-        try:
-            vectorizer, matrix = _build_tfidf_index(corpus_signature)
-        except ValueError:
-            return []
-
-        query_vector = vectorizer.transform([question])
-        similarity_scores = cosine_similarity(query_vector, matrix).ravel()
-
-    ranked_results = sorted(
+def _rank_from_scores(chunks: tuple[LoadedChunk, ...], similarity_scores: object) -> list[tuple[LoadedChunk, float]]:
+    return sorted(
         (
             (chunk, float(score))
             for chunk, score in zip(chunks, similarity_scores, strict=False)
@@ -123,4 +97,62 @@ def rank_chunks_by_similarity(question: str, chunks: tuple[LoadedChunk, ...]) ->
         key=lambda item: item[1],
         reverse=True,
     )
-    return ranked_results
+
+
+def rank_chunks_by_tfidf(question: str, chunks: tuple[LoadedChunk, ...]) -> list[tuple[LoadedChunk, float]]:
+    if not question.strip() or not chunks:
+        return []
+
+    try:
+        vectorizer, matrix = _build_tfidf_index(_corpus_signature(chunks))
+    except ValueError:
+        return []
+
+    query_vector = vectorizer.transform([question])
+    similarity_scores = cosine_similarity(query_vector, matrix).ravel()
+    return _rank_from_scores(chunks, similarity_scores)
+
+
+def rank_chunks_by_embeddings(question: str, chunks: tuple[LoadedChunk, ...]) -> list[tuple[LoadedChunk, float]]:
+    if not question.strip() or not chunks:
+        return []
+
+    try:
+        embedding_matrix = _build_embedding_index(
+            corpus_signature=_corpus_signature(chunks),
+            model_name=EMBEDDING_MODEL_NAME,
+        )
+    except Exception:
+        return []
+
+    if embedding_matrix is None:
+        return []
+
+    model = _get_embedding_model(EMBEDDING_MODEL_NAME)
+    if model is None:
+        return []
+
+    query_vector = model.encode(
+        [question],
+        convert_to_numpy=True,
+        normalize_embeddings=True,
+    )
+    similarity_scores = cosine_similarity(query_vector, embedding_matrix).ravel()
+    return _rank_from_scores(chunks, similarity_scores)
+
+
+def rank_chunks_by_similarity(
+    question: str,
+    chunks: tuple[LoadedChunk, ...],
+    mode: RetrievalMode = "auto",
+) -> list[tuple[LoadedChunk, float]]:
+    if mode == "tfidf":
+        return rank_chunks_by_tfidf(question=question, chunks=chunks)
+    if mode == "embeddings":
+        return rank_chunks_by_embeddings(question=question, chunks=chunks)
+
+    embedding_results = rank_chunks_by_embeddings(question=question, chunks=chunks)
+    if embedding_results:
+        return embedding_results
+
+    return rank_chunks_by_tfidf(question=question, chunks=chunks)
