@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -102,6 +103,92 @@ def _evaluate_mode(top_k: int, mode: str, chunks) -> dict:
     }
 
 
+def _score_key(report: dict) -> tuple[float, float, float, float]:
+    return (
+        report["mrr"],
+        report["recall_at_k"],
+        report["hit_rate_at_1"],
+        report["average_top_score"],
+    )
+
+
+def _best_mode_report(mode_reports: list[dict]) -> dict:
+    return max(mode_reports, key=_score_key)
+
+
+def _best_chunking_report(chunking_reports: list[dict]) -> tuple[dict, dict]:
+    best_experiment: dict | None = None
+    best_mode: dict | None = None
+
+    for experiment in chunking_reports:
+        experiment_best_mode = _best_mode_report(experiment["modes"])
+        if best_mode is None or _score_key(experiment_best_mode) > _score_key(best_mode):
+            best_experiment = experiment
+            best_mode = experiment_best_mode
+
+    if best_experiment is None or best_mode is None:
+        raise ValueError("Chunking experiments are empty.")
+
+    return best_experiment, best_mode
+
+
+def _format_mode_line(report: dict) -> str:
+    return (
+        f"- {report['mode']}: "
+        f"Hit@1={report['hit_rate_at_1']:.3f}, "
+        f"Recall@{report['top_k']}={report['recall_at_k']:.3f}, "
+        f"MRR={report['mrr']:.3f}, "
+        f"AvgTopScore={report['average_top_score']:.3f}"
+    )
+
+
+def _build_text_summary(report: dict) -> str:
+    lines: list[str] = []
+    lines.append("Retrieval Evaluation Summary")
+    lines.append(f"Top-K: {report['top_k']}")
+    lines.append("")
+    lines.append("Base Retrieval Modes")
+    for mode_report in report["modes"]:
+        lines.append(_format_mode_line(mode_report))
+
+    best_mode = _best_mode_report(report["modes"])
+    lines.append("")
+    lines.append(
+        "Best Base Mode: "
+        f"{best_mode['mode']} "
+        f"(MRR={best_mode['mrr']:.3f}, Recall@{best_mode['top_k']}={best_mode['recall_at_k']:.3f})"
+    )
+
+    lines.append("")
+    lines.append("Chunking Experiments")
+    for experiment in report["chunking_experiments"]:
+        lines.append(
+            f"- {experiment['label']} "
+            f"(chunk_size={experiment['chunk_size_words']}, overlap={experiment['chunk_overlap_words']})"
+        )
+        for mode_report in experiment["modes"]:
+            lines.append(f"  {_format_mode_line(mode_report)}")
+
+    best_experiment, best_experiment_mode = _best_chunking_report(report["chunking_experiments"])
+    lines.append("")
+    lines.append(
+        "Best Chunking Setup: "
+        f"{best_experiment['label']} "
+        f"(chunk_size={best_experiment['chunk_size_words']}, "
+        f"overlap={best_experiment['chunk_overlap_words']}, "
+        f"mode={best_experiment_mode['mode']}, "
+        f"MRR={best_experiment_mode['mrr']:.3f})"
+    )
+
+    lines.append("")
+    lines.append("How To Read Metrics")
+    lines.append("- Hit@1: how often the correct document is ranked first.")
+    lines.append(f"- Recall@{report['top_k']}: how often the correct document appears in the top-k results.")
+    lines.append("- MRR: rewards higher ranking of the correct document; higher is better.")
+    lines.append("- AvgTopScore: average confidence score of the first result; useful as a supporting signal.")
+    return "\n".join(lines)
+
+
 def evaluate_retrieval(top_k: int = DEFAULT_TOP_K) -> dict:
     default_chunks = load_chunks()
     reports = [
@@ -134,6 +221,29 @@ def evaluate_retrieval(top_k: int = DEFAULT_TOP_K) -> dict:
     }
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Evaluate retrieval quality across retrieval modes and chunking configurations.",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=DEFAULT_TOP_K,
+        help="Top-K value used for Recall@K and ranking checks.",
+    )
+    parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the evaluation report.",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    report = evaluate_retrieval()
-    print(json.dumps(report, indent=2, ensure_ascii=False))
+    args = _parse_args()
+    report = evaluate_retrieval(top_k=args.top_k)
+    if args.format == "json":
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(_build_text_summary(report))
