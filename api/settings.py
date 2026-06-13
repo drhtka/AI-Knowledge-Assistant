@@ -33,8 +33,8 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-CHUNK_SIZE_WORDS = _env_int("CHUNK_SIZE_WORDS", 80)
-CHUNK_OVERLAP_WORDS = _env_int("CHUNK_OVERLAP_WORDS", 20)
+CHUNK_SIZE_WORDS = _env_int("CHUNK_SIZE_WORDS", 120)
+CHUNK_OVERLAP_WORDS = _env_int("CHUNK_OVERLAP_WORDS", 30)
 
 
 LLM_ENABLED = _env_flag("LLM_ENABLED", default=False)

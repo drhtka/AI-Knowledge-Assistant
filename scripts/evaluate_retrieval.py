@@ -20,9 +20,9 @@ EVAL_REPORTS_DIR = PROJECT_ROOT / "data" / "eval" / "reports"
 DEFAULT_TOP_K = 3
 EVAL_MODES = ("tfidf", "embeddings", "auto")
 CHUNKING_CONFIGS = (
-    {"label": "default_80_20", "chunk_size_words": 80, "chunk_overlap_words": 20},
+    {"label": "baseline_120_30", "chunk_size_words": 120, "chunk_overlap_words": 30},
     {"label": "small_50_10", "chunk_size_words": 50, "chunk_overlap_words": 10},
-    {"label": "large_120_30", "chunk_size_words": 120, "chunk_overlap_words": 30},
+    {"label": "legacy_80_20", "chunk_size_words": 80, "chunk_overlap_words": 20},
 )
 
 
