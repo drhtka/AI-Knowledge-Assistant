@@ -35,8 +35,14 @@ def _clean_text(text: str) -> str:
 
 
 def _sanitize_filename(filename: str) -> str:
-    sanitized = re.sub(r"[^A-Za-z0-9._-]+", "_", filename).strip("._")
-    return sanitized or "uploaded_document.txt"
+    path = Path(filename)
+    sanitized_stem = re.sub(r"[^A-Za-z0-9._-]+", "_", path.stem).strip("._")
+    sanitized_suffix = path.suffix.lower()
+
+    if sanitized_suffix:
+        return f"{sanitized_stem or 'uploaded_document'}{sanitized_suffix}"
+
+    return sanitized_stem or "uploaded_document"
 
 
 def _extract_title(path: Path, text: str) -> str:
