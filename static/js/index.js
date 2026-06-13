@@ -6,6 +6,19 @@ const uploadResult = document.getElementById("upload-result");
 const chunkingPresetForm = document.getElementById("chunking-preset-form");
 const chunkingResult = document.getElementById("chunking-result");
 
+function fillQuestionInput(questionText) {
+    if (!(questionForm instanceof HTMLFormElement)) {
+        return;
+    }
+
+    const questionInput = questionForm.elements.namedItem("question");
+    if (questionInput instanceof HTMLInputElement) {
+        questionInput.value = questionText;
+        questionInput.focus();
+        questionInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+}
+
 function renderUploadStatus(message, className = "upload-result meta") {
     if (!(uploadResult instanceof HTMLElement)) {
         return;
@@ -39,19 +52,33 @@ function renderUploadSuccess(payload) {
     ctaButton.type = "button";
     ctaButton.textContent = "Ask About This Document";
     ctaButton.addEventListener("click", () => {
-        if (!(questionForm instanceof HTMLFormElement)) {
-            return;
-        }
-
-        const questionInput = questionForm.elements.namedItem("question");
-        if (questionInput instanceof HTMLInputElement) {
-            questionInput.value = `What is ${payload.source_name} about?`;
-            questionInput.focus();
-            questionInput.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        fillQuestionInput(`What is ${payload.source_name} about?`);
     });
 
-    uploadResult.append(title, details, followUp, ctaButton);
+    const quickPromptIntro = document.createElement("p");
+    quickPromptIntro.className = "meta";
+    quickPromptIntro.textContent = "Quick prompts for the uploaded document:";
+
+    const quickPromptActions = document.createElement("div");
+    quickPromptActions.className = "actions";
+
+    const quickPrompts = [
+        `What is ${payload.source_name} about?`,
+        `What are the key points in ${payload.source_name}?`,
+        `Summarize ${payload.source_name} in simple terms.`,
+    ];
+
+    quickPrompts.forEach((promptText) => {
+        const promptButton = document.createElement("button");
+        promptButton.type = "button";
+        promptButton.textContent = promptText;
+        promptButton.addEventListener("click", () => {
+            fillQuestionInput(promptText);
+        });
+        quickPromptActions.append(promptButton);
+    });
+
+    uploadResult.append(title, details, followUp, ctaButton, quickPromptIntro, quickPromptActions);
 }
 
 demoButtons.forEach((button) => {
