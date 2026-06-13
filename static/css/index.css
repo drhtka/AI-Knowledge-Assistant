@@ -24,6 +24,10 @@ pre {
     color: #c6d0e1;
 }
 
+a {
+    color: #93c5fd;
+}
+
 .layout-grid {
     display: grid;
     grid-template-columns: 1.2fr 1fr;
@@ -79,6 +83,10 @@ button {
 .list-reset li {
     padding: 10px 0;
     border-bottom: 1px solid #1f2937;
+}
+
+.error-text {
+    color: #fca5a5;
 }
 
 pre {

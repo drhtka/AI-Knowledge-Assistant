@@ -60,9 +60,19 @@ def index(request: Request) -> HTMLResponse:
     question = request.query_params.get("question", "")
     top_k_raw = request.query_params.get("top_k", "3") or "3"
     top_k = max(1, min(10, int(top_k_raw)))
+    web_question = request.query_params.get("web_question", "")
+    web_top_k_raw = request.query_params.get("web_top_k", "5") or "5"
+    web_top_k = max(1, min(10, int(web_top_k_raw)))
 
     search_result = search(question, top_k) if question else None
     ask_result = ask(question, top_k) if question else None
+    web_search_result = None
+    web_search_error = ""
+    if web_question:
+        try:
+            web_search_result = web_search(question=web_question, top_k=web_top_k)
+        except ValueError as exc:
+            web_search_error = str(exc)
 
     return templates.TemplateResponse(
         request=request,
@@ -71,11 +81,16 @@ def index(request: Request) -> HTMLResponse:
             "page_title": "AI Knowledge Assistant",
             "question": question,
             "top_k": top_k,
+            "web_question": web_question,
+            "web_top_k": web_top_k,
             "demo_prompts": DEMO_PROMPTS,
             "search_result": search_result,
             "ask_result": ask_result,
+            "web_search_result": web_search_result,
+            "web_search_error": web_search_error,
             "search_result_json": search_result.model_dump(mode="json") if search_result else {},
             "ask_result_json": ask_result.model_dump(mode="json") if ask_result else {},
+            "web_search_result_json": web_search_result.model_dump(mode="json") if web_search_result else {},
         },
     )
 
