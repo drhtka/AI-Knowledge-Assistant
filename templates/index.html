@@ -45,13 +45,7 @@
                             {% for mode in retrieval_mode_options %}
                             <option
                                 value="{{ mode }}"
-                                {%
-                                if
-                                retrieval_mode=""
-                                ="mode"
-                                %}selected{%
-                                endif
-                                %}
+                                {% if retrieval_mode == mode %}selected{% endif %}
                             >
                                 {{ mode }}
                             </option>
