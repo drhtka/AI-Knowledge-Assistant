@@ -20,6 +20,17 @@
             <section class="layout-grid">
                 <article class="content-card">
                     <h2>Ask</h2>
+                    <h3>Demo Prompts</h3>
+                    <div class="actions">
+                        {% for item in demo_prompts %}
+                        <button
+                            type="button"
+                            data-demo-question="{{ item.question }}"
+                        >
+                            {{ item.label }}
+                        </button>
+                        {% endfor %}
+                    </div>
                     <form id="question-form" method="get" action="/">
                         <label for="question">Question</label>
                         <input
@@ -64,18 +75,6 @@
                 </article>
 
                 <article class="content-card">
-                    <h2>Demo Prompts</h2>
-                    <div class="actions">
-                        {% for item in demo_prompts %}
-                        <button
-                            type="button"
-                            data-demo-question="{{ item.question }}"
-                        >
-                            {{ item.label }}
-                        </button>
-                        {% endfor %}
-                    </div>
-
                     <div class="feature-block">
                         <h2>Upload Documents</h2>
                         <p class="feature-intro">
