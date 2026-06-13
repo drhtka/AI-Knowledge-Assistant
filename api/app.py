@@ -185,6 +185,8 @@ async def ingest_endpoint(file: UploadFile = File(...)) -> IngestResponse:
     return IngestResponse(
         status="ok",
         filename=file.filename,
+        source_name=stored_path.name,
+        file_type=stored_path.suffix.lower().lstrip(".") or "unknown",
         stored_path=str(stored_path),
         chunks_loaded=chunks_loaded,
     )

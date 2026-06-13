@@ -57,6 +57,8 @@ class AskResponse(BaseModel):
 class IngestResponse(BaseModel):
     status: str
     filename: str
+    source_name: str
+    file_type: str
     stored_path: str
     chunks_loaded: int
 

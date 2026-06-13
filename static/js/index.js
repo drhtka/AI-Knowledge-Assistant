@@ -28,7 +28,12 @@ function renderUploadSuccess(payload) {
 
     const details = document.createElement("p");
     details.className = "meta";
-    details.textContent = `${payload.filename} | loaded chunks: ${payload.chunks_loaded}`;
+    details.textContent =
+        `file=${payload.source_name} | type=${payload.file_type} | chunks=${payload.chunks_loaded}`;
+
+    const followUp = document.createElement("p");
+    followUp.className = "meta";
+    followUp.textContent = "The document is now part of the local retrieval index.";
 
     const ctaButton = document.createElement("button");
     ctaButton.type = "button";
@@ -40,13 +45,13 @@ function renderUploadSuccess(payload) {
 
         const questionInput = questionForm.elements.namedItem("question");
         if (questionInput instanceof HTMLInputElement) {
-            questionInput.value = `What is ${payload.filename} about?`;
+            questionInput.value = `What is ${payload.source_name} about?`;
             questionInput.focus();
             questionInput.scrollIntoView({ behavior: "smooth", block: "center" });
         }
     });
 
-    uploadResult.append(title, details, ctaButton);
+    uploadResult.append(title, details, followUp, ctaButton);
 }
 
 demoButtons.forEach((button) => {
