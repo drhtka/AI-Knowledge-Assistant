@@ -13,14 +13,14 @@
         <main>
             <h1>AI Knowledge Assistant</h1>
             <p class="intro">
-                Compact scaffold for ingestion, retrieval, grounded answers, and
-                a portfolio-ready FastAPI UI.
+                Portfolio demo for local document ingestion, configurable retrieval,
+                grounded answers, and evaluation-aware search workflows.
             </p>
 
             <section class="layout-grid">
                 <article class="content-card">
                     <h2>Ask</h2>
-                    <h3>Demo Prompts</h3>
+                    <h3>Try a Demo Prompt</h3>
                     <div class="actions">
                         {% for item in demo_prompts %}
                         <button
@@ -32,7 +32,7 @@
                         {% endfor %}
                     </div>
                     <form id="question-form" method="get" action="/">
-                        <label for="question">Question</label>
+                        <label for="question">Ask a Question</label>
                         <input
                             id="question"
                             name="question"
@@ -64,11 +64,11 @@
                         </select>
                         <p class="meta">
                             Switch between `auto`, `tfidf`, and `embeddings` to
-                            show how retrieval behavior changes.
+                            compare how the retrieval layer behaves on the same question.
                         </p>
 
                         <div class="actions">
-                            <button type="submit">Run</button>
+                            <button type="submit">Ask Assistant</button>
                             <button type="button" id="clear-form">Clear</button>
                         </div>
                     </form>
@@ -78,7 +78,7 @@
                     <div class="feature-block">
                         <h2>Upload Documents</h2>
                         <p class="feature-intro">
-                            Add new local knowledge to the assistant before asking a question.
+                            Add local source material before asking a question.
                         </p>
                         <form id="upload-form">
                             <label for="upload_file">Document</label>
@@ -100,15 +100,15 @@
                             </div>
                         </form>
                         <div id="upload-result" class="upload-result meta">
-                            Upload a document to update the local knowledge base.
+                            Upload a document to refresh the local knowledge base.
                         </div>
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <h2>Web Search</h2>
+                    <h2>External Web Search</h2>
                     <form method="get" action="/">
-                        <label for="web_question">Web Question</label>
+                        <label for="web_question">External Search Query</label>
                         <input
                             id="web_question"
                             name="web_question"
@@ -116,7 +116,7 @@
                             placeholder="Find recent RAG architecture examples"
                         />
 
-                        <label for="web_top_k">Web Top K</label>
+                        <label for="web_top_k">Results Limit</label>
                         <input
                             id="web_top_k"
                             name="web_top_k"
@@ -127,11 +127,11 @@
                         />
 
                         <div class="actions">
-                            <button type="submit">Search Web</button>
+                            <button type="submit">Search External Web</button>
                         </div>
                     </form>
 
-                    <h2>Project Layout</h2>
+                    <h2>Project Overview</h2>
                     <ul class="list-reset">
                         <li>
                             <code>api/</code> app, schemas, retrieval baseline
@@ -144,7 +144,7 @@
                         </li>
                     </ul>
 
-                    <h2>System Config</h2>
+                    <h2>Current System Setup</h2>
                     <ul class="list-reset">
                         <li>
                             <strong>Current chunking preset:</strong>
@@ -188,11 +188,11 @@
                             {% endfor %}
                         </select>
                         <div class="actions">
-                            <button type="submit">Apply Preset</button>
+                            <button type="submit">Apply Chunking Preset</button>
                         </div>
                     </form>
                     <div id="chunking-result" class="upload-result meta">
-                        Apply a preset to rebuild chunks with a different chunking baseline.
+                        Apply a preset to rebuild the chunk index with a different baseline.
                     </div>
                 </article>
             </section>
@@ -214,13 +214,13 @@
                 </ul>
                 {% else %}
                 <p class="meta">
-                    Run a question to see a grounded answer preview.
+                    Ask a question to preview a grounded answer with cited context.
                 </p>
                 {% endif %}
             </article>
 
             <article class="content-card">
-                <h2>Mode Comparison</h2>
+                <h2>Retrieval Mode Comparison</h2>
                 {% if mode_comparison %}
                 <div class="mode-compare-grid">
                     {% for item in mode_comparison %}
@@ -234,13 +234,13 @@
                 </div>
                 {% else %}
                 <p class="meta">
-                    Run a question to compare `auto`, `tfidf`, and `embeddings`.
+                    Ask a question to compare `auto`, `tfidf`, and `embeddings` side by side.
                 </p>
                 {% endif %}
             </article>
 
             <article class="content-card">
-                <h2>Retrieved Chunks</h2>
+                <h2>Retrieved Context</h2>
                 {% if search_result %}
                 <p class="meta">
                     retrieval_mode={{ search_result.retrieval_mode }}
@@ -256,7 +256,7 @@
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="meta">No chunks yet.</p>
+                <p class="meta">Ask a question to inspect the retrieved context.</p>
                 {% endif %}
             </article>
 
@@ -284,23 +284,23 @@
                 </ul>
                 {% else %}
                 <p class="meta">
-                    Run a web search to see SerpAPI results here.
+                    Run an external web search to inspect `SerpAPI` results here.
                 </p>
                 {% endif %}
             </article>
 
             <section class="layout-grid">
                 <article class="content-card">
-                    <h2>Search JSON</h2>
+                    <h2>Search Response JSON</h2>
                     <pre>{{ search_result_json | tojson(indent=2) }}</pre>
                 </article>
                 <article class="content-card">
-                    <h2>Ask JSON</h2>
+                    <h2>Ask Response JSON</h2>
                     <pre>{{ ask_result_json | tojson(indent=2) }}</pre>
                 </article>
             </section>
             <article class="content-card">
-                <h2>Web Search JSON</h2>
+                <h2>Web Search Response JSON</h2>
                 <pre>{{ web_search_result_json | tojson(indent=2) }}</pre>
             </article>
         </main>
