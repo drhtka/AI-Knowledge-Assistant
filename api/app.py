@@ -200,7 +200,9 @@ def _build_storage_config_response(
         active_backend_ready=storage_config["active_backend_ready"],
         active_backend_can_connect=storage_config["active_backend_can_connect"],
         active_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
+        active_backend_indexing_ready=storage_config["active_backend_indexing_ready"],
         active_backend_message=storage_config["active_backend_message"],
+        active_backend_indexing_message=storage_config["active_backend_indexing_message"],
         reindex_accepted=reindex_start.accepted,
         reindex_state=reindex_start.state,
         reindex_started_at=reindex_start.started_at,
@@ -362,7 +364,9 @@ def index(request: Request) -> HTMLResponse:
 def health() -> HealthResponse:
     storage_config = get_storage_backend_config()
     ready = bool(
-        storage_config["active_backend_ready"] and storage_config["active_backend_retrieval_ready"]
+        storage_config["active_backend_ready"]
+        and storage_config["active_backend_retrieval_ready"]
+        and storage_config["active_backend_indexing_ready"]
     )
     return HealthResponse(
         status="ok" if ready else "degraded",
@@ -375,7 +379,9 @@ def health() -> HealthResponse:
         active_storage_backend_ready=storage_config["active_backend_ready"],
         active_storage_backend_can_connect=storage_config["active_backend_can_connect"],
         active_storage_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
+        active_storage_backend_indexing_ready=storage_config["active_backend_indexing_ready"],
         active_storage_backend_message=storage_config["active_backend_message"],
+        active_storage_backend_indexing_message=storage_config["active_backend_indexing_message"],
     )
 
 
@@ -443,7 +449,9 @@ def _build_runtime_observability_response() -> RuntimeObservabilityResponse:
         active_backend_ready=storage_config["active_backend_ready"],
         active_backend_can_connect=storage_config["active_backend_can_connect"],
         active_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
+        active_backend_indexing_ready=storage_config["active_backend_indexing_ready"],
         active_backend_message=storage_config["active_backend_message"],
+        active_backend_indexing_message=storage_config["active_backend_indexing_message"],
         reindex_state=reindex_status.state,
         reindex_trigger=reindex_status.trigger,
         reindex_backend=reindex_status.backend,

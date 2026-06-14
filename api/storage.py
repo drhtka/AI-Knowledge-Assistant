@@ -129,7 +129,9 @@ def get_active_storage_backend_status() -> dict[str, object]:
             "active_backend_ready": True,
             "active_backend_can_connect": True,
             "active_backend_retrieval_ready": True,
+            "active_backend_indexing_ready": True,
             "active_backend_message": "file backend is ready for retrieval requests.",
+            "active_backend_indexing_message": "file backend is ready for reindex requests.",
         }
 
     pgvector_storage = _build_chunk_storage("pgvector")
