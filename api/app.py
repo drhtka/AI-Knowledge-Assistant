@@ -31,9 +31,12 @@ from api.schemas import (
     ReindexStatusResponse,
     SearchRequest,
     SearchResponse,
+    StorageConfigResponse,
+    StorageConfigUpdateRequest,
     WebSearchRequest,
     WebSearchResponse,
 )
+from api.storage import get_active_storage_backend, get_storage_backend_config, set_active_storage_backend
 from api.settings import (
     RAW_DATA_DIR,
     STATIC_DIR,
@@ -103,6 +106,7 @@ def _build_reindex_status_response() -> ReindexStatusResponse:
     return ReindexStatusResponse(
         state=status_snapshot.state,
         trigger=status_snapshot.trigger,
+        active_storage_backend=get_active_storage_backend(),
         started_at=status_snapshot.started_at,
         finished_at=status_snapshot.finished_at,
         last_error=status_snapshot.last_error,
@@ -144,6 +148,7 @@ def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartRespon
         accepted=start_result.accepted,
         state=start_result.status_snapshot.state,
         trigger=start_result.status_snapshot.trigger,
+        active_storage_backend=get_active_storage_backend(),
         started_at=start_result.status_snapshot.started_at,
         message=message,
         rerun_requested=start_result.status_snapshot.rerun_requested,
@@ -159,6 +164,28 @@ def _build_chunking_config_response(
         chunk_size_words=updated_config["chunk_size_words"],
         chunk_overlap_words=updated_config["chunk_overlap_words"],
         available_presets=updated_config["available_presets"],
+        active_storage_backend=get_active_storage_backend(),
+        reindex_accepted=reindex_start.accepted,
+        reindex_state=reindex_start.state,
+        reindex_started_at=reindex_start.started_at,
+        reindex_message=reindex_start.message,
+        rerun_requested=reindex_start.rerun_requested,
+    )
+
+
+def _build_storage_config_response(
+    storage_config: dict[str, object],
+    reindex_start: ReindexStartResponse,
+) -> StorageConfigResponse:
+    return StorageConfigResponse(
+        current_backend=storage_config["current_backend"],
+        default_backend=storage_config["default_backend"],
+        available_backends=storage_config["available_backends"],
+        runtime_override_active=storage_config["runtime_override_active"],
+        active_backend_ready=storage_config["active_backend_ready"],
+        active_backend_can_connect=storage_config["active_backend_can_connect"],
+        active_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
+        active_backend_message=storage_config["active_backend_message"],
         reindex_accepted=reindex_start.accepted,
         reindex_state=reindex_start.state,
         reindex_started_at=reindex_start.started_at,
@@ -273,6 +300,7 @@ def index(request: Request) -> HTMLResponse:
             web_search_error = str(exc)
     mode_comparison = _build_mode_comparison(question, top_k) if question else []
     upload_feedback = _build_upload_feedback(request)
+    storage_config = get_storage_backend_config()
 
     return templates.TemplateResponse(
         request=request,
@@ -292,6 +320,10 @@ def index(request: Request) -> HTMLResponse:
                 "available_chunk_overlaps": chunk_overlap_options,
                 "preset_display_options": preset_display_options,
                 "available_top_k": TOP_K_OPTIONS,
+                "current_storage_backend": storage_config["current_backend"],
+                "default_storage_backend": storage_config["default_backend"],
+                "available_storage_backends": storage_config["available_backends"],
+                "storage_runtime_override_active": storage_config["runtime_override_active"],
                 **get_chunking_config(),
             },
             "web_question": web_question,
@@ -313,7 +345,20 @@ def index(request: Request) -> HTMLResponse:
 
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-    return HealthResponse(status="ok", ready=True, project="ai_knowledge_assistant")
+    storage_config = get_storage_backend_config()
+    ready = bool(
+        storage_config["active_backend_ready"] and storage_config["active_backend_retrieval_ready"]
+    )
+    return HealthResponse(
+        status="ok" if ready else "degraded",
+        ready=ready,
+        project="ai_knowledge_assistant",
+        active_storage_backend=storage_config["current_backend"],
+        active_storage_backend_ready=storage_config["active_backend_ready"],
+        active_storage_backend_can_connect=storage_config["active_backend_can_connect"],
+        active_storage_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
+        active_storage_backend_message=storage_config["active_backend_message"],
+    )
 
 
 @app.get("/chunking-config", response_model=ChunkingConfigResponse)
@@ -324,6 +369,7 @@ def chunking_config_endpoint() -> ChunkingConfigResponse:
         chunk_size_words=chunking_config["chunk_size_words"],
         chunk_overlap_words=chunking_config["chunk_overlap_words"],
         available_presets=chunking_config["available_presets"],
+        active_storage_backend=get_active_storage_backend(),
         reindex_accepted=False,
         reindex_state=get_reindex_status().state,
         reindex_started_at=get_reindex_status().started_at,
@@ -340,6 +386,33 @@ def update_chunking_config_endpoint(
     updated_config = set_chunking_preset(request.preset)
     reindex_start = _start_reindex_background_job(background_tasks, trigger="chunking_config")
     return _build_chunking_config_response(updated_config, reindex_start)
+
+
+@app.get("/storage-config", response_model=StorageConfigResponse)
+def storage_config_endpoint() -> StorageConfigResponse:
+    storage_config = get_storage_backend_config()
+    reindex_status = get_reindex_status()
+    return StorageConfigResponse(
+        current_backend=storage_config["current_backend"],
+        default_backend=storage_config["default_backend"],
+        available_backends=storage_config["available_backends"],
+        runtime_override_active=storage_config["runtime_override_active"],
+        reindex_accepted=False,
+        reindex_state=reindex_status.state,
+        reindex_started_at=reindex_status.started_at,
+        reindex_message="No storage backend reindex requested in this response.",
+        rerun_requested=reindex_status.rerun_requested,
+    )
+
+
+@app.post("/storage-config", response_model=StorageConfigResponse)
+def update_storage_config_endpoint(
+    request: StorageConfigUpdateRequest,
+    background_tasks: BackgroundTasks,
+) -> StorageConfigResponse:
+    updated_config = set_active_storage_backend(request.backend)
+    reindex_start = _start_reindex_background_job(background_tasks, trigger="storage_backend")
+    return _build_storage_config_response(updated_config, reindex_start)
 
 
 @app.post("/reindex", response_model=ReindexStartResponse)

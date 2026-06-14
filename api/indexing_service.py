@@ -12,7 +12,7 @@ from api.ingestion import (
     estimate_document_chunk_count,
     save_uploaded_document,
 )
-from api.storage import get_chunk_storage
+from api.storage import get_active_storage_backend, get_chunk_storage
 
 logger = logging.getLogger("ai_knowledge_assistant.indexing")
 
@@ -105,6 +105,7 @@ def consume_rerun_request() -> str:
 
 
 def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
+    active_storage_backend = get_active_storage_backend()
     with _reindex_status_lock:
         if _reindex_status.state == "running":
             status_snapshot = _set_reindex_status(
@@ -119,6 +120,7 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
                         "trigger": trigger,
                         "current_trigger": status_snapshot.trigger,
                         "state": status_snapshot.state,
+                        "active_storage_backend": active_storage_backend,
                         "rerun_requested": status_snapshot.rerun_requested,
                     },
                 },
@@ -147,6 +149,7 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
                 "trigger": trigger,
                 "state": status_snapshot.state,
                 "started_at": status_snapshot.started_at,
+                "active_storage_backend": active_storage_backend,
             },
         },
     )
@@ -154,6 +157,7 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
 
 
 def ensure_index_loaded() -> tuple:
+    active_storage_backend = get_active_storage_backend()
     chunks = get_chunk_storage().load_chunks()
     logger.info(
         "Index loaded into memory.",
@@ -161,6 +165,7 @@ def ensure_index_loaded() -> tuple:
             "event": "index_loaded",
             "context": {
                 "chunk_count": len(chunks),
+                "active_storage_backend": active_storage_backend,
             },
         },
     )
@@ -174,6 +179,7 @@ def rebuild_index(
     assume_running: bool = False,
 ) -> ReindexResult:
     started_at = perf_counter()
+    active_storage_backend = get_active_storage_backend()
     chunk_storage = get_chunk_storage()
     if started_at_iso is None:
         started_at_iso = _utc_now_iso()
@@ -212,6 +218,7 @@ def rebuild_index(
                     "document_count": result.document_count,
                     "chunk_count": result.chunk_count,
                     "elapsed_ms": result.elapsed_ms,
+                    "active_storage_backend": active_storage_backend,
                 },
             },
         )
@@ -233,6 +240,7 @@ def rebuild_index(
                 "context": {
                     "trigger": trigger,
                     "elapsed_ms": elapsed_ms,
+                    "active_storage_backend": active_storage_backend,
                     "error_type": type(exc).__name__,
                 },
             },

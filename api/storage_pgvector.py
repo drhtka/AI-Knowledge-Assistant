@@ -7,7 +7,14 @@ import re
 from time import perf_counter
 
 from api.chunking_config import get_chunking_config
-from api.embeddings import compose_embedding_text, encode_query, encode_texts, vector_to_pgvector_literal
+from api.embeddings import (
+    compose_embedding_text,
+    embedding_stack_available,
+    encode_query,
+    encode_texts,
+    get_embedding_model,
+    vector_to_pgvector_literal,
+)
 from api.ingestion import (
     IGNORED_FILENAMES,
     SUPPORTED_EXTENSIONS,
@@ -176,6 +183,53 @@ class PgvectorChunkStorage:
             ) from exc
 
         return psycopg.connect(self.config.database_url)
+
+    def get_readiness_status(self) -> dict[str, object]:
+        embedding_stack_ready = embedding_stack_available()
+        embedding_model_ready = bool(get_embedding_model()) if embedding_stack_ready else False
+
+        try:
+            with self._connect() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    cursor.fetchone()
+        except Exception as exc:
+            return {
+                "active_backend_ready": False,
+                "active_backend_can_connect": False,
+                "active_backend_retrieval_ready": False,
+                "active_backend_message": (
+                    "pgvector backend is not ready: "
+                    f"{type(exc).__name__}: {exc}"
+                ),
+            }
+
+        if not embedding_stack_ready:
+            return {
+                "active_backend_ready": True,
+                "active_backend_can_connect": True,
+                "active_backend_retrieval_ready": False,
+                "active_backend_message": (
+                    "pgvector backend can connect, but the embedding stack is unavailable."
+                ),
+            }
+
+        if not embedding_model_ready:
+            return {
+                "active_backend_ready": True,
+                "active_backend_can_connect": True,
+                "active_backend_retrieval_ready": False,
+                "active_backend_message": (
+                    "pgvector backend can connect, but the embedding model is not ready."
+                ),
+            }
+
+        return {
+            "active_backend_ready": True,
+            "active_backend_can_connect": True,
+            "active_backend_retrieval_ready": True,
+            "active_backend_message": "pgvector backend is ready for retrieval requests.",
+        }
 
     def _chunk_from_row(self, row: tuple[object, ...]) -> LoadedChunk:
         return LoadedChunk(

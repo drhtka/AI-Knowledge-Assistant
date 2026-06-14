@@ -6,13 +6,14 @@ from time import perf_counter
 
 from api.generation import generate_grounded_answer
 from api.schemas import AskResponse, RetrievalModeValue, SearchHit, SearchResponse
-from api.storage import get_chunk_storage
+from api.storage import get_active_storage_backend, get_chunk_storage
 
 logger = logging.getLogger("ai_knowledge_assistant.retrieval")
 
 
 def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> SearchResponse:
     started_at = perf_counter()
+    active_storage_backend = get_active_storage_backend()
     try:
         chunk_storage = get_chunk_storage()
         ranked_chunks = chunk_storage.rank_chunks(
@@ -38,6 +39,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             question=question,
             top_k=top_k,
             retrieval_mode=retrieval_mode,
+            active_storage_backend=active_storage_backend,
             hits=hits,
         )
         latency_ms = int((perf_counter() - started_at) * 1000)
@@ -49,6 +51,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
                     "question_length": len(question.strip()),
                     "top_k": top_k,
                     "retrieval_mode": retrieval_mode,
+                    "active_storage_backend": active_storage_backend,
                     "hit_count": len(hits),
                     "latency_ms": latency_ms,
                 },
@@ -65,6 +68,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
                     "question_length": len(question.strip()),
                     "top_k": top_k,
                     "retrieval_mode": retrieval_mode,
+                    "active_storage_backend": active_storage_backend,
                     "latency_ms": latency_ms,
                     "error_type": type(exc).__name__,
                 },
@@ -86,6 +90,7 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
             sources=[hit.title for hit in result.hits],
             chunks=result.hits,
             retrieval_mode=result.retrieval_mode,
+            active_storage_backend=result.active_storage_backend,
             confidence=generated.confidence,
             latency_ms=latency_ms,
             answer_mode=generated.answer_mode,
@@ -98,6 +103,7 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
                     "question_length": len(question.strip()),
                     "top_k": top_k,
                     "retrieval_mode": result.retrieval_mode,
+                    "active_storage_backend": result.active_storage_backend,
                     "hit_count": len(result.hits),
                     "latency_ms": latency_ms,
                     "answer_mode": generated.answer_mode,
@@ -115,6 +121,7 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
                     "question_length": len(question.strip()),
                     "top_k": top_k,
                     "retrieval_mode": retrieval_mode,
+                    "active_storage_backend": get_active_storage_backend(),
                     "latency_ms": latency_ms,
                     "error_type": type(exc).__name__,
                 },

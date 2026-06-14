@@ -7,12 +7,18 @@ from pydantic import BaseModel, Field
 RetrievalModeValue = Literal["auto", "tfidf", "embeddings"]
 ChunkingPresetValue = Literal["baseline_120_30", "legacy_80_20", "small_50_10"]
 ReindexStateValue = Literal["idle", "running", "succeeded", "failed"]
+StorageBackendValue = Literal["file", "pgvector"]
 
 
 class HealthResponse(BaseModel):
     status: str
     ready: bool
     project: str
+    active_storage_backend: StorageBackendValue
+    active_storage_backend_ready: bool
+    active_storage_backend_can_connect: bool
+    active_storage_backend_retrieval_ready: bool
+    active_storage_backend_message: str
 
 
 class SearchRequest(BaseModel):
@@ -35,6 +41,7 @@ class SearchResponse(BaseModel):
     question: str
     top_k: int
     retrieval_mode: RetrievalModeValue
+    active_storage_backend: StorageBackendValue
     hits: list[SearchHit]
 
 
@@ -50,6 +57,7 @@ class AskResponse(BaseModel):
     sources: list[str]
     chunks: list[SearchHit]
     retrieval_mode: RetrievalModeValue
+    active_storage_backend: StorageBackendValue
     confidence: float
     latency_ms: int
     answer_mode: str
@@ -79,6 +87,27 @@ class ChunkingConfigResponse(BaseModel):
     chunk_size_words: int
     chunk_overlap_words: int
     available_presets: list[ChunkingPresetValue]
+    active_storage_backend: StorageBackendValue
+    reindex_accepted: bool
+    reindex_state: ReindexStateValue
+    reindex_started_at: str | None
+    reindex_message: str
+    rerun_requested: bool
+
+
+class StorageConfigUpdateRequest(BaseModel):
+    backend: StorageBackendValue
+
+
+class StorageConfigResponse(BaseModel):
+    current_backend: StorageBackendValue
+    default_backend: StorageBackendValue
+    available_backends: list[StorageBackendValue]
+    runtime_override_active: bool
+    active_backend_ready: bool
+    active_backend_can_connect: bool
+    active_backend_retrieval_ready: bool
+    active_backend_message: str
     reindex_accepted: bool
     reindex_state: ReindexStateValue
     reindex_started_at: str | None
@@ -101,6 +130,7 @@ class ReindexStartResponse(BaseModel):
     accepted: bool
     state: ReindexStateValue
     trigger: str
+    active_storage_backend: StorageBackendValue
     started_at: str | None
     message: str
     rerun_requested: bool
@@ -109,6 +139,7 @@ class ReindexStartResponse(BaseModel):
 class ReindexStatusResponse(BaseModel):
     state: ReindexStateValue
     trigger: str
+    active_storage_backend: StorageBackendValue
     started_at: str | None
     finished_at: str | None
     last_error: str

@@ -5,6 +5,8 @@ const uploadForm = document.getElementById("upload-form");
 const uploadResult = document.getElementById("upload-result");
 const chunkingPresetForm = document.getElementById("chunking-preset-form");
 const chunkingResult = document.getElementById("chunking-result");
+const storageBackendForm = document.getElementById("storage-backend-form");
+const storageBackendResult = document.getElementById("storage-backend-result");
 const reindexStatusBadge = document.getElementById("reindex-status-badge");
 const reindexTrigger = document.getElementById("reindex-trigger");
 const reindexRerunRequested = document.getElementById("reindex-rerun-requested");
@@ -325,6 +327,50 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
         } catch {
             chunkingResult.className = "upload-result error-text";
             chunkingResult.textContent = "Preset update failed because the server did not respond.";
+        }
+    });
+}
+
+if (storageBackendForm instanceof HTMLFormElement && storageBackendResult instanceof HTMLElement) {
+    storageBackendForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const backendInput = storageBackendForm.elements.namedItem("storage_backend");
+        if (!(backendInput instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        storageBackendResult.className = "upload-result meta";
+        storageBackendResult.textContent = "Applying storage backend and scheduling background reindex...";
+
+        try {
+            const response = await fetch("/storage-config", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ backend: backendInput.value }),
+            });
+            const payload = await response.json();
+
+            if (!response.ok) {
+                const errorMessage = payload.detail ?? "Storage backend update failed.";
+                storageBackendResult.className = "upload-result error-text";
+                storageBackendResult.textContent = errorMessage;
+                return;
+            }
+
+            storageBackendResult.className = "upload-result success-text";
+            storageBackendResult.textContent =
+                `Active backend=${payload.current_backend}. ${payload.reindex_message}`;
+            void refreshReindexStatus();
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        } catch {
+            storageBackendResult.className = "upload-result error-text";
+            storageBackendResult.textContent =
+                "Storage backend update failed because the server did not respond.";
         }
     });
 }
