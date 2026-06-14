@@ -8,6 +8,7 @@ RetrievalModeValue = Literal["auto", "tfidf", "embeddings"]
 ChunkingPresetValue = Literal["baseline_120_30", "legacy_80_20", "small_50_10"]
 ReindexStateValue = Literal["idle", "running", "succeeded", "failed"]
 StorageBackendValue = Literal["file", "pgvector"]
+ReindexOutcomeValue = Literal["idle", "running", "succeeded", "failed", "rerun_requested"]
 StorageBackendReadinessValue = Literal["ready", "degraded"]
 StorageBackendIssueValue = Literal[
     "none",
@@ -178,9 +179,19 @@ class RuntimeObservabilityResponse(BaseModel):
     active_backend_message: str
     reindex_state: ReindexStateValue
     reindex_trigger: str
+    reindex_backend: StorageBackendValue
     reindex_started_at: str | None
     reindex_finished_at: str | None
     reindex_rerun_requested: bool
+    reindex_rerun_trigger: str
+    reindex_outcome: ReindexOutcomeValue
+    reindex_summary_message: str
+    reindex_document_count: int
+    reindex_chunk_count: int
+    reindex_elapsed_ms: int
+    reindex_last_error: str
+    reindex_last_successful_backend: StorageBackendValue | None
+    reindex_last_successful_finished_at: str | None
     last_retrieval: RetrievalRuntimeSnapshotResponse
 
 
@@ -201,6 +212,12 @@ class ReindexStartResponse(BaseModel):
     trigger: str
     active_storage_backend: StorageBackendValue
     started_at: str | None
+    finished_at: str | None
+    rerun_trigger: str
+    outcome: ReindexOutcomeValue
+    summary_message: str
+    last_successful_backend: StorageBackendValue | None
+    last_successful_finished_at: str | None
     message: str
     rerun_requested: bool
 
@@ -214,6 +231,10 @@ class ReindexStatusResponse(BaseModel):
     last_error: str
     rerun_requested: bool
     rerun_trigger: str
+    outcome: ReindexOutcomeValue
+    summary_message: str
+    last_successful_backend: StorageBackendValue | None
+    last_successful_finished_at: str | None
     document_count: int
     chunk_count: int
     elapsed_ms: int

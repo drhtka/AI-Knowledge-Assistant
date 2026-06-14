@@ -37,6 +37,7 @@ class UploadedDocumentResult:
 class ReindexStatusSnapshot:
     state: str
     trigger: str
+    backend: str
     started_at: str | None
     finished_at: str | None
     last_error: str
@@ -45,6 +46,10 @@ class ReindexStatusSnapshot:
     document_count: int
     chunk_count: int
     elapsed_ms: int
+    outcome: str
+    summary_message: str
+    last_successful_backend: str | None
+    last_successful_finished_at: str | None
 
 
 @dataclass(frozen=True)
@@ -57,6 +62,7 @@ _reindex_status_lock = RLock()
 _reindex_status = ReindexStatusSnapshot(
     state="idle",
     trigger="startup",
+    backend="file",
     started_at=None,
     finished_at=None,
     last_error="",
@@ -65,6 +71,10 @@ _reindex_status = ReindexStatusSnapshot(
     document_count=0,
     chunk_count=0,
     elapsed_ms=0,
+    outcome="idle",
+    summary_message="No reindex job has been started in this process yet.",
+    last_successful_backend=None,
+    last_successful_finished_at=None,
 )
 
 
@@ -72,20 +82,118 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _derive_reindex_outcome(*, state: str, rerun_requested: bool) -> str:
+    if state == "running" and rerun_requested:
+        return "rerun_requested"
+    if state in {"idle", "running", "succeeded", "failed"}:
+        return state
+    return "idle"
+
+
+def _build_reindex_summary_message(
+    *,
+    state: str,
+    outcome: str,
+    backend: str,
+    trigger: str,
+    rerun_requested: bool,
+    rerun_trigger: str,
+    document_count: int,
+    chunk_count: int,
+    last_error: str,
+) -> str:
+    if outcome == "idle":
+        return "No reindex job has been started in this process yet."
+    if outcome == "rerun_requested":
+        requested_trigger = rerun_trigger or trigger
+        return (
+            f"Reindex is running on backend {backend} and another pass was requested "
+            f"with trigger {requested_trigger}."
+        )
+    if state == "running":
+        return f"Reindex is running on backend {backend} with trigger {trigger}."
+    if state == "succeeded":
+        if document_count == 0:
+            return f"Reindex succeeded on backend {backend} but found zero documents to index."
+        return (
+            f"Reindex succeeded on backend {backend}: indexed {document_count} documents "
+            f"into {chunk_count} chunks."
+        )
+    if state == "failed":
+        error_summary = last_error or "unknown error"
+        return f"Reindex failed on backend {backend}: {error_summary}."
+    return (
+        f"Reindex is in state {state} on backend {backend}"
+        f"{' with a rerun requested' if rerun_requested else ''}."
+    )
+
+
 def _set_reindex_status(**changes: object) -> ReindexStatusSnapshot:
     global _reindex_status
     with _reindex_status_lock:
+        state = str(changes.get("state", _reindex_status.state))
+        trigger = str(changes.get("trigger", _reindex_status.trigger))
+        backend = str(changes.get("backend", _reindex_status.backend))
+        started_at = changes.get("started_at", _reindex_status.started_at)
+        finished_at = changes.get("finished_at", _reindex_status.finished_at)
+        last_error = str(changes.get("last_error", _reindex_status.last_error))
+        rerun_requested = bool(changes.get("rerun_requested", _reindex_status.rerun_requested))
+        rerun_trigger = str(changes.get("rerun_trigger", _reindex_status.rerun_trigger))
+        document_count = int(changes.get("document_count", _reindex_status.document_count))
+        chunk_count = int(changes.get("chunk_count", _reindex_status.chunk_count))
+        elapsed_ms = int(changes.get("elapsed_ms", _reindex_status.elapsed_ms))
+        outcome = str(
+            changes.get(
+                "outcome",
+                _derive_reindex_outcome(state=state, rerun_requested=rerun_requested),
+            )
+        )
+        last_successful_backend = changes.get(
+            "last_successful_backend",
+            _reindex_status.last_successful_backend,
+        )
+        last_successful_finished_at = changes.get(
+            "last_successful_finished_at",
+            _reindex_status.last_successful_finished_at,
+        )
+        summary_message = str(
+            changes.get(
+                "summary_message",
+                _build_reindex_summary_message(
+                    state=state,
+                    outcome=outcome,
+                    backend=backend,
+                    trigger=trigger,
+                    rerun_requested=rerun_requested,
+                    rerun_trigger=rerun_trigger,
+                    document_count=document_count,
+                    chunk_count=chunk_count,
+                    last_error=last_error,
+                ),
+            )
+        )
         _reindex_status = ReindexStatusSnapshot(
-            state=str(changes.get("state", _reindex_status.state)),
-            trigger=str(changes.get("trigger", _reindex_status.trigger)),
-            started_at=changes.get("started_at", _reindex_status.started_at),
-            finished_at=changes.get("finished_at", _reindex_status.finished_at),
-            last_error=str(changes.get("last_error", _reindex_status.last_error)),
-            rerun_requested=bool(changes.get("rerun_requested", _reindex_status.rerun_requested)),
-            rerun_trigger=str(changes.get("rerun_trigger", _reindex_status.rerun_trigger)),
-            document_count=int(changes.get("document_count", _reindex_status.document_count)),
-            chunk_count=int(changes.get("chunk_count", _reindex_status.chunk_count)),
-            elapsed_ms=int(changes.get("elapsed_ms", _reindex_status.elapsed_ms)),
+            state=state,
+            trigger=trigger,
+            backend=backend,
+            started_at=started_at,
+            finished_at=finished_at,
+            last_error=last_error,
+            rerun_requested=rerun_requested,
+            rerun_trigger=rerun_trigger,
+            document_count=document_count,
+            chunk_count=chunk_count,
+            elapsed_ms=elapsed_ms,
+            outcome=outcome,
+            summary_message=summary_message,
+            last_successful_backend=(
+                None if last_successful_backend is None else str(last_successful_backend)
+            ),
+            last_successful_finished_at=(
+                None
+                if last_successful_finished_at is None
+                else str(last_successful_finished_at)
+            ),
         )
         return _reindex_status
 
@@ -120,6 +228,9 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
                         "trigger": trigger,
                         "current_trigger": status_snapshot.trigger,
                         "state": status_snapshot.state,
+                        "backend": status_snapshot.backend,
+                        "outcome": status_snapshot.outcome,
+                        "summary_message": status_snapshot.summary_message,
                         "active_storage_backend": active_storage_backend,
                         "rerun_requested": status_snapshot.rerun_requested,
                     },
@@ -134,11 +245,15 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
         status_snapshot = _set_reindex_status(
             state="running",
             trigger=trigger,
+            backend=active_storage_backend,
             started_at=started_at,
             finished_at=None,
             last_error="",
             rerun_requested=False,
             rerun_trigger="",
+            document_count=0,
+            chunk_count=0,
+            elapsed_ms=0,
         )
 
     logger.info(
@@ -148,6 +263,9 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
             "context": {
                 "trigger": trigger,
                 "state": status_snapshot.state,
+                "backend": status_snapshot.backend,
+                "outcome": status_snapshot.outcome,
+                "summary_message": status_snapshot.summary_message,
                 "started_at": status_snapshot.started_at,
                 "active_storage_backend": active_storage_backend,
             },
@@ -187,27 +305,37 @@ def rebuild_index(
         _set_reindex_status(
             state="running",
             trigger=trigger,
+            backend=active_storage_backend,
             started_at=started_at_iso,
             finished_at=None,
             last_error="",
+            rerun_requested=False,
+            rerun_trigger="",
+            document_count=0,
+            chunk_count=0,
+            elapsed_ms=0,
         )
     try:
         chunks = chunk_storage.rebuild_chunks()
         elapsed_ms = int((perf_counter() - started_at) * 1000)
+        finished_at = _utc_now_iso()
         result = ReindexResult(
             document_count=len({chunk.source_path for chunk in chunks}),
             chunk_count=len(chunks),
             elapsed_ms=elapsed_ms,
         )
-        _set_reindex_status(
+        status_snapshot = _set_reindex_status(
             state="succeeded",
             trigger=trigger,
+            backend=active_storage_backend,
             started_at=started_at_iso,
-            finished_at=_utc_now_iso(),
+            finished_at=finished_at,
             last_error="",
             document_count=result.document_count,
             chunk_count=result.chunk_count,
             elapsed_ms=result.elapsed_ms,
+            last_successful_backend=active_storage_backend,
+            last_successful_finished_at=finished_at,
         )
         logger.info(
             "Rebuilt processed chunks index.",
@@ -215,6 +343,9 @@ def rebuild_index(
                 "event": "index_rebuilt",
                 "context": {
                     "trigger": trigger,
+                    "backend": status_snapshot.backend,
+                    "outcome": status_snapshot.outcome,
+                    "summary_message": status_snapshot.summary_message,
                     "document_count": result.document_count,
                     "chunk_count": result.chunk_count,
                     "elapsed_ms": result.elapsed_ms,
@@ -225,12 +356,15 @@ def rebuild_index(
         return result
     except Exception as exc:
         elapsed_ms = int((perf_counter() - started_at) * 1000)
-        _set_reindex_status(
+        status_snapshot = _set_reindex_status(
             state="failed",
             trigger=trigger,
+            backend=active_storage_backend,
             started_at=started_at_iso,
             finished_at=_utc_now_iso(),
             last_error=str(exc),
+            document_count=0,
+            chunk_count=0,
             elapsed_ms=elapsed_ms,
         )
         logger.exception(
@@ -239,6 +373,9 @@ def rebuild_index(
                 "event": "index_rebuild_failed",
                 "context": {
                     "trigger": trigger,
+                    "backend": status_snapshot.backend,
+                    "outcome": status_snapshot.outcome,
+                    "summary_message": status_snapshot.summary_message,
                     "elapsed_ms": elapsed_ms,
                     "active_storage_backend": active_storage_backend,
                     "error_type": type(exc).__name__,
