@@ -296,6 +296,17 @@ select {
     min-width: 0;
 }
 
+.json-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.json-card pre {
+    height: 250px;
+    overflow: auto;
+}
+
 .list-reset li,
 .meta,
 a {

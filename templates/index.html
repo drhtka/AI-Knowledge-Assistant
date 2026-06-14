@@ -416,20 +416,20 @@
                 {% endif %}
             </article>
 
-            <section class="layout-grid">
-                <article class="content-card">
+            <section class="json-stack">
+                <article class="content-card json-card">
                     <h2>JSON відповіді пошуку</h2>
                     <pre>{{ search_result_json | tojson(indent=2) }}</pre>
                 </article>
-                <article class="content-card">
+                <article class="content-card json-card">
                     <h2>JSON відповіді на запит</h2>
                     <pre>{{ ask_result_json | tojson(indent=2) }}</pre>
                 </article>
+                <article class="content-card json-card">
+                    <h2>JSON відповіді вебпошуку</h2>
+                    <pre>{{ web_search_result_json | tojson(indent=2) }}</pre>
+                </article>
             </section>
-            <article class="content-card">
-                <h2>JSON відповіді вебпошуку</h2>
-                <pre>{{ web_search_result_json | tojson(indent=2) }}</pre>
-            </article>
         </main>
         <script
             src="{{ request.url_for('static', path='js/index.js') }}"
