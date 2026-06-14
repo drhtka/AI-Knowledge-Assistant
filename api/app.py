@@ -9,13 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunking_preset
-from api.ingestion import (
-    build_document_preview,
-    build_processed_chunks,
-    clear_chunks_cache,
-    load_chunks,
-    save_uploaded_document,
-)
+from api.indexing_service import ensure_index_loaded, ingest_uploaded_document, rebuild_index
+from api.ingestion import build_document_preview
+from api.logging_utils import configure_logging
 from api.retrieval import ask, search
 from api.schemas import (
     AskRequest,
@@ -39,7 +35,8 @@ from api.web_search import web_search
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    load_chunks()
+    configure_logging()
+    ensure_index_loaded()
     yield
 
 
@@ -101,19 +98,18 @@ async def _ingest_uploaded_file(file: UploadFile) -> IngestResponse:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
     try:
-        stored_path = save_uploaded_document(file.filename, file_content)
+        ingested_document = ingest_uploaded_document(file.filename, file_content)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    chunks_loaded = sum(1 for chunk in load_chunks() if chunk.document_id.startswith(stored_path.stem))
     return IngestResponse(
         status="ok",
-        filename=file.filename,
-        source_name=stored_path.name,
-        file_type=stored_path.suffix.lower().lstrip(".") or "unknown",
-        stored_path=str(stored_path),
-        chunks_loaded=chunks_loaded,
-        preview_text=build_document_preview(stored_path),
+        filename=ingested_document.original_filename,
+        source_name=ingested_document.stored_path.name,
+        file_type=ingested_document.file_type,
+        stored_path=str(ingested_document.stored_path),
+        chunks_loaded=ingested_document.chunks_loaded,
+        preview_text=ingested_document.preview_text,
     )
 
 
@@ -227,9 +223,7 @@ def chunking_config_endpoint() -> ChunkingConfigResponse:
 @app.post("/chunking-config", response_model=ChunkingConfigResponse)
 def update_chunking_config_endpoint(request: ChunkingConfigUpdateRequest) -> ChunkingConfigResponse:
     updated_config = set_chunking_preset(request.preset)
-    clear_chunks_cache()
-    build_processed_chunks()
-    clear_chunks_cache()
+    rebuild_index()
     return ChunkingConfigResponse(**updated_config)
 
 

@@ -345,6 +345,4 @@ def save_uploaded_document(filename: str, content: bytes, raw_data_dir: Path = R
         target_path.write_bytes(content)
     else:
         target_path.write_text(content.decode("utf-8", errors="ignore"), encoding="utf-8")
-    clear_chunks_cache()
-    build_processed_chunks(raw_data_dir=raw_data_dir)
     return target_path
