@@ -7,7 +7,11 @@ from threading import Lock
 from typing import Protocol
 
 from api.ingestion import LoadedChunk, build_processed_chunks, clear_chunks_cache, load_chunks
-from api.schemas import RetrievalModeValue, StorageBackendValue
+from api.schemas import (
+    RetrievalModeValue,
+    StorageBackendValue,
+)
+from api.storage_runtime import RankedChunkResult
 from api.settings import CHUNK_STORAGE_BACKEND
 from api.storage_pgvector import PgvectorChunkStorage, build_pgvector_storage
 from api.vector_search import rank_chunks_by_similarity
@@ -24,7 +28,7 @@ class ChunkStorage(Protocol):
     def rebuild_chunks(self) -> tuple[LoadedChunk, ...]:
         ...
 
-    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> list[tuple[LoadedChunk, float]]:
+    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> "RankedChunkResult":
         ...
 
     def clear_cache(self) -> None:
@@ -42,12 +46,17 @@ class FileChunkStorage:
         clear_chunks_cache()
         return chunks
 
-    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> list[tuple[LoadedChunk, float]]:
-        return rank_chunks_by_similarity(
-            question=question,
-            chunks=self.load_chunks(),
-            mode=mode,
-        )[:top_k]
+    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> "RankedChunkResult":
+        return RankedChunkResult(
+            ranked_chunks=rank_chunks_by_similarity(
+                question=question,
+                chunks=self.load_chunks(),
+                mode=mode,
+            )[:top_k],
+            execution_path="file_native",
+            used_fallback=False,
+            execution_issue="none",
+        )
 
     def clear_cache(self) -> None:
         clear_chunks_cache()

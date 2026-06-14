@@ -30,6 +30,7 @@ from api.settings import (
     PGVECTOR_SCHEMA,
     PGVECTOR_TABLE,
 )
+from api.storage_runtime import RankedChunkResult
 from api.vector_search import rank_chunks_by_similarity
 
 logger = logging.getLogger("ai_knowledge_assistant.pgvector_storage")
@@ -142,7 +143,7 @@ class PgvectorChunkStorage:
         latency_ms: float,
         reason: str,
         error: Exception | None = None,
-    ) -> list[tuple[LoadedChunk, float]]:
+    ) -> RankedChunkResult:
         self._log_rescue_fallback(
             mode=mode,
             question=question,
@@ -152,11 +153,16 @@ class PgvectorChunkStorage:
             error=error,
         )
         fallback_mode: RetrievalModeValue = "embeddings" if mode == "embeddings" else "auto"
-        return rank_chunks_by_similarity(
-            question=question,
-            chunks=self.load_chunks(),
-            mode=fallback_mode,
-        )[:top_k]
+        return RankedChunkResult(
+            ranked_chunks=rank_chunks_by_similarity(
+                question=question,
+                chunks=self.load_chunks(),
+                mode=fallback_mode,
+            )[:top_k],
+            execution_path="pgvector_rescue_fallback",
+            used_fallback=True,
+            execution_issue=reason,
+        )
 
     def _validate_identifier(self, value: str) -> str:
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
@@ -454,9 +460,14 @@ class PgvectorChunkStorage:
         top_k: int,
         mode: RetrievalModeValue,
         started_at: float,
-    ) -> list[tuple[LoadedChunk, float]]:
+    ) -> RankedChunkResult:
         if not question.strip() or top_k < 1:
-            return []
+            return RankedChunkResult(
+                ranked_chunks=[],
+                execution_path="pgvector_native",
+                used_fallback=False,
+                execution_issue="none",
+            )
 
         query_embedding = encode_query(question)
         if query_embedding is None:
@@ -516,15 +527,25 @@ class PgvectorChunkStorage:
                 hit_count=len(ranked_chunks),
                 latency_ms=latency_ms,
             )
-        return ranked_chunks
+        return RankedChunkResult(
+            ranked_chunks=ranked_chunks,
+            execution_path="pgvector_native",
+            used_fallback=False,
+            execution_issue="none",
+        )
 
-    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> list[tuple[LoadedChunk, float]]:
+    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> RankedChunkResult:
         if mode == "tfidf":
-            return rank_chunks_by_similarity(
-                question=question,
-                chunks=self.load_chunks(),
-                mode="tfidf",
-            )[:top_k]
+            return RankedChunkResult(
+                ranked_chunks=rank_chunks_by_similarity(
+                    question=question,
+                    chunks=self.load_chunks(),
+                    mode="tfidf",
+                )[:top_k],
+                execution_path="pgvector_local_tfidf",
+                used_fallback=False,
+                execution_issue="none",
+            )
 
         started_at = perf_counter()
         try:

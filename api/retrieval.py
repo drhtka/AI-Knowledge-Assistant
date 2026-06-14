@@ -16,7 +16,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
     active_storage_backend = get_active_storage_backend()
     try:
         chunk_storage = get_chunk_storage()
-        ranked_chunks = chunk_storage.rank_chunks(
+        ranked_result = chunk_storage.rank_chunks(
             question=question,
             top_k=top_k,
             mode=retrieval_mode,
@@ -32,7 +32,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
                 source_name=Path(chunk.source_path).name,
                 chunk_index=chunk.chunk_index,
             )
-            for chunk, score in ranked_chunks
+            for chunk, score in ranked_result.ranked_chunks
         ]
 
         response = SearchResponse(
@@ -40,6 +40,9 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             top_k=top_k,
             retrieval_mode=retrieval_mode,
             active_storage_backend=active_storage_backend,
+            retrieval_execution_path=ranked_result.execution_path,
+            retrieval_used_fallback=ranked_result.used_fallback,
+            retrieval_execution_issue=ranked_result.execution_issue,
             hits=hits,
         )
         latency_ms = int((perf_counter() - started_at) * 1000)
@@ -52,6 +55,9 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
                     "top_k": top_k,
                     "retrieval_mode": retrieval_mode,
                     "active_storage_backend": active_storage_backend,
+                    "retrieval_execution_path": ranked_result.execution_path,
+                    "retrieval_used_fallback": ranked_result.used_fallback,
+                    "retrieval_execution_issue": ranked_result.execution_issue,
                     "hit_count": len(hits),
                     "latency_ms": latency_ms,
                 },
@@ -91,6 +97,9 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
             chunks=result.hits,
             retrieval_mode=result.retrieval_mode,
             active_storage_backend=result.active_storage_backend,
+            retrieval_execution_path=result.retrieval_execution_path,
+            retrieval_used_fallback=result.retrieval_used_fallback,
+            retrieval_execution_issue=result.retrieval_execution_issue,
             confidence=generated.confidence,
             latency_ms=latency_ms,
             answer_mode=generated.answer_mode,
@@ -104,6 +113,9 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
                     "top_k": top_k,
                     "retrieval_mode": result.retrieval_mode,
                     "active_storage_backend": result.active_storage_backend,
+                    "retrieval_execution_path": result.retrieval_execution_path,
+                    "retrieval_used_fallback": result.retrieval_used_fallback,
+                    "retrieval_execution_issue": result.retrieval_execution_issue,
                     "hit_count": len(result.hits),
                     "latency_ms": latency_ms,
                     "answer_mode": generated.answer_mode,
@@ -122,6 +134,9 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
                     "top_k": top_k,
                     "retrieval_mode": retrieval_mode,
                     "active_storage_backend": get_active_storage_backend(),
+                    "retrieval_execution_path": "unknown",
+                    "retrieval_used_fallback": False,
+                    "retrieval_execution_issue": "none",
                     "latency_ms": latency_ms,
                     "error_type": type(exc).__name__,
                 },

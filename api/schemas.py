@@ -15,6 +15,17 @@ StorageBackendIssueValue = Literal[
     "embedding_stack_unavailable",
     "embedding_model_unavailable",
 ]
+RetrievalExecutionPathValue = Literal[
+    "file_native",
+    "pgvector_native",
+    "pgvector_local_tfidf",
+    "pgvector_rescue_fallback",
+]
+RetrievalExecutionIssueValue = Literal[
+    "none",
+    "pgvector_unavailable",
+    "pgvector_query_failed",
+]
 
 
 class HealthResponse(BaseModel):
@@ -51,6 +62,9 @@ class SearchResponse(BaseModel):
     top_k: int
     retrieval_mode: RetrievalModeValue
     active_storage_backend: StorageBackendValue
+    retrieval_execution_path: RetrievalExecutionPathValue
+    retrieval_used_fallback: bool
+    retrieval_execution_issue: RetrievalExecutionIssueValue
     hits: list[SearchHit]
 
 
@@ -67,6 +81,9 @@ class AskResponse(BaseModel):
     chunks: list[SearchHit]
     retrieval_mode: RetrievalModeValue
     active_storage_backend: StorageBackendValue
+    retrieval_execution_path: RetrievalExecutionPathValue
+    retrieval_used_fallback: bool
+    retrieval_execution_issue: RetrievalExecutionIssueValue
     confidence: float
     latency_ms: int
     answer_mode: str
