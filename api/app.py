@@ -19,7 +19,7 @@ from api.indexing_service import (
 )
 from api.ingestion import build_document_preview
 from api.logging_utils import configure_logging
-from api.retrieval import ask, search
+from api.retrieval import ask, get_retrieval_runtime_snapshot, search
 from api.schemas import (
     AskRequest,
     AskResponse,
@@ -29,6 +29,8 @@ from api.schemas import (
     IngestResponse,
     ReindexStartResponse,
     ReindexStatusResponse,
+    RetrievalRuntimeSnapshotResponse,
+    RuntimeObservabilityResponse,
     SearchRequest,
     SearchResponse,
     StorageConfigResponse,
@@ -398,17 +400,66 @@ def update_chunking_config_endpoint(
 def storage_config_endpoint() -> StorageConfigResponse:
     storage_config = get_storage_backend_config()
     reindex_status = get_reindex_status()
-    return StorageConfigResponse(
-        current_backend=storage_config["current_backend"],
-        default_backend=storage_config["default_backend"],
-        available_backends=storage_config["available_backends"],
-        runtime_override_active=storage_config["runtime_override_active"],
-        reindex_accepted=False,
-        reindex_state=reindex_status.state,
-        reindex_started_at=reindex_status.started_at,
-        reindex_message="No storage backend reindex requested in this response.",
-        rerun_requested=reindex_status.rerun_requested,
+    return _build_storage_config_response(
+        storage_config,
+        ReindexStartResponse(
+            status="noop",
+            accepted=False,
+            state=reindex_status.state,
+            trigger=reindex_status.trigger,
+            active_storage_backend=get_active_storage_backend(),
+            started_at=reindex_status.started_at,
+            message="No storage backend reindex requested in this response.",
+            rerun_requested=reindex_status.rerun_requested,
+        ),
     )
+
+
+def _build_runtime_observability_response() -> RuntimeObservabilityResponse:
+    storage_config = get_storage_backend_config()
+    reindex_status = get_reindex_status()
+    last_retrieval = get_retrieval_runtime_snapshot()
+    return RuntimeObservabilityResponse(
+        active_storage_backend=storage_config["current_backend"],
+        active_backend_summary_message=storage_config["active_backend_summary_message"],
+        active_backend_state=storage_config["active_backend_state"],
+        active_backend_issue=storage_config["active_backend_issue"],
+        active_backend_ready=storage_config["active_backend_ready"],
+        active_backend_can_connect=storage_config["active_backend_can_connect"],
+        active_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
+        active_backend_message=storage_config["active_backend_message"],
+        reindex_state=reindex_status.state,
+        reindex_trigger=reindex_status.trigger,
+        reindex_started_at=reindex_status.started_at,
+        reindex_finished_at=reindex_status.finished_at,
+        reindex_rerun_requested=reindex_status.rerun_requested,
+        last_retrieval=RetrievalRuntimeSnapshotResponse(
+            available=last_retrieval.available,
+            request_kind=last_retrieval.request_kind,
+            status=last_retrieval.status,
+            question_length=last_retrieval.question_length,
+            retrieval_mode=last_retrieval.retrieval_mode,
+            active_storage_backend=last_retrieval.active_storage_backend,
+            retrieval_execution_path=last_retrieval.retrieval_execution_path,
+            retrieval_execution_issue=last_retrieval.retrieval_execution_issue,
+            retrieval_outcome=last_retrieval.retrieval_outcome,
+            retrieval_summary_message=last_retrieval.retrieval_summary_message,
+            hit_count=last_retrieval.hit_count,
+            latency_ms=last_retrieval.latency_ms,
+            updated_at=last_retrieval.updated_at,
+            error_type=last_retrieval.error_type,
+        ),
+    )
+
+
+@app.get("/runtime-observability", response_model=RuntimeObservabilityResponse)
+def runtime_observability_endpoint() -> RuntimeObservabilityResponse:
+    return _build_runtime_observability_response()
+
+
+@app.get("/runtime-status", response_model=RuntimeObservabilityResponse)
+def runtime_status_endpoint() -> RuntimeObservabilityResponse:
+    return _build_runtime_observability_response()
 
 
 @app.post("/storage-config", response_model=StorageConfigResponse)

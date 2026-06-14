@@ -150,6 +150,40 @@ class StorageConfigResponse(BaseModel):
     rerun_requested: bool
 
 
+class RetrievalRuntimeSnapshotResponse(BaseModel):
+    available: bool
+    request_kind: str
+    status: str
+    question_length: int
+    retrieval_mode: RetrievalModeValue
+    active_storage_backend: StorageBackendValue
+    retrieval_execution_path: str
+    retrieval_execution_issue: str
+    retrieval_outcome: str
+    retrieval_summary_message: str
+    hit_count: int
+    latency_ms: int
+    updated_at: str | None
+    error_type: str
+
+
+class RuntimeObservabilityResponse(BaseModel):
+    active_storage_backend: StorageBackendValue
+    active_backend_summary_message: str
+    active_backend_state: StorageBackendReadinessValue
+    active_backend_issue: StorageBackendIssueValue
+    active_backend_ready: bool
+    active_backend_can_connect: bool
+    active_backend_retrieval_ready: bool
+    active_backend_message: str
+    reindex_state: ReindexStateValue
+    reindex_trigger: str
+    reindex_started_at: str | None
+    reindex_finished_at: str | None
+    reindex_rerun_requested: bool
+    last_retrieval: RetrievalRuntimeSnapshotResponse
+
+
 class ReindexResponse(BaseModel):
     status: str
     document_count: int
