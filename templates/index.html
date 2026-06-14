@@ -18,6 +18,94 @@
                 пошуку з урахуванням оцінювання.
             </p>
 
+            <section class="overview-grid">
+                <article class="content-card overview-card">
+                    <p class="section-kicker">Workspace</p>
+                    <h2>Огляд проєкту</h2>
+                    <ul class="list-reset compact-list">
+                        <li>
+                            <code>api/</code> застосунок, схеми, базова логіка
+                            пошуку
+                        </li>
+                        <li>
+                            <code>data/</code> локальні корпуси та набори для
+                            оцінювання
+                        </li>
+                        <li><code>notebooks/</code> експерименти</li>
+                        <li>
+                            <code>src/</code> майбутні модулі завантаження та
+                            індексації
+                        </li>
+                    </ul>
+                </article>
+
+                <article class="content-card overview-card dashboard-card">
+                    <div class="dashboard-header">
+                        <div>
+                            <p class="section-kicker">Local Retrieval</p>
+                            <h2>Поточна конфігурація системи</h2>
+                        </div>
+                        <span class="dashboard-badge">Active</span>
+                    </div>
+                    <div class="dashboard-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Поточний пресет розбиття</span>
+                            <code class="stat-value"
+                                >{{ system_config.current_preset }}</code
+                            >
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Типовий режим пошуку</span>
+                            <code class="stat-value"
+                                >{{ system_config.default_retrieval_mode }}</code
+                            >
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Розмір фрагмента</span>
+                            <span class="stat-value"
+                                >{{ system_config.chunk_size_words }} слів</span
+                            >
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Перекриття фрагментів</span>
+                            <span class="stat-value"
+                                >{{ system_config.chunk_overlap_words }} слів</span
+                            >
+                        </div>
+                    </div>
+                    <div class="modes-panel">
+                        <span class="stat-label">Доступні режими</span>
+                        <div class="pill-row">
+                            {% for mode in system_config.available_retrieval_modes %}
+                            <code class="mode-pill">{{ mode }}</code>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <form id="chunking-preset-form" class="inline-form dashboard-panel">
+                        <label for="chunking_preset">Пресет розбиття</label>
+                        <div class="inline-form-row">
+                            <select id="chunking_preset" name="chunking_preset">
+                                {% for preset in system_config.available_presets %}
+                                <option
+                                    value="{{ preset }}"
+                                    {% if system_config.current_preset == preset %}selected{% endif %}
+                                >
+                                    {{ preset }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit">
+                                Застосувати пресет розбиття
+                            </button>
+                        </div>
+                    </form>
+                    <div id="chunking-result" class="upload-result meta">
+                        Застосуйте пресет, щоб перебудувати індекс фрагментів з
+                        іншою базовою конфігурацією.
+                    </div>
+                </article>
+            </section>
+
             <section class="layout-grid">
                 <article class="content-card">
                     <h2>Запит</h2>
@@ -186,70 +274,6 @@
                             <button type="submit">Шукати в інтернеті</button>
                         </div>
                     </form>
-
-                    <h2>Огляд проєкту</h2>
-                    <ul class="list-reset">
-                        <li>
-                            <code>api/</code> застосунок, схеми, базова логіка пошуку
-                        </li>
-                        <li><code>data/</code> локальні корпуси та набори для оцінювання</li>
-                        <li><code>notebooks/</code> експерименти</li>
-                        <li>
-                            <code>src/</code> майбутні модулі завантаження та
-                            індексації
-                        </li>
-                    </ul>
-
-                    <h2>Поточна конфігурація системи</h2>
-                    <ul class="list-reset">
-                        <li>
-                            <strong>Поточний пресет розбиття:</strong>
-                            <code>{{ system_config.current_preset }}</code>
-                        </li>
-                        <li>
-                            <strong>Типовий режим пошуку:</strong>
-                            <code
-                                >{{ system_config.default_retrieval_mode
-                                }}</code
-                            >
-                        </li>
-                        <li>
-                            <strong>Розмір фрагмента:</strong>
-                            <code>{{ system_config.chunk_size_words }}</code> слів
-                        </li>
-                        <li>
-                            <strong>Перекриття фрагментів:</strong>
-                            <code>{{ system_config.chunk_overlap_words }}</code>
-                            слів
-                        </li>
-                        <li>
-                            <strong>Доступні режими:</strong>
-                            {% for mode in
-                            system_config.available_retrieval_modes %}
-                            <code>{{ mode }}</code>{% if not loop.last %}, {%
-                            endif %} {% endfor %}
-                        </li>
-                    </ul>
-                    <form id="chunking-preset-form">
-                        <label for="chunking_preset">Пресет розбиття</label>
-                        <select id="chunking_preset" name="chunking_preset">
-                            {% for preset in system_config.available_presets %}
-                            <option
-                                value="{{ preset }}"
-                                {% if system_config.current_preset == preset %}selected{% endif %}
-                            >
-                                {{ preset }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <div class="actions">
-                            <button type="submit">Застосувати пресет розбиття</button>
-                        </div>
-                    </form>
-                    <div id="chunking-result" class="upload-result meta">
-                        Застосуйте пресет, щоб перебудувати індекс фрагментів з
-                        іншою базовою конфігурацією.
-                    </div>
                 </article>
             </section>
 
