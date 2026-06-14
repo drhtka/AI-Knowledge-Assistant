@@ -99,6 +99,11 @@ def build_document_preview(path: Path, max_chars: int = 420) -> str:
     return (truncated or preview_text[:max_chars].strip()) + "..."
 
 
+def estimate_document_chunk_count(path: Path) -> int:
+    """Estimate how many chunks a single document will produce with current config."""
+    return len(_build_chunks(path))
+
+
 def _split_text_into_word_chunks(
     text: str,
     chunk_size_words: int | None = None,

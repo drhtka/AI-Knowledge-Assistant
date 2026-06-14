@@ -61,8 +61,12 @@ class IngestResponse(BaseModel):
     source_name: str
     file_type: str
     stored_path: str
-    chunks_loaded: int
+    estimated_chunks: int
     preview_text: str
+    reindex_accepted: bool
+    reindex_state: ReindexStateValue
+    reindex_started_at: str | None
+    reindex_message: str
 
 
 class ChunkingConfigUpdateRequest(BaseModel):

@@ -42,11 +42,11 @@ function renderUploadSuccess(payload) {
     const details = document.createElement("p");
     details.className = "meta";
     details.textContent =
-        `file=${payload.source_name} | type=${payload.file_type} | chunks=${payload.chunks_loaded}`;
+        `file=${payload.source_name} | type=${payload.file_type} | estimated_chunks=${payload.estimated_chunks}`;
 
     const followUp = document.createElement("p");
     followUp.className = "meta";
-    followUp.textContent = "The document is now part of the local retrieval index.";
+    followUp.textContent = payload.reindex_message || "Background reindex status updated.";
 
     let previewBlock = null;
     if (typeof payload.preview_text === "string" && payload.preview_text.trim()) {
@@ -143,7 +143,7 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
 
-        renderUploadStatus("Uploading document and rebuilding chunks...");
+        renderUploadStatus("Uploading document and scheduling background reindex...");
 
         try {
             const response = await fetch("/ingest", {

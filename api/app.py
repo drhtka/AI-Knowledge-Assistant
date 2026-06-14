@@ -12,7 +12,7 @@ from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunk
 from api.indexing_service import (
     ensure_index_loaded,
     get_reindex_status,
-    ingest_uploaded_document,
+    prepare_uploaded_document,
     rebuild_index,
     start_reindex_job,
 )
@@ -147,7 +147,21 @@ def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartRespon
     )
 
 
-async def _ingest_uploaded_file(file: UploadFile) -> IngestResponse:
+def _start_reindex_background_job(
+    background_tasks: BackgroundTasks,
+    trigger: str,
+) -> ReindexStartResponse:
+    response = _build_reindex_start_response(trigger=trigger)
+    if response.accepted:
+        background_tasks.add_task(
+            _run_reindex_background_job,
+            response.trigger,
+            response.started_at,
+        )
+    return response
+
+
+async def _ingest_uploaded_file(file: UploadFile, background_tasks: BackgroundTasks) -> IngestResponse:
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename is required.")
 
@@ -156,9 +170,10 @@ async def _ingest_uploaded_file(file: UploadFile) -> IngestResponse:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
     try:
-        ingested_document = ingest_uploaded_document(file.filename, file_content)
+        ingested_document = prepare_uploaded_document(file.filename, file_content)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    reindex_start = _start_reindex_background_job(background_tasks, trigger="upload")
 
     return IngestResponse(
         status="ok",
@@ -166,8 +181,12 @@ async def _ingest_uploaded_file(file: UploadFile) -> IngestResponse:
         source_name=ingested_document.stored_path.name,
         file_type=ingested_document.file_type,
         stored_path=str(ingested_document.stored_path),
-        chunks_loaded=ingested_document.chunks_loaded,
+        estimated_chunks=ingested_document.estimated_chunks,
         preview_text=ingested_document.preview_text,
+        reindex_accepted=reindex_start.accepted,
+        reindex_state=reindex_start.state,
+        reindex_started_at=reindex_start.started_at,
+        reindex_message=reindex_start.message,
     )
 
 
@@ -188,8 +207,10 @@ def _build_upload_feedback(request: Request) -> dict[str, object] | None:
         "filename": request.query_params.get("uploaded_filename", ""),
         "source_name": source_name,
         "file_type": request.query_params.get("uploaded_file_type", ""),
-        "chunks_loaded": request.query_params.get("uploaded_chunks_loaded", "0"),
+        "estimated_chunks": request.query_params.get("uploaded_estimated_chunks", "0"),
         "preview_text": preview_text,
+        "reindex_message": request.query_params.get("uploaded_reindex_message", ""),
+        "reindex_state": request.query_params.get("uploaded_reindex_state", ""),
         "error": request.query_params.get("upload_error", ""),
     }
 
@@ -287,14 +308,7 @@ def update_chunking_config_endpoint(request: ChunkingConfigUpdateRequest) -> Chu
 
 @app.post("/reindex", response_model=ReindexStartResponse)
 def reindex_endpoint(background_tasks: BackgroundTasks) -> ReindexStartResponse:
-    response = _build_reindex_start_response(trigger="manual")
-    if response.accepted:
-        background_tasks.add_task(
-            _run_reindex_background_job,
-            response.trigger,
-            response.started_at,
-        )
-    return response
+    return _start_reindex_background_job(background_tasks, trigger="manual")
 
 
 @app.get("/reindex-status", response_model=ReindexStatusResponse)
@@ -320,14 +334,14 @@ def web_search_endpoint(request: WebSearchRequest) -> WebSearchResponse:
 
 
 @app.post("/ingest", response_model=IngestResponse)
-async def ingest_endpoint(file: UploadFile = File(...)) -> IngestResponse:
-    return await _ingest_uploaded_file(file)
+async def ingest_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...)) -> IngestResponse:
+    return await _ingest_uploaded_file(file, background_tasks)
 
 
 @app.post("/upload")
-async def upload_page_endpoint(file: UploadFile = File(...)) -> RedirectResponse:
+async def upload_page_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...)) -> RedirectResponse:
     try:
-        result = await _ingest_uploaded_file(file)
+        result = await _ingest_uploaded_file(file, background_tasks)
     except HTTPException as exc:
         query = urlencode(
             {
@@ -343,7 +357,9 @@ async def upload_page_endpoint(file: UploadFile = File(...)) -> RedirectResponse
             "uploaded_filename": result.filename,
             "uploaded_source_name": result.source_name,
             "uploaded_file_type": result.file_type,
-            "uploaded_chunks_loaded": result.chunks_loaded,
+            "uploaded_estimated_chunks": result.estimated_chunks,
+            "uploaded_reindex_message": result.reindex_message,
+            "uploaded_reindex_state": result.reindex_state,
         },
     )
     return RedirectResponse(url=f"/?{query}", status_code=303)

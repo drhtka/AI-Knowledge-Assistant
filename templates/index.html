@@ -243,11 +243,10 @@
                             <p class="meta">
                                 файл={{ upload_feedback.source_name }} |
                                 тип={{ upload_feedback.file_type }} |
-                                фрагментів={{ upload_feedback.chunks_loaded }}
+                                очікуваних_фрагментів={{ upload_feedback.estimated_chunks }}
                             </p>
                             <p class="meta">
-                                Документ тепер є частиною локального пошукового
-                                індексу.
+                                {{ upload_feedback.reindex_message or "Фоновий reindex для документа вже запущено." }}
                             </p>
                             {% if upload_feedback.preview_text %}
                             <div class="upload-preview">

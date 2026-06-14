@@ -11,6 +11,7 @@ from api.ingestion import (
     build_document_preview,
     build_processed_chunks,
     clear_chunks_cache,
+    estimate_document_chunk_count,
     load_chunks,
     save_uploaded_document,
 )
@@ -30,7 +31,7 @@ class UploadedDocumentResult:
     original_filename: str
     stored_path: Path
     file_type: str
-    chunks_loaded: int
+    estimated_chunks: int
     preview_text: str
 
 
@@ -132,10 +133,6 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
     return ReindexStartResult(accepted=True, status_snapshot=status_snapshot)
 
 
-def _count_chunks_for_document(chunks: tuple, document_stem: str) -> int:
-    return sum(1 for chunk in chunks if chunk.document_id.startswith(document_stem))
-
-
 def ensure_index_loaded() -> tuple:
     chunks = load_chunks()
     logger.info(
@@ -227,12 +224,11 @@ def rebuild_index(
 def ingest_uploaded_document(filename: str, content: bytes) -> UploadedDocumentResult:
     stored_path = save_uploaded_document(filename, content)
     reindex_result = rebuild_index(trigger="upload")
-    chunks_loaded = _count_chunks_for_document(load_chunks(), stored_path.stem)
     result = UploadedDocumentResult(
         original_filename=filename,
         stored_path=stored_path,
         file_type=stored_path.suffix.lower().lstrip(".") or "unknown",
-        chunks_loaded=chunks_loaded,
+        estimated_chunks=estimate_document_chunk_count(stored_path),
         preview_text=build_document_preview(stored_path),
     )
     logger.info(
@@ -243,9 +239,33 @@ def ingest_uploaded_document(filename: str, content: bytes) -> UploadedDocumentR
                 "filename": result.original_filename,
                 "stored_name": result.stored_path.name,
                 "file_type": result.file_type,
-                "chunks_loaded": result.chunks_loaded,
+                "estimated_chunks": result.estimated_chunks,
                 "index_chunk_count": reindex_result.chunk_count,
                 "elapsed_ms": reindex_result.elapsed_ms,
+            },
+        },
+    )
+    return result
+
+
+def prepare_uploaded_document(filename: str, content: bytes) -> UploadedDocumentResult:
+    stored_path = save_uploaded_document(filename, content)
+    result = UploadedDocumentResult(
+        original_filename=filename,
+        stored_path=stored_path,
+        file_type=stored_path.suffix.lower().lstrip(".") or "unknown",
+        estimated_chunks=estimate_document_chunk_count(stored_path),
+        preview_text=build_document_preview(stored_path),
+    )
+    logger.info(
+        "Uploaded document saved and prepared for async indexing.",
+        extra={
+            "event": "document_saved_for_indexing",
+            "context": {
+                "filename": result.original_filename,
+                "stored_name": result.stored_path.name,
+                "file_type": result.file_type,
+                "estimated_chunks": result.estimated_chunks,
             },
         },
     )
