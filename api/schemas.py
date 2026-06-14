@@ -34,6 +34,7 @@ class HealthResponse(BaseModel):
     ready: bool
     project: str
     active_storage_backend: StorageBackendValue
+    active_storage_backend_summary_message: str
     active_storage_backend_state: StorageBackendReadinessValue
     active_storage_backend_issue: StorageBackendIssueValue
     active_storage_backend_ready: bool
@@ -135,6 +136,7 @@ class StorageConfigResponse(BaseModel):
     default_backend: StorageBackendValue
     available_backends: list[StorageBackendValue]
     runtime_override_active: bool
+    active_backend_summary_message: str
     active_backend_state: StorageBackendReadinessValue
     active_backend_issue: StorageBackendIssueValue
     active_backend_ready: bool

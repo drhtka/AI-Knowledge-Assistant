@@ -78,6 +78,26 @@ _default_storage_backend: StorageBackendValue = _normalize_storage_backend(CHUNK
 _current_storage_backend: StorageBackendValue = _default_storage_backend
 
 
+def _build_backend_summary_message(
+    *,
+    backend: StorageBackendValue,
+    state: str,
+    issue: str,
+) -> str:
+    if backend == "file":
+        return "File backend is ready and serving retrieval locally."
+
+    if state == "ready":
+        return "pgvector backend is ready and can serve DB-first retrieval."
+    if issue == "connection_failed":
+        return "pgvector backend is degraded because the database connection is unavailable."
+    if issue == "embedding_stack_unavailable":
+        return "pgvector backend is degraded because the embedding stack is unavailable."
+    if issue == "embedding_model_unavailable":
+        return "pgvector backend is degraded because the embedding model is unavailable."
+    return f"{backend} backend is in state={state} with issue={issue}."
+
+
 def get_active_storage_backend() -> StorageBackendValue:
     with _storage_backend_lock:
         return _current_storage_backend
@@ -99,6 +119,11 @@ def get_active_storage_backend_status() -> dict[str, object]:
     current_backend = get_active_storage_backend()
     if current_backend == "file":
         return {
+            "active_backend_summary_message": _build_backend_summary_message(
+                backend="file",
+                state="ready",
+                issue="none",
+            ),
             "active_backend_state": "ready",
             "active_backend_issue": "none",
             "active_backend_ready": True,
@@ -110,7 +135,13 @@ def get_active_storage_backend_status() -> dict[str, object]:
     pgvector_storage = _build_chunk_storage("pgvector")
     if not isinstance(pgvector_storage, PgvectorChunkStorage):
         raise TypeError("Expected PgvectorChunkStorage for the 'pgvector' backend.")
-    return pgvector_storage.get_readiness_status()
+    status = pgvector_storage.get_readiness_status()
+    status["active_backend_summary_message"] = _build_backend_summary_message(
+        backend="pgvector",
+        state=str(status["active_backend_state"]),
+        issue=str(status["active_backend_issue"]),
+    )
+    return status
 
 
 def set_active_storage_backend(backend: StorageBackendValue) -> dict[str, object]:
