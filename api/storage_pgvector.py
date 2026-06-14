@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import logging
 import re
+from time import perf_counter
 
 from api.chunking_config import get_chunking_config
 from api.embeddings import compose_embedding_text, encode_query, encode_texts, vector_to_pgvector_literal
@@ -61,6 +62,7 @@ class PgvectorChunkStorage:
         mode: RetrievalModeValue,
         question: str,
         top_k: int,
+        latency_ms: float,
         reason: str,
         error: Exception | None = None,
     ) -> None:
@@ -72,6 +74,7 @@ class PgvectorChunkStorage:
                     "mode": mode,
                     "question_length": len(question.strip()),
                     "top_k": top_k,
+                    "latency_ms": round(latency_ms, 2),
                     "reason": reason,
                     "error_type": type(error).__name__ if error is not None else "",
                 },
@@ -85,6 +88,7 @@ class PgvectorChunkStorage:
         mode: RetrievalModeValue,
         question: str,
         top_k: int,
+        latency_ms: float,
     ) -> None:
         logger.info(
             "pgvector retrieval returned zero results without using local fallback.",
@@ -94,6 +98,7 @@ class PgvectorChunkStorage:
                     "mode": mode,
                     "question_length": len(question.strip()),
                     "top_k": top_k,
+                    "latency_ms": round(latency_ms, 2),
                 },
             },
         )
@@ -105,6 +110,7 @@ class PgvectorChunkStorage:
         question: str,
         top_k: int,
         hit_count: int,
+        latency_ms: float,
     ) -> None:
         logger.info(
             "pgvector retrieval completed successfully.",
@@ -115,6 +121,7 @@ class PgvectorChunkStorage:
                     "question_length": len(question.strip()),
                     "top_k": top_k,
                     "hit_count": hit_count,
+                    "latency_ms": round(latency_ms, 2),
                 },
             },
         )
@@ -125,6 +132,7 @@ class PgvectorChunkStorage:
         question: str,
         top_k: int,
         mode: RetrievalModeValue,
+        latency_ms: float,
         reason: str,
         error: Exception | None = None,
     ) -> list[tuple[LoadedChunk, float]]:
@@ -132,6 +140,7 @@ class PgvectorChunkStorage:
             mode=mode,
             question=question,
             top_k=top_k,
+            latency_ms=latency_ms,
             reason=reason,
             error=error,
         )
@@ -382,6 +391,7 @@ class PgvectorChunkStorage:
         question: str,
         top_k: int,
         mode: RetrievalModeValue,
+        started_at: float,
     ) -> list[tuple[LoadedChunk, float]]:
         if not question.strip() or top_k < 1:
             return []
@@ -428,14 +438,21 @@ class PgvectorChunkStorage:
             for row in rows
             if row[-1] is not None and float(row[-1]) > 0
         ]
+        latency_ms = (perf_counter() - started_at) * 1000
         if not ranked_chunks:
-            self._log_zero_results(mode=mode, question=question, top_k=top_k)
+            self._log_zero_results(
+                mode=mode,
+                question=question,
+                top_k=top_k,
+                latency_ms=latency_ms,
+            )
         else:
             self._log_successful_retrieval(
                 mode=mode,
                 question=question,
                 top_k=top_k,
                 hit_count=len(ranked_chunks),
+                latency_ms=latency_ms,
             )
         return ranked_chunks
 
@@ -447,17 +464,20 @@ class PgvectorChunkStorage:
                 mode="tfidf",
             )[:top_k]
 
+        started_at = perf_counter()
         try:
             return self._rank_chunks_by_pgvector_embeddings(
                 question=question,
                 top_k=top_k,
                 mode=mode,
+                started_at=started_at,
             )
         except PgvectorRetrievalUnavailableError as exc:
             return self._rank_chunks_with_local_fallback(
                 question=question,
                 top_k=top_k,
                 mode=mode,
+                latency_ms=(perf_counter() - started_at) * 1000,
                 reason="pgvector_unavailable",
                 error=exc,
             )
@@ -466,6 +486,7 @@ class PgvectorChunkStorage:
                 question=question,
                 top_k=top_k,
                 mode=mode,
+                latency_ms=(perf_counter() - started_at) * 1000,
                 reason="pgvector_query_failed",
                 error=exc,
             )
