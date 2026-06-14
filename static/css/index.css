@@ -34,6 +34,12 @@ a {
     gap: 20px;
 }
 
+.layout-grid > *,
+.overview-grid > *,
+.mode-compare-grid > * {
+    min-width: 0;
+}
+
 .overview-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -47,6 +53,7 @@ a {
     border-radius: 14px;
     padding: 18px;
     margin-bottom: 18px;
+    min-width: 0;
 }
 
 .feature-block {
@@ -263,6 +270,14 @@ select {
     border-radius: 12px;
     padding: 12px;
     background: #0f172a;
+    min-width: 0;
+}
+
+.list-reset li,
+.meta,
+a {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 button {
@@ -325,6 +340,10 @@ pre {
     background: #020617;
     padding: 12px;
     border-radius: 10px;
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 @media (max-width: 860px) {
