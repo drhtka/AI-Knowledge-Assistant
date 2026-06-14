@@ -67,6 +67,7 @@ class SearchResponse(BaseModel):
     retrieval_used_fallback: bool
     retrieval_execution_issue: RetrievalExecutionIssueValue
     retrieval_outcome: RetrievalOutcomeValue
+    retrieval_summary_message: str
     hits: list[SearchHit]
 
 
@@ -87,6 +88,7 @@ class AskResponse(BaseModel):
     retrieval_used_fallback: bool
     retrieval_execution_issue: RetrievalExecutionIssueValue
     retrieval_outcome: RetrievalOutcomeValue
+    retrieval_summary_message: str
     confidence: float
     latency_ms: int
     answer_mode: str

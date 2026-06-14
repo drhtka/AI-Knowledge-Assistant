@@ -11,6 +11,40 @@ from api.storage import get_active_storage_backend, get_chunk_storage
 logger = logging.getLogger("ai_knowledge_assistant.retrieval")
 
 
+def _build_retrieval_summary_message(
+    *,
+    active_storage_backend: str,
+    execution_path: str,
+    outcome: str,
+    execution_issue: str,
+) -> str:
+    if execution_path == "file_native":
+        if outcome == "zero_results":
+            return "File backend completed normally but returned zero results."
+        return "File backend served the retrieval request successfully."
+
+    if execution_path == "pgvector_native":
+        if outcome == "zero_results":
+            return "pgvector DB-first retrieval completed normally but returned zero results."
+        return "pgvector DB-first retrieval served the request successfully."
+
+    if execution_path == "pgvector_local_tfidf":
+        if outcome == "zero_results":
+            return "pgvector backend used the local tfidf path and returned zero results."
+        return "pgvector backend used the expected local tfidf path successfully."
+
+    if execution_path == "pgvector_rescue_fallback":
+        return (
+            "pgvector retrieval used the rescue fallback to local ranking"
+            f" because of {execution_issue}."
+        )
+
+    return (
+        f"Retrieval finished on backend {active_storage_backend} with "
+        f"path={execution_path} and outcome={outcome}."
+    )
+
+
 def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> SearchResponse:
     started_at = perf_counter()
     active_storage_backend = get_active_storage_backend()
@@ -20,6 +54,12 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             question=question,
             top_k=top_k,
             mode=retrieval_mode,
+        )
+        retrieval_summary_message = _build_retrieval_summary_message(
+            active_storage_backend=active_storage_backend,
+            execution_path=ranked_result.execution_path,
+            outcome=ranked_result.outcome,
+            execution_issue=ranked_result.execution_issue,
         )
 
         hits = [
@@ -44,6 +84,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             retrieval_used_fallback=ranked_result.used_fallback,
             retrieval_execution_issue=ranked_result.execution_issue,
             retrieval_outcome=ranked_result.outcome,
+            retrieval_summary_message=retrieval_summary_message,
             hits=hits,
         )
         latency_ms = int((perf_counter() - started_at) * 1000)
@@ -60,6 +101,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
                     "retrieval_used_fallback": ranked_result.used_fallback,
                     "retrieval_execution_issue": ranked_result.execution_issue,
                     "retrieval_outcome": ranked_result.outcome,
+                    "retrieval_summary_message": retrieval_summary_message,
                     "hit_count": len(hits),
                     "latency_ms": latency_ms,
                 },
@@ -103,6 +145,7 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
             retrieval_used_fallback=result.retrieval_used_fallback,
             retrieval_execution_issue=result.retrieval_execution_issue,
             retrieval_outcome=result.retrieval_outcome,
+            retrieval_summary_message=result.retrieval_summary_message,
             confidence=generated.confidence,
             latency_ms=latency_ms,
             answer_mode=generated.answer_mode,
@@ -120,6 +163,7 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
                     "retrieval_used_fallback": result.retrieval_used_fallback,
                     "retrieval_execution_issue": result.retrieval_execution_issue,
                     "retrieval_outcome": result.retrieval_outcome,
+                    "retrieval_summary_message": result.retrieval_summary_message,
                     "hit_count": len(result.hits),
                     "latency_ms": latency_ms,
                     "answer_mode": generated.answer_mode,
