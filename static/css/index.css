@@ -17,6 +17,17 @@ h3 {
     margin-top: 0;
 }
 
+h2 {
+    font-size: 1.45rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #e9d5ff;
+    background: linear-gradient(90deg, #93c5fd 0%, #c4b5fd 45%, #86efac 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 .intro,
 .meta,
 code,
