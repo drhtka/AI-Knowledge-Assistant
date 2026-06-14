@@ -67,6 +67,7 @@ class IngestResponse(BaseModel):
     reindex_state: ReindexStateValue
     reindex_started_at: str | None
     reindex_message: str
+    rerun_requested: bool
 
 
 class ChunkingConfigUpdateRequest(BaseModel):
@@ -97,6 +98,7 @@ class ReindexStartResponse(BaseModel):
     trigger: str
     started_at: str | None
     message: str
+    rerun_requested: bool
 
 
 class ReindexStatusResponse(BaseModel):
@@ -105,6 +107,8 @@ class ReindexStatusResponse(BaseModel):
     started_at: str | None
     finished_at: str | None
     last_error: str
+    rerun_requested: bool
+    rerun_trigger: str
     document_count: int
     chunk_count: int
     elapsed_ms: int

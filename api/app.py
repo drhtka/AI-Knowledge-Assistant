@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 
 from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunking_preset
 from api.indexing_service import (
+    consume_rerun_request,
     ensure_index_loaded,
     get_reindex_status,
     prepare_uploaded_document,
@@ -120,6 +121,8 @@ def _build_reindex_status_response() -> ReindexStatusResponse:
         started_at=status_snapshot.started_at,
         finished_at=status_snapshot.finished_at,
         last_error=status_snapshot.last_error,
+        rerun_requested=status_snapshot.rerun_requested,
+        rerun_trigger=status_snapshot.rerun_trigger,
         document_count=status_snapshot.document_count,
         chunk_count=status_snapshot.chunk_count,
         elapsed_ms=status_snapshot.elapsed_ms,
@@ -127,7 +130,21 @@ def _build_reindex_status_response() -> ReindexStatusResponse:
 
 
 def _run_reindex_background_job(trigger: str, started_at: str | None) -> None:
-    rebuild_index(trigger=trigger, started_at_iso=started_at, assume_running=True)
+    current_trigger = trigger
+    current_started_at = started_at
+    assume_running = True
+    while True:
+        rebuild_index(
+            trigger=current_trigger,
+            started_at_iso=current_started_at,
+            assume_running=assume_running,
+        )
+        rerun_trigger = consume_rerun_request()
+        if not rerun_trigger:
+            return
+        current_trigger = rerun_trigger
+        current_started_at = None
+        assume_running = False
 
 
 def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartResponse:
@@ -135,7 +152,7 @@ def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartRespon
     message = (
         "Reindex job started in the background."
         if start_result.accepted
-        else "Reindex is already running."
+        else "Reindex is already running; rerun requested."
     )
     return ReindexStartResponse(
         status="accepted" if start_result.accepted else "already_running",
@@ -144,6 +161,7 @@ def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartRespon
         trigger=start_result.status_snapshot.trigger,
         started_at=start_result.status_snapshot.started_at,
         message=message,
+        rerun_requested=start_result.status_snapshot.rerun_requested,
     )
 
 
@@ -187,6 +205,7 @@ async def _ingest_uploaded_file(file: UploadFile, background_tasks: BackgroundTa
         reindex_state=reindex_start.state,
         reindex_started_at=reindex_start.started_at,
         reindex_message=reindex_start.message,
+        rerun_requested=reindex_start.rerun_requested,
     )
 
 

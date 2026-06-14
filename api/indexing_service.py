@@ -42,6 +42,8 @@ class ReindexStatusSnapshot:
     started_at: str | None
     finished_at: str | None
     last_error: str
+    rerun_requested: bool
+    rerun_trigger: str
     document_count: int
     chunk_count: int
     elapsed_ms: int
@@ -60,6 +62,8 @@ _reindex_status = ReindexStatusSnapshot(
     started_at=None,
     finished_at=None,
     last_error="",
+    rerun_requested=False,
+    rerun_trigger="",
     document_count=0,
     chunk_count=0,
     elapsed_ms=0,
@@ -79,6 +83,8 @@ def _set_reindex_status(**changes: object) -> ReindexStatusSnapshot:
             started_at=changes.get("started_at", _reindex_status.started_at),
             finished_at=changes.get("finished_at", _reindex_status.finished_at),
             last_error=str(changes.get("last_error", _reindex_status.last_error)),
+            rerun_requested=bool(changes.get("rerun_requested", _reindex_status.rerun_requested)),
+            rerun_trigger=str(changes.get("rerun_trigger", _reindex_status.rerun_trigger)),
             document_count=int(changes.get("document_count", _reindex_status.document_count)),
             chunk_count=int(changes.get("chunk_count", _reindex_status.chunk_count)),
             elapsed_ms=int(changes.get("elapsed_ms", _reindex_status.elapsed_ms)),
@@ -91,23 +97,37 @@ def get_reindex_status() -> ReindexStatusSnapshot:
         return ReindexStatusSnapshot(**_reindex_status.__dict__)
 
 
+def consume_rerun_request() -> str:
+    with _reindex_status_lock:
+        if not _reindex_status.rerun_requested:
+            return ""
+        rerun_trigger = _reindex_status.rerun_trigger or _reindex_status.trigger
+        _set_reindex_status(rerun_requested=False, rerun_trigger="")
+        return rerun_trigger
+
+
 def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
     with _reindex_status_lock:
         if _reindex_status.state == "running":
+            status_snapshot = _set_reindex_status(
+                rerun_requested=True,
+                rerun_trigger=trigger,
+            )
             logger.info(
-                "Skipped reindex start because another reindex is already running.",
+                "Marked reindex rerun as requested while another reindex is running.",
                 extra={
-                    "event": "index_rebuild_start_skipped",
+                    "event": "index_rebuild_rerun_requested",
                     "context": {
                         "trigger": trigger,
-                        "current_trigger": _reindex_status.trigger,
-                        "state": _reindex_status.state,
+                        "current_trigger": status_snapshot.trigger,
+                        "state": status_snapshot.state,
+                        "rerun_requested": status_snapshot.rerun_requested,
                     },
                 },
             )
             return ReindexStartResult(
                 accepted=False,
-                status_snapshot=ReindexStatusSnapshot(**_reindex_status.__dict__),
+                status_snapshot=ReindexStatusSnapshot(**status_snapshot.__dict__),
             )
 
         started_at = _utc_now_iso()
@@ -117,6 +137,8 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
             started_at=started_at,
             finished_at=None,
             last_error="",
+            rerun_requested=False,
+            rerun_trigger="",
         )
 
     logger.info(
