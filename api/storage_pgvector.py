@@ -208,6 +208,7 @@ class PgvectorChunkStorage:
                 "active_backend_can_connect": False,
                 "active_backend_retrieval_ready": False,
                 "active_backend_indexing_ready": False,
+                "active_backend_indexing_preflight": "blocked",
                 "active_backend_message": (
                     "pgvector backend is not ready: "
                     f"{type(exc).__name__}: {exc}"
@@ -224,12 +225,13 @@ class PgvectorChunkStorage:
                 "active_backend_ready": True,
                 "active_backend_can_connect": True,
                 "active_backend_retrieval_ready": False,
-                "active_backend_indexing_ready": False,
+                "active_backend_indexing_ready": True,
+                "active_backend_indexing_preflight": "degraded",
                 "active_backend_message": (
                     "pgvector backend can connect, but the embedding stack is unavailable."
                 ),
                 "active_backend_indexing_message": (
-                    "pgvector backend can connect, but reindexing is not ready because the embedding stack is unavailable."
+                    "pgvector backend can reindex in degraded mode, but embeddings will be unavailable because the embedding stack is unavailable."
                 ),
             }
 
@@ -240,12 +242,13 @@ class PgvectorChunkStorage:
                 "active_backend_ready": True,
                 "active_backend_can_connect": True,
                 "active_backend_retrieval_ready": False,
-                "active_backend_indexing_ready": False,
+                "active_backend_indexing_ready": True,
+                "active_backend_indexing_preflight": "degraded",
                 "active_backend_message": (
                     "pgvector backend can connect, but the embedding model is not ready."
                 ),
                 "active_backend_indexing_message": (
-                    "pgvector backend can connect, but reindexing is not ready because the embedding model is unavailable."
+                    "pgvector backend can reindex in degraded mode, but embeddings will be unavailable because the embedding model is unavailable."
                 ),
             }
 
@@ -256,6 +259,7 @@ class PgvectorChunkStorage:
             "active_backend_can_connect": True,
             "active_backend_retrieval_ready": True,
             "active_backend_indexing_ready": True,
+            "active_backend_indexing_preflight": "native",
             "active_backend_message": "pgvector backend is ready for retrieval requests.",
             "active_backend_indexing_message": "pgvector backend is ready for reindex requests.",
         }

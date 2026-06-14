@@ -10,6 +10,7 @@ ReindexStateValue = Literal["idle", "running", "succeeded", "failed"]
 StorageBackendValue = Literal["file", "pgvector"]
 ReindexOutcomeValue = Literal["idle", "running", "succeeded", "failed", "rerun_requested"]
 StorageBackendReadinessValue = Literal["ready", "degraded"]
+IndexingPreflightValue = Literal["native", "degraded", "blocked"]
 StorageBackendIssueValue = Literal[
     "none",
     "connection_failed",
@@ -42,6 +43,7 @@ class HealthResponse(BaseModel):
     active_storage_backend_can_connect: bool
     active_storage_backend_retrieval_ready: bool
     active_storage_backend_indexing_ready: bool
+    active_storage_backend_indexing_preflight: IndexingPreflightValue
     active_storage_backend_message: str
     active_storage_backend_indexing_message: str
 
@@ -146,6 +148,7 @@ class StorageConfigResponse(BaseModel):
     active_backend_can_connect: bool
     active_backend_retrieval_ready: bool
     active_backend_indexing_ready: bool
+    active_backend_indexing_preflight: IndexingPreflightValue
     active_backend_message: str
     active_backend_indexing_message: str
     reindex_accepted: bool
@@ -181,6 +184,7 @@ class RuntimeObservabilityResponse(BaseModel):
     active_backend_can_connect: bool
     active_backend_retrieval_ready: bool
     active_backend_indexing_ready: bool
+    active_backend_indexing_preflight: IndexingPreflightValue
     active_backend_message: str
     active_backend_indexing_message: str
     reindex_state: ReindexStateValue

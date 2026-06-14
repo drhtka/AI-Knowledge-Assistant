@@ -201,6 +201,7 @@ def _build_storage_config_response(
         active_backend_can_connect=storage_config["active_backend_can_connect"],
         active_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
         active_backend_indexing_ready=storage_config["active_backend_indexing_ready"],
+        active_backend_indexing_preflight=storage_config["active_backend_indexing_preflight"],
         active_backend_message=storage_config["active_backend_message"],
         active_backend_indexing_message=storage_config["active_backend_indexing_message"],
         reindex_accepted=reindex_start.accepted,
@@ -380,6 +381,7 @@ def health() -> HealthResponse:
         active_storage_backend_can_connect=storage_config["active_backend_can_connect"],
         active_storage_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
         active_storage_backend_indexing_ready=storage_config["active_backend_indexing_ready"],
+        active_storage_backend_indexing_preflight=storage_config["active_backend_indexing_preflight"],
         active_storage_backend_message=storage_config["active_backend_message"],
         active_storage_backend_indexing_message=storage_config["active_backend_indexing_message"],
     )
@@ -450,6 +452,7 @@ def _build_runtime_observability_response() -> RuntimeObservabilityResponse:
         active_backend_can_connect=storage_config["active_backend_can_connect"],
         active_backend_retrieval_ready=storage_config["active_backend_retrieval_ready"],
         active_backend_indexing_ready=storage_config["active_backend_indexing_ready"],
+        active_backend_indexing_preflight=storage_config["active_backend_indexing_preflight"],
         active_backend_message=storage_config["active_backend_message"],
         active_backend_indexing_message=storage_config["active_backend_indexing_message"],
         reindex_state=reindex_status.state,
