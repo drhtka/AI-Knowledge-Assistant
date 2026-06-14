@@ -142,6 +142,14 @@ def _build_upload_feedback(request: Request) -> dict[str, object] | None:
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
+    chunk_size_options = sorted(
+        {config["chunk_size_words"] for config in CHUNKING_PRESETS.values()},
+        reverse=True,
+    )
+    chunk_overlap_options = sorted(
+        {config["chunk_overlap_words"] for config in CHUNKING_PRESETS.values()},
+        reverse=True,
+    )
     preset_display_options = [
         {"value": preset, "label": _preset_label(preset)}
         for preset in CHUNKING_PRESETS.keys()
@@ -184,6 +192,8 @@ def index(request: Request) -> HTMLResponse:
             "system_config": {
                 "default_retrieval_mode": "auto",
                 "available_retrieval_modes": RETRIEVAL_MODE_OPTIONS,
+                "available_chunk_sizes": chunk_size_options,
+                "available_chunk_overlaps": chunk_overlap_options,
                 "preset_display_options": preset_display_options,
                 "available_top_k": TOP_K_OPTIONS,
                 **get_chunking_config(),
