@@ -98,6 +98,27 @@ class PgvectorChunkStorage:
             },
         )
 
+    def _log_successful_retrieval(
+        self,
+        *,
+        mode: RetrievalModeValue,
+        question: str,
+        top_k: int,
+        hit_count: int,
+    ) -> None:
+        logger.info(
+            "pgvector retrieval completed successfully.",
+            extra={
+                "event": "pgvector_retrieval_succeeded",
+                "context": {
+                    "mode": mode,
+                    "question_length": len(question.strip()),
+                    "top_k": top_k,
+                    "hit_count": hit_count,
+                },
+            },
+        )
+
     def _rank_chunks_with_local_fallback(
         self,
         *,
@@ -409,6 +430,13 @@ class PgvectorChunkStorage:
         ]
         if not ranked_chunks:
             self._log_zero_results(mode=mode, question=question, top_k=top_k)
+        else:
+            self._log_successful_retrieval(
+                mode=mode,
+                question=question,
+                top_k=top_k,
+                hit_count=len(ranked_chunks),
+            )
         return ranked_chunks
 
     def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> list[tuple[LoadedChunk, float]]:
