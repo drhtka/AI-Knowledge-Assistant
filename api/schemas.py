@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 RetrievalModeValue = Literal["auto", "tfidf", "embeddings"]
 ChunkingPresetValue = Literal["baseline_120_30", "legacy_80_20", "small_50_10"]
+ReindexStateValue = Literal["idle", "running", "succeeded", "failed"]
 
 
 class HealthResponse(BaseModel):
@@ -83,6 +84,17 @@ class ReindexResponse(BaseModel):
     current_preset: ChunkingPresetValue
     chunk_size_words: int
     chunk_overlap_words: int
+
+
+class ReindexStatusResponse(BaseModel):
+    state: ReindexStateValue
+    trigger: str
+    started_at: str | None
+    finished_at: str | None
+    last_error: str
+    document_count: int
+    chunk_count: int
+    elapsed_ms: int
 
 
 class WebSearchRequest(BaseModel):

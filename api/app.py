@@ -9,7 +9,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunking_preset
-from api.indexing_service import ensure_index_loaded, ingest_uploaded_document, rebuild_index
+from api.indexing_service import (
+    ensure_index_loaded,
+    get_reindex_status,
+    ingest_uploaded_document,
+    rebuild_index,
+)
 from api.ingestion import build_document_preview
 from api.logging_utils import configure_logging
 from api.retrieval import ask, search
@@ -21,6 +26,7 @@ from api.schemas import (
     HealthResponse,
     IngestResponse,
     ReindexResponse,
+    ReindexStatusResponse,
     SearchRequest,
     SearchResponse,
     WebSearchRequest,
@@ -90,8 +96,8 @@ def _build_mode_comparison(question: str, top_k: int) -> list[dict[str, object]]
     return comparisons
 
 
-def _build_reindex_response() -> ReindexResponse:
-    reindex_result = rebuild_index()
+def _build_reindex_response(trigger: str = "manual") -> ReindexResponse:
+    reindex_result = rebuild_index(trigger=trigger)
     chunking_config = get_chunking_config()
     return ReindexResponse(
         status="ok",
@@ -101,6 +107,20 @@ def _build_reindex_response() -> ReindexResponse:
         current_preset=chunking_config["current_preset"],
         chunk_size_words=chunking_config["chunk_size_words"],
         chunk_overlap_words=chunking_config["chunk_overlap_words"],
+    )
+
+
+def _build_reindex_status_response() -> ReindexStatusResponse:
+    status_snapshot = get_reindex_status()
+    return ReindexStatusResponse(
+        state=status_snapshot.state,
+        trigger=status_snapshot.trigger,
+        started_at=status_snapshot.started_at,
+        finished_at=status_snapshot.finished_at,
+        last_error=status_snapshot.last_error,
+        document_count=status_snapshot.document_count,
+        chunk_count=status_snapshot.chunk_count,
+        elapsed_ms=status_snapshot.elapsed_ms,
     )
 
 
@@ -238,13 +258,18 @@ def chunking_config_endpoint() -> ChunkingConfigResponse:
 @app.post("/chunking-config", response_model=ChunkingConfigResponse)
 def update_chunking_config_endpoint(request: ChunkingConfigUpdateRequest) -> ChunkingConfigResponse:
     updated_config = set_chunking_preset(request.preset)
-    _build_reindex_response()
+    _build_reindex_response(trigger="chunking_config")
     return ChunkingConfigResponse(**updated_config)
 
 
 @app.post("/reindex", response_model=ReindexResponse)
 def reindex_endpoint() -> ReindexResponse:
-    return _build_reindex_response()
+    return _build_reindex_response(trigger="manual")
+
+
+@app.get("/reindex-status", response_model=ReindexStatusResponse)
+def reindex_status_endpoint() -> ReindexStatusResponse:
+    return _build_reindex_status_response()
 
 
 @app.post("/search", response_model=SearchResponse)
