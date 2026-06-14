@@ -5,8 +5,8 @@ from pathlib import Path
 from time import perf_counter
 
 from api.generation import generate_grounded_answer
-from api.ingestion import load_chunks
 from api.schemas import AskResponse, RetrievalModeValue, SearchHit, SearchResponse
+from api.storage import get_chunk_storage
 from api.vector_search import rank_chunks_by_similarity
 
 logger = logging.getLogger("ai_knowledge_assistant.retrieval")
@@ -15,6 +15,7 @@ logger = logging.getLogger("ai_knowledge_assistant.retrieval")
 def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> SearchResponse:
     started_at = perf_counter()
     try:
+        chunk_storage = get_chunk_storage()
         hits = [
             SearchHit(
                 document_id=chunk.document_id,
@@ -27,7 +28,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             )
             for chunk, score in rank_chunks_by_similarity(
                 question=question,
-                chunks=load_chunks(),
+                chunks=chunk_storage.load_chunks(),
                 mode=retrieval_mode,
             )[:top_k]
         ]

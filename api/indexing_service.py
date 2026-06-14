@@ -9,12 +9,10 @@ from time import perf_counter
 
 from api.ingestion import (
     build_document_preview,
-    build_processed_chunks,
-    clear_chunks_cache,
     estimate_document_chunk_count,
-    load_chunks,
     save_uploaded_document,
 )
+from api.storage import get_chunk_storage
 
 logger = logging.getLogger("ai_knowledge_assistant.indexing")
 
@@ -156,7 +154,7 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
 
 
 def ensure_index_loaded() -> tuple:
-    chunks = load_chunks()
+    chunks = get_chunk_storage().load_chunks()
     logger.info(
         "Index loaded into memory.",
         extra={
@@ -176,6 +174,7 @@ def rebuild_index(
     assume_running: bool = False,
 ) -> ReindexResult:
     started_at = perf_counter()
+    chunk_storage = get_chunk_storage()
     if started_at_iso is None:
         started_at_iso = _utc_now_iso()
     if not assume_running:
@@ -187,9 +186,7 @@ def rebuild_index(
             last_error="",
         )
     try:
-        clear_chunks_cache()
-        chunks = build_processed_chunks()
-        clear_chunks_cache()
+        chunks = chunk_storage.rebuild_chunks()
         elapsed_ms = int((perf_counter() - started_at) * 1000)
         result = ReindexResult(
             document_count=len({chunk.source_path for chunk in chunks}),
