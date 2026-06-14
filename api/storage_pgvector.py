@@ -12,6 +12,7 @@ from api.ingestion import (
     LoadedChunk,
     build_experiment_chunks,
 )
+from api.schemas import RetrievalModeValue
 from api.settings import (
     CHUNKING_VERSION,
     RAW_DATA_DIR,
@@ -20,6 +21,7 @@ from api.settings import (
     PGVECTOR_SCHEMA,
     PGVECTOR_TABLE,
 )
+from api.vector_search import rank_chunks_by_similarity
 
 
 @dataclass(frozen=True)
@@ -279,7 +281,7 @@ class PgvectorChunkStorage:
             connection.commit()
         return chunks
 
-    def rank_chunks_by_embeddings(self, question: str, top_k: int) -> list[tuple[LoadedChunk, float]] | None:
+    def _rank_chunks_by_pgvector_embeddings(self, question: str, top_k: int) -> list[tuple[LoadedChunk, float]]:
         if not question.strip() or top_k < 1:
             return []
 
@@ -323,6 +325,25 @@ class PgvectorChunkStorage:
             for row in rows
             if row[-1] is not None and float(row[-1]) > 0
         ]
+
+    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> list[tuple[LoadedChunk, float]]:
+        if mode == "tfidf":
+            return rank_chunks_by_similarity(
+                question=question,
+                chunks=self.load_chunks(),
+                mode="tfidf",
+            )[:top_k]
+
+        pgvector_ranked = self._rank_chunks_by_pgvector_embeddings(question=question, top_k=top_k)
+        if pgvector_ranked:
+            return pgvector_ranked
+
+        fallback_mode: RetrievalModeValue = "embeddings" if mode == "embeddings" else "auto"
+        return rank_chunks_by_similarity(
+            question=question,
+            chunks=self.load_chunks(),
+            mode=fallback_mode,
+        )[:top_k]
 
     def clear_cache(self) -> None:
         # The pgvector implementation does not keep a local cache yet.

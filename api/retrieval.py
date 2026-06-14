@@ -7,7 +7,6 @@ from time import perf_counter
 from api.generation import generate_grounded_answer
 from api.schemas import AskResponse, RetrievalModeValue, SearchHit, SearchResponse
 from api.storage import get_chunk_storage
-from api.vector_search import rank_chunks_by_similarity
 
 logger = logging.getLogger("ai_knowledge_assistant.retrieval")
 
@@ -16,33 +15,11 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
     started_at = perf_counter()
     try:
         chunk_storage = get_chunk_storage()
-        ranked_chunks: list[tuple[object, float]]
-
-        if retrieval_mode in {"auto", "embeddings"}:
-            pgvector_ranked = chunk_storage.rank_chunks_by_embeddings(question=question, top_k=top_k)
-            if pgvector_ranked:
-                ranked_chunks = pgvector_ranked
-            elif retrieval_mode == "embeddings":
-                chunks = chunk_storage.load_chunks()
-                ranked_chunks = rank_chunks_by_similarity(
-                    question=question,
-                    chunks=chunks,
-                    mode="embeddings",
-                )[:top_k]
-            else:
-                chunks = chunk_storage.load_chunks()
-                ranked_chunks = rank_chunks_by_similarity(
-                    question=question,
-                    chunks=chunks,
-                    mode="auto",
-                )[:top_k]
-        else:
-            chunks = chunk_storage.load_chunks()
-            ranked_chunks = rank_chunks_by_similarity(
-                question=question,
-                chunks=chunks,
-                mode=retrieval_mode,
-            )[:top_k]
+        ranked_chunks = chunk_storage.rank_chunks(
+            question=question,
+            top_k=top_k,
+            mode=retrieval_mode,
+        )
 
         hits = [
             SearchHit(
