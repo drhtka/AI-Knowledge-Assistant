@@ -204,12 +204,20 @@
                     <div class="dashboard-panel reindex-status-panel">
                         <div class="reindex-status-header">
                             <span class="stat-label">Reindex Status</span>
-                            <span
-                                id="reindex-status-badge"
-                                class="dashboard-badge reindex-badge reindex-badge-{{ reindex_status.state }}"
-                            >
-                                {{ reindex_status.state }}
-                            </span>
+                            <div class="reindex-status-actions">
+                                <button type="button" id="refresh-reindex-status-button">
+                                    Refresh
+                                </button>
+                                <button type="button" id="start-reindex-button">
+                                    Start Reindex
+                                </button>
+                                <span
+                                    id="reindex-status-badge"
+                                    class="dashboard-badge reindex-badge reindex-badge-{{ reindex_status.state }}"
+                                >
+                                    {{ reindex_status.state }}
+                                </span>
+                            </div>
                         </div>
                         <div class="reindex-status-grid">
                             <div class="reindex-status-item">
@@ -235,11 +243,18 @@
                                 <strong id="reindex-elapsed-ms">{{ reindex_status.elapsed_ms }}</strong>
                             </div>
                             <div class="reindex-status-item">
+                                <span class="meta">started at</span>
+                                <strong id="reindex-started-at">{{ reindex_status.started_at or "not started yet" }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
                                 <span class="meta">last update</span>
                                 <strong id="reindex-finished-at">{{ reindex_status.finished_at or "not finished yet" }}</strong>
                             </div>
                         </div>
-                        <p id="reindex-status-message" class="meta reindex-status-message">
+                        <p
+                            id="reindex-status-message"
+                            class="meta reindex-status-message {% if reindex_status.last_error %}reindex-status-error{% endif %}"
+                        >
                             {% if reindex_status.last_error %}
                             last_error={{ reindex_status.last_error }}
                             {% elif reindex_status.started_at %}

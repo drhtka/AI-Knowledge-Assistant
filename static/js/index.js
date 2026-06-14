@@ -11,8 +11,11 @@ const reindexRerunRequested = document.getElementById("reindex-rerun-requested")
 const reindexDocumentCount = document.getElementById("reindex-document-count");
 const reindexChunkCount = document.getElementById("reindex-chunk-count");
 const reindexElapsedMs = document.getElementById("reindex-elapsed-ms");
+const reindexStartedAt = document.getElementById("reindex-started-at");
 const reindexFinishedAt = document.getElementById("reindex-finished-at");
 const reindexStatusMessage = document.getElementById("reindex-status-message");
+const refreshReindexStatusButton = document.getElementById("refresh-reindex-status-button");
+const startReindexButton = document.getElementById("start-reindex-button");
 
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -67,10 +70,14 @@ function renderReindexStatus(payload) {
     if (reindexElapsedMs instanceof HTMLElement) {
         reindexElapsedMs.textContent = String(payload.elapsed_ms ?? 0);
     }
+    if (reindexStartedAt instanceof HTMLElement) {
+        reindexStartedAt.textContent = payload.started_at || "not started yet";
+    }
     if (reindexFinishedAt instanceof HTMLElement) {
         reindexFinishedAt.textContent = payload.finished_at || "not finished yet";
     }
     if (reindexStatusMessage instanceof HTMLElement) {
+        reindexStatusMessage.classList.toggle("reindex-status-error", Boolean(payload.last_error));
         if (payload.last_error) {
             reindexStatusMessage.textContent = `last_error=${payload.last_error}`;
         } else if (payload.rerun_requested && payload.rerun_trigger) {
@@ -82,6 +89,15 @@ function renderReindexStatus(payload) {
             reindexStatusMessage.textContent = "Waiting for the next reindex trigger.";
         }
     }
+}
+
+function renderReindexMessage(message, isError = false) {
+    if (!(reindexStatusMessage instanceof HTMLElement)) {
+        return;
+    }
+
+    reindexStatusMessage.textContent = message;
+    reindexStatusMessage.classList.toggle("reindex-status-error", isError);
 }
 
 async function refreshReindexStatus() {
@@ -98,6 +114,33 @@ async function refreshReindexStatus() {
         renderReindexStatus(payload);
     } catch {
         // Keep the last known status visible if polling fails.
+    }
+}
+
+async function startReindexFromUi() {
+    if (!(startReindexButton instanceof HTMLButtonElement)) {
+        return;
+    }
+
+    startReindexButton.disabled = true;
+    renderReindexMessage("Starting background reindex...");
+
+    try {
+        const response = await fetch("/reindex", { method: "POST" });
+        const payload = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = payload.detail ?? "Failed to start reindex.";
+            renderReindexMessage(errorMessage, true);
+            return;
+        }
+
+        renderReindexMessage(payload.message || "Background reindex request accepted.");
+        await refreshReindexStatus();
+    } catch {
+        renderReindexMessage("Failed to start reindex because the server did not respond.", true);
+    } finally {
+        startReindexButton.disabled = false;
     }
 }
 
@@ -287,6 +330,16 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
 }
 
 if (reindexStatusBadge instanceof HTMLElement) {
+    if (refreshReindexStatusButton instanceof HTMLButtonElement) {
+        refreshReindexStatusButton.addEventListener("click", () => {
+            void refreshReindexStatus();
+        });
+    }
+    if (startReindexButton instanceof HTMLButtonElement) {
+        startReindexButton.addEventListener("click", () => {
+            void startReindexFromUi();
+        });
+    }
     void refreshReindexStatus();
     window.setInterval(() => {
         void refreshReindexStatus();
