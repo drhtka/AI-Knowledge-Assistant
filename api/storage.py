@@ -88,6 +88,8 @@ def get_active_storage_backend_status() -> dict[str, object]:
     current_backend = get_active_storage_backend()
     if current_backend == "file":
         return {
+            "active_backend_state": "ready",
+            "active_backend_issue": "none",
             "active_backend_ready": True,
             "active_backend_can_connect": True,
             "active_backend_retrieval_ready": True,

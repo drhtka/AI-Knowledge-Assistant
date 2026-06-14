@@ -195,6 +195,8 @@ class PgvectorChunkStorage:
                     cursor.fetchone()
         except Exception as exc:
             return {
+                "active_backend_state": "degraded",
+                "active_backend_issue": "connection_failed",
                 "active_backend_ready": False,
                 "active_backend_can_connect": False,
                 "active_backend_retrieval_ready": False,
@@ -206,6 +208,8 @@ class PgvectorChunkStorage:
 
         if not embedding_stack_ready:
             return {
+                "active_backend_state": "degraded",
+                "active_backend_issue": "embedding_stack_unavailable",
                 "active_backend_ready": True,
                 "active_backend_can_connect": True,
                 "active_backend_retrieval_ready": False,
@@ -216,6 +220,8 @@ class PgvectorChunkStorage:
 
         if not embedding_model_ready:
             return {
+                "active_backend_state": "degraded",
+                "active_backend_issue": "embedding_model_unavailable",
                 "active_backend_ready": True,
                 "active_backend_can_connect": True,
                 "active_backend_retrieval_ready": False,
@@ -225,6 +231,8 @@ class PgvectorChunkStorage:
             }
 
         return {
+            "active_backend_state": "ready",
+            "active_backend_issue": "none",
             "active_backend_ready": True,
             "active_backend_can_connect": True,
             "active_backend_retrieval_ready": True,

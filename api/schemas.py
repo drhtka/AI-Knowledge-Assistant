@@ -8,6 +8,13 @@ RetrievalModeValue = Literal["auto", "tfidf", "embeddings"]
 ChunkingPresetValue = Literal["baseline_120_30", "legacy_80_20", "small_50_10"]
 ReindexStateValue = Literal["idle", "running", "succeeded", "failed"]
 StorageBackendValue = Literal["file", "pgvector"]
+StorageBackendReadinessValue = Literal["ready", "degraded"]
+StorageBackendIssueValue = Literal[
+    "none",
+    "connection_failed",
+    "embedding_stack_unavailable",
+    "embedding_model_unavailable",
+]
 
 
 class HealthResponse(BaseModel):
@@ -15,6 +22,8 @@ class HealthResponse(BaseModel):
     ready: bool
     project: str
     active_storage_backend: StorageBackendValue
+    active_storage_backend_state: StorageBackendReadinessValue
+    active_storage_backend_issue: StorageBackendIssueValue
     active_storage_backend_ready: bool
     active_storage_backend_can_connect: bool
     active_storage_backend_retrieval_ready: bool
@@ -104,6 +113,8 @@ class StorageConfigResponse(BaseModel):
     default_backend: StorageBackendValue
     available_backends: list[StorageBackendValue]
     runtime_override_active: bool
+    active_backend_state: StorageBackendReadinessValue
+    active_backend_issue: StorageBackendIssueValue
     active_backend_ready: bool
     active_backend_can_connect: bool
     active_backend_retrieval_ready: bool
