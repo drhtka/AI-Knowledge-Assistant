@@ -83,10 +83,18 @@
                                     name="retrieval_mode"
                                     form="question-form"
                                 >
+                                    <option
+                                        value=""
+                                        disabled
+                                        hidden
+                                        {% if not has_retrieval_mode_query %}selected{% endif %}
+                                    >
+                                        Обрати режим
+                                    </option>
                                     {% for mode in retrieval_mode_options %}
                                     <option
                                         value="{{ mode }}"
-                                        {% if retrieval_mode == mode %}selected{% endif %}
+                                        {% if has_retrieval_mode_query and retrieval_mode == mode %}selected{% endif %}
                                     >
                                         {{ mode }}
                                     </option>
@@ -112,15 +120,30 @@
                             </div>
                             <div class="control-field">
                                 <label for="top_k">Топ K</label>
-                                <input
+                                <select
                                     id="top_k"
                                     name="top_k"
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    value="{{ top_k }}"
                                     form="question-form"
-                                />
+                                >
+                                    <option
+                                        value=""
+                                        disabled
+                                        hidden
+                                        {% if not has_top_k_query %}selected{% endif %}
+                                    >
+                                        Обрати кількість
+                                    </option>
+                                    <option value="1" {% if has_top_k_query and top_k == 1 %}selected{% endif %}>1</option>
+                                    <option value="2" {% if has_top_k_query and top_k == 2 %}selected{% endif %}>2</option>
+                                    <option value="3" {% if has_top_k_query and top_k == 3 %}selected{% endif %}>3</option>
+                                    <option value="4" {% if has_top_k_query and top_k == 4 %}selected{% endif %}>4</option>
+                                    <option value="5" {% if has_top_k_query and top_k == 5 %}selected{% endif %}>5</option>
+                                    <option value="6" {% if has_top_k_query and top_k == 6 %}selected{% endif %}>6</option>
+                                    <option value="7" {% if has_top_k_query and top_k == 7 %}selected{% endif %}>7</option>
+                                    <option value="8" {% if has_top_k_query and top_k == 8 %}selected{% endif %}>8</option>
+                                    <option value="9" {% if has_top_k_query and top_k == 9 %}selected{% endif %}>9</option>
+                                    <option value="10" {% if has_top_k_query and top_k == 10 %}selected{% endif %}>10</option>
+                                </select>
                                 <p class="meta control-help">
                                     Визначає, скільки найкращих фрагментів
                                     локальний пошук передасть у відповідь.

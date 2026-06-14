@@ -138,8 +138,10 @@ def _build_upload_feedback(request: Request) -> dict[str, object] | None:
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
     question = request.query_params.get("question", "")
+    has_top_k_query = "top_k" in request.query_params
     top_k_raw = request.query_params.get("top_k", "3") or "3"
     top_k = max(1, min(10, int(top_k_raw)))
+    has_retrieval_mode_query = "retrieval_mode" in request.query_params
     retrieval_mode = request.query_params.get("retrieval_mode", "auto") or "auto"
     if retrieval_mode not in RETRIEVAL_MODE_OPTIONS:
         retrieval_mode = "auto"
@@ -166,7 +168,9 @@ def index(request: Request) -> HTMLResponse:
             "page_title": "AI Knowledge Assistant",
             "question": question,
             "top_k": top_k,
+            "has_top_k_query": has_top_k_query,
             "retrieval_mode": retrieval_mode,
+            "has_retrieval_mode_query": has_retrieval_mode_query,
             "retrieval_mode_options": RETRIEVAL_MODE_OPTIONS,
             "system_config": {
                 "default_retrieval_mode": "auto",
