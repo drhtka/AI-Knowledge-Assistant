@@ -86,6 +86,15 @@ class ReindexResponse(BaseModel):
     chunk_overlap_words: int
 
 
+class ReindexStartResponse(BaseModel):
+    status: str
+    accepted: bool
+    state: ReindexStateValue
+    trigger: str
+    started_at: str | None
+    message: str
+
+
 class ReindexStatusResponse(BaseModel):
     state: ReindexStateValue
     trigger: str

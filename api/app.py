@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from urllib.parse import urlencode
 
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -14,6 +14,7 @@ from api.indexing_service import (
     get_reindex_status,
     ingest_uploaded_document,
     rebuild_index,
+    start_reindex_job,
 )
 from api.ingestion import build_document_preview
 from api.logging_utils import configure_logging
@@ -26,6 +27,7 @@ from api.schemas import (
     HealthResponse,
     IngestResponse,
     ReindexResponse,
+    ReindexStartResponse,
     ReindexStatusResponse,
     SearchRequest,
     SearchResponse,
@@ -121,6 +123,27 @@ def _build_reindex_status_response() -> ReindexStatusResponse:
         document_count=status_snapshot.document_count,
         chunk_count=status_snapshot.chunk_count,
         elapsed_ms=status_snapshot.elapsed_ms,
+    )
+
+
+def _run_reindex_background_job(trigger: str, started_at: str | None) -> None:
+    rebuild_index(trigger=trigger, started_at_iso=started_at, assume_running=True)
+
+
+def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartResponse:
+    start_result = start_reindex_job(trigger=trigger)
+    message = (
+        "Reindex job started in the background."
+        if start_result.accepted
+        else "Reindex is already running."
+    )
+    return ReindexStartResponse(
+        status="accepted" if start_result.accepted else "already_running",
+        accepted=start_result.accepted,
+        state=start_result.status_snapshot.state,
+        trigger=start_result.status_snapshot.trigger,
+        started_at=start_result.status_snapshot.started_at,
+        message=message,
     )
 
 
@@ -262,9 +285,16 @@ def update_chunking_config_endpoint(request: ChunkingConfigUpdateRequest) -> Chu
     return ChunkingConfigResponse(**updated_config)
 
 
-@app.post("/reindex", response_model=ReindexResponse)
-def reindex_endpoint() -> ReindexResponse:
-    return _build_reindex_response(trigger="manual")
+@app.post("/reindex", response_model=ReindexStartResponse)
+def reindex_endpoint(background_tasks: BackgroundTasks) -> ReindexStartResponse:
+    response = _build_reindex_start_response(trigger="manual")
+    if response.accepted:
+        background_tasks.add_task(
+            _run_reindex_background_job,
+            response.trigger,
+            response.started_at,
+        )
+    return response
 
 
 @app.get("/reindex-status", response_model=ReindexStatusResponse)

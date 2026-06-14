@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import logging
 from pathlib import Path
-from threading import Lock
+from threading import RLock
 from time import perf_counter
 
 from api.ingestion import (
@@ -46,7 +46,13 @@ class ReindexStatusSnapshot:
     elapsed_ms: int
 
 
-_reindex_status_lock = Lock()
+@dataclass(frozen=True)
+class ReindexStartResult:
+    accepted: bool
+    status_snapshot: ReindexStatusSnapshot
+
+
+_reindex_status_lock = RLock()
 _reindex_status = ReindexStatusSnapshot(
     state="idle",
     trigger="startup",
@@ -84,6 +90,48 @@ def get_reindex_status() -> ReindexStatusSnapshot:
         return ReindexStatusSnapshot(**_reindex_status.__dict__)
 
 
+def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
+    with _reindex_status_lock:
+        if _reindex_status.state == "running":
+            logger.info(
+                "Skipped reindex start because another reindex is already running.",
+                extra={
+                    "event": "index_rebuild_start_skipped",
+                    "context": {
+                        "trigger": trigger,
+                        "current_trigger": _reindex_status.trigger,
+                        "state": _reindex_status.state,
+                    },
+                },
+            )
+            return ReindexStartResult(
+                accepted=False,
+                status_snapshot=ReindexStatusSnapshot(**_reindex_status.__dict__),
+            )
+
+        started_at = _utc_now_iso()
+        status_snapshot = _set_reindex_status(
+            state="running",
+            trigger=trigger,
+            started_at=started_at,
+            finished_at=None,
+            last_error="",
+        )
+
+    logger.info(
+        "Accepted reindex job start.",
+        extra={
+            "event": "index_rebuild_start_accepted",
+            "context": {
+                "trigger": trigger,
+                "state": status_snapshot.state,
+                "started_at": status_snapshot.started_at,
+            },
+        },
+    )
+    return ReindexStartResult(accepted=True, status_snapshot=status_snapshot)
+
+
 def _count_chunks_for_document(chunks: tuple, document_stem: str) -> int:
     return sum(1 for chunk in chunks if chunk.document_id.startswith(document_stem))
 
@@ -102,16 +150,23 @@ def ensure_index_loaded() -> tuple:
     return chunks
 
 
-def rebuild_index(trigger: str = "manual") -> ReindexResult:
+def rebuild_index(
+    trigger: str = "manual",
+    *,
+    started_at_iso: str | None = None,
+    assume_running: bool = False,
+) -> ReindexResult:
     started_at = perf_counter()
-    started_at_iso = _utc_now_iso()
-    _set_reindex_status(
-        state="running",
-        trigger=trigger,
-        started_at=started_at_iso,
-        finished_at=None,
-        last_error="",
-    )
+    if started_at_iso is None:
+        started_at_iso = _utc_now_iso()
+    if not assume_running:
+        _set_reindex_status(
+            state="running",
+            trigger=trigger,
+            started_at=started_at_iso,
+            finished_at=None,
+            last_error="",
+        )
     try:
         clear_chunks_cache()
         chunks = build_processed_chunks()
