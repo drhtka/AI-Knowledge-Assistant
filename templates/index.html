@@ -50,7 +50,6 @@
                     <div class="dashboard-stats">
                         <div class="stat-item">
                             <span class="stat-label">Поточний режим пошуку</span>
-                            <code class="stat-value">{{ retrieval_mode }}</code>
                             <div class="pill-row stat-pill-row">
                                 {% for mode in
                                 system_config.available_retrieval_modes %}
@@ -63,9 +62,6 @@
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Розмір фрагмента</span>
-                            <span class="stat-value"
-                                >{{ system_config.chunk_size_words }} слів</span
-                            >
                             <div class="pill-row stat-pill-row">
                                 {% for size in system_config.available_chunk_sizes %}
                                 <code
@@ -77,9 +73,6 @@
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Перекриття фрагментів</span>
-                            <span class="stat-value"
-                                >{{ system_config.chunk_overlap_words }} слів</span
-                            >
                             <div class="pill-row stat-pill-row">
                                 {% for overlap in
                                 system_config.available_chunk_overlaps %}
@@ -92,7 +85,6 @@
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Топ K</span>
-                            <span class="stat-value">{{ top_k }}</span>
                             <div class="pill-row stat-pill-row">
                                 {% for value in system_config.available_top_k %}
                                 <code
