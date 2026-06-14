@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import logging
 import re
 
 from api.chunking_config import get_chunking_config
@@ -22,6 +23,13 @@ from api.settings import (
     PGVECTOR_TABLE,
 )
 from api.vector_search import rank_chunks_by_similarity
+
+logger = logging.getLogger("ai_knowledge_assistant.pgvector_storage")
+
+
+class PgvectorRetrievalUnavailableError(RuntimeError):
+    """Raised when pgvector retrieval cannot be used and a rescue fallback is needed."""
+
 
 
 @dataclass(frozen=True)
@@ -46,6 +54,53 @@ class PgvectorChunkStorage:
                 embedding_dim=PGVECTOR_EMBEDDING_DIM,
             )
         )
+
+    def _log_rescue_fallback(
+        self,
+        *,
+        mode: RetrievalModeValue,
+        question: str,
+        top_k: int,
+        reason: str,
+        error: Exception | None = None,
+    ) -> None:
+        logger.warning(
+            "pgvector retrieval fell back to local ranking.",
+            extra={
+                "event": "pgvector_retrieval_fallback",
+                "context": {
+                    "mode": mode,
+                    "question_length": len(question.strip()),
+                    "top_k": top_k,
+                    "reason": reason,
+                    "error_type": type(error).__name__ if error is not None else "",
+                },
+            },
+            exc_info=error is not None,
+        )
+
+    def _rank_chunks_with_local_fallback(
+        self,
+        *,
+        question: str,
+        top_k: int,
+        mode: RetrievalModeValue,
+        reason: str,
+        error: Exception | None = None,
+    ) -> list[tuple[LoadedChunk, float]]:
+        self._log_rescue_fallback(
+            mode=mode,
+            question=question,
+            top_k=top_k,
+            reason=reason,
+            error=error,
+        )
+        fallback_mode: RetrievalModeValue = "embeddings" if mode == "embeddings" else "auto"
+        return rank_chunks_by_similarity(
+            question=question,
+            chunks=self.load_chunks(),
+            mode=fallback_mode,
+        )[:top_k]
 
     def _validate_identifier(self, value: str) -> str:
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
@@ -287,9 +342,11 @@ class PgvectorChunkStorage:
 
         query_embedding = encode_query(question)
         if query_embedding is None:
-            return []
+            raise PgvectorRetrievalUnavailableError(
+                "Embedding model is unavailable for pgvector query encoding."
+            )
         if len(query_embedding[0]) != self.config.embedding_dim:
-            raise ValueError(
+            raise PgvectorRetrievalUnavailableError(
                 "Configured PGVECTOR_EMBEDDING_DIM does not match the active embedding model output size."
             )
 
@@ -334,16 +391,24 @@ class PgvectorChunkStorage:
                 mode="tfidf",
             )[:top_k]
 
-        pgvector_ranked = self._rank_chunks_by_pgvector_embeddings(question=question, top_k=top_k)
-        if pgvector_ranked:
-            return pgvector_ranked
-
-        fallback_mode: RetrievalModeValue = "embeddings" if mode == "embeddings" else "auto"
-        return rank_chunks_by_similarity(
-            question=question,
-            chunks=self.load_chunks(),
-            mode=fallback_mode,
-        )[:top_k]
+        try:
+            return self._rank_chunks_by_pgvector_embeddings(question=question, top_k=top_k)
+        except PgvectorRetrievalUnavailableError as exc:
+            return self._rank_chunks_with_local_fallback(
+                question=question,
+                top_k=top_k,
+                mode=mode,
+                reason="pgvector_unavailable",
+                error=exc,
+            )
+        except Exception as exc:
+            return self._rank_chunks_with_local_fallback(
+                question=question,
+                top_k=top_k,
+                mode=mode,
+                reason="pgvector_query_failed",
+                error=exc,
+            )
 
     def clear_cache(self) -> None:
         # The pgvector implementation does not keep a local cache yet.
