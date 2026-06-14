@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from time import perf_counter
 
@@ -8,8 +9,11 @@ from api.ingestion import load_chunks
 from api.schemas import AskResponse, RetrievalModeValue, SearchHit, SearchResponse
 from api.vector_search import rank_chunks_by_similarity
 
+logger = logging.getLogger("ai_knowledge_assistant.retrieval")
+
 
 def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> SearchResponse:
+    started_at = perf_counter()
     hits = [
         SearchHit(
             document_id=chunk.document_id,
@@ -27,12 +31,27 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
         )[:top_k]
     ]
 
-    return SearchResponse(
+    response = SearchResponse(
         question=question,
         top_k=top_k,
         retrieval_mode=retrieval_mode,
         hits=hits,
     )
+    latency_ms = int((perf_counter() - started_at) * 1000)
+    logger.info(
+        "Search request completed.",
+        extra={
+            "event": "search_request_completed",
+            "context": {
+                "question_length": len(question.strip()),
+                "top_k": top_k,
+                "retrieval_mode": retrieval_mode,
+                "hit_count": len(hits),
+                "latency_ms": latency_ms,
+            },
+        },
+    )
+    return response
 
 
 def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> AskResponse:
@@ -41,7 +60,7 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
     generated = generate_grounded_answer(question=question, hits=result.hits)
     latency_ms = int((perf_counter() - started_at) * 1000)
 
-    return AskResponse(
+    response = AskResponse(
         question=question,
         answer=generated.answer,
         sources=[hit.title for hit in result.hits],
@@ -51,3 +70,18 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
         latency_ms=latency_ms,
         answer_mode=generated.answer_mode,
     )
+    logger.info(
+        "Ask request completed.",
+        extra={
+            "event": "ask_request_completed",
+            "context": {
+                "question_length": len(question.strip()),
+                "top_k": top_k,
+                "retrieval_mode": result.retrieval_mode,
+                "hit_count": len(result.hits),
+                "latency_ms": latency_ms,
+                "answer_mode": generated.answer_mode,
+            },
+        },
+    )
+    return response
