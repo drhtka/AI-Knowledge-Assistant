@@ -178,6 +178,66 @@ a {
     margin-bottom: 14px;
 }
 
+.reindex-status-panel {
+    margin-top: 14px;
+}
+
+.reindex-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.reindex-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.reindex-status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.62);
+}
+
+.reindex-status-item strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.reindex-status-message {
+    margin-bottom: 0;
+}
+
+.reindex-badge {
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.reindex-badge-idle,
+.reindex-badge-succeeded {
+    border-color: rgba(134, 239, 172, 0.35);
+    background: rgba(22, 101, 52, 0.2);
+    color: #dcfce7;
+}
+
+.reindex-badge-running {
+    border-color: rgba(250, 204, 21, 0.35);
+    background: rgba(161, 98, 7, 0.22);
+    color: #fef3c7;
+}
+
+.reindex-badge-failed {
+    border-color: rgba(248, 113, 113, 0.35);
+    background: rgba(127, 29, 29, 0.24);
+    color: #fecaca;
+}
+
 .control-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -413,6 +473,10 @@ pre {
     }
 
     .control-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reindex-status-grid {
         grid-template-columns: 1fr;
     }
 

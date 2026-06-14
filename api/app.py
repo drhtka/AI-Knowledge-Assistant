@@ -301,6 +301,7 @@ def index(request: Request) -> HTMLResponse:
             "ask_result": ask_result,
             "mode_comparison": mode_comparison,
             "upload_feedback": upload_feedback,
+            "reindex_status": _build_reindex_status_response(),
             "web_search_result": web_search_result,
             "web_search_error": web_search_error,
             "search_result_json": search_result.model_dump(mode="json") if search_result else {},

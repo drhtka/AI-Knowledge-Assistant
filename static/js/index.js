@@ -5,6 +5,14 @@ const uploadForm = document.getElementById("upload-form");
 const uploadResult = document.getElementById("upload-result");
 const chunkingPresetForm = document.getElementById("chunking-preset-form");
 const chunkingResult = document.getElementById("chunking-result");
+const reindexStatusBadge = document.getElementById("reindex-status-badge");
+const reindexTrigger = document.getElementById("reindex-trigger");
+const reindexRerunRequested = document.getElementById("reindex-rerun-requested");
+const reindexDocumentCount = document.getElementById("reindex-document-count");
+const reindexChunkCount = document.getElementById("reindex-chunk-count");
+const reindexElapsedMs = document.getElementById("reindex-elapsed-ms");
+const reindexFinishedAt = document.getElementById("reindex-finished-at");
+const reindexStatusMessage = document.getElementById("reindex-status-message");
 
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -26,6 +34,71 @@ function renderUploadStatus(message, className = "upload-result meta") {
 
     uploadResult.className = className;
     uploadResult.textContent = message;
+}
+
+function updateReindexBadge(state) {
+    if (!(reindexStatusBadge instanceof HTMLElement)) {
+        return;
+    }
+
+    reindexStatusBadge.textContent = state;
+    reindexStatusBadge.className = `dashboard-badge reindex-badge reindex-badge-${state}`;
+}
+
+function renderReindexStatus(payload) {
+    if (!(reindexStatusBadge instanceof HTMLElement)) {
+        return;
+    }
+
+    updateReindexBadge(payload.state ?? "idle");
+
+    if (reindexTrigger instanceof HTMLElement) {
+        reindexTrigger.textContent = payload.trigger || "unknown";
+    }
+    if (reindexRerunRequested instanceof HTMLElement) {
+        reindexRerunRequested.textContent = payload.rerun_requested ? "yes" : "no";
+    }
+    if (reindexDocumentCount instanceof HTMLElement) {
+        reindexDocumentCount.textContent = String(payload.document_count ?? 0);
+    }
+    if (reindexChunkCount instanceof HTMLElement) {
+        reindexChunkCount.textContent = String(payload.chunk_count ?? 0);
+    }
+    if (reindexElapsedMs instanceof HTMLElement) {
+        reindexElapsedMs.textContent = String(payload.elapsed_ms ?? 0);
+    }
+    if (reindexFinishedAt instanceof HTMLElement) {
+        reindexFinishedAt.textContent = payload.finished_at || "not finished yet";
+    }
+    if (reindexStatusMessage instanceof HTMLElement) {
+        if (payload.last_error) {
+            reindexStatusMessage.textContent = `last_error=${payload.last_error}`;
+        } else if (payload.rerun_requested && payload.rerun_trigger) {
+            reindexStatusMessage.textContent =
+                `rerun_trigger=${payload.rerun_trigger} | started_at=${payload.started_at || "pending"}`;
+        } else if (payload.started_at) {
+            reindexStatusMessage.textContent = `started_at=${payload.started_at}`;
+        } else {
+            reindexStatusMessage.textContent = "Waiting for the next reindex trigger.";
+        }
+    }
+}
+
+async function refreshReindexStatus() {
+    if (!(reindexStatusBadge instanceof HTMLElement)) {
+        return;
+    }
+
+    try {
+        const response = await fetch("/reindex-status");
+        if (!response.ok) {
+            return;
+        }
+        const payload = await response.json();
+        renderReindexStatus(payload);
+    } catch {
+        // Keep the last known status visible if polling fails.
+    }
 }
 
 function renderUploadSuccess(payload) {
@@ -159,6 +232,7 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
             }
 
             renderUploadSuccess(payload);
+            void refreshReindexStatus();
             uploadForm.reset();
         } catch {
             renderUploadStatus(
@@ -201,10 +275,20 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
             chunkingResult.className = "upload-result success-text";
             chunkingResult.textContent =
                 `Applied ${payload.current_preset}: chunk_size=${payload.chunk_size_words}, overlap=${payload.chunk_overlap_words}. ${payload.reindex_message}`;
-            window.location.reload();
+            void refreshReindexStatus();
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 300);
         } catch {
             chunkingResult.className = "upload-result error-text";
             chunkingResult.textContent = "Preset update failed because the server did not respond.";
         }
     });
+}
+
+if (reindexStatusBadge instanceof HTMLElement) {
+    void refreshReindexStatus();
+    window.setInterval(() => {
+        void refreshReindexStatus();
+    }, 4000);
 }

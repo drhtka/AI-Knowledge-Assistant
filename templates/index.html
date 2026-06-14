@@ -201,6 +201,54 @@
                         Застосуйте пресет, щоб перебудувати індекс фрагментів з
                         іншою базовою конфігурацією.
                     </div>
+                    <div class="dashboard-panel reindex-status-panel">
+                        <div class="reindex-status-header">
+                            <span class="stat-label">Reindex Status</span>
+                            <span
+                                id="reindex-status-badge"
+                                class="dashboard-badge reindex-badge reindex-badge-{{ reindex_status.state }}"
+                            >
+                                {{ reindex_status.state }}
+                            </span>
+                        </div>
+                        <div class="reindex-status-grid">
+                            <div class="reindex-status-item">
+                                <span class="meta">trigger</span>
+                                <strong id="reindex-trigger">{{ reindex_status.trigger }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">rerun requested</span>
+                                <strong id="reindex-rerun-requested">
+                                    {% if reindex_status.rerun_requested %}yes{% else %}no{% endif %}
+                                </strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">documents</span>
+                                <strong id="reindex-document-count">{{ reindex_status.document_count }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">chunks</span>
+                                <strong id="reindex-chunk-count">{{ reindex_status.chunk_count }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">latency ms</span>
+                                <strong id="reindex-elapsed-ms">{{ reindex_status.elapsed_ms }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">last update</span>
+                                <strong id="reindex-finished-at">{{ reindex_status.finished_at or "not finished yet" }}</strong>
+                            </div>
+                        </div>
+                        <p id="reindex-status-message" class="meta reindex-status-message">
+                            {% if reindex_status.last_error %}
+                            last_error={{ reindex_status.last_error }}
+                            {% elif reindex_status.started_at %}
+                            started_at={{ reindex_status.started_at }}
+                            {% else %}
+                            Waiting for the next reindex trigger.
+                            {% endif %}
+                        </p>
+                    </div>
                 </article>
             </section>
 
