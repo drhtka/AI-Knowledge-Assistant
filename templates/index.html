@@ -172,124 +172,96 @@
                 </article>
             </section>
 
-            <section class="layout-grid">
-                <article class="content-card">
-                    <h2>Запит</h2>
-                    <h3>Спробуйте демонстраційний запит</h3>
-                    <div class="actions">
-                        {% for item in demo_prompts %}
-                        <button
-                            type="button"
-                            data-demo-question="{{ item.question }}"
-                        >
-                            {{ item.label }}
-                        </button>
-                        {% endfor %}
-                    </div>
-                    <form id="question-form" method="get" action="/">
-                        <label for="question">Поставте запитання</label>
+            <section class="feature-grid">
+                <article class="feature-block feature-panel">
+                    <h2>Завантаження документів</h2>
+                    <p class="feature-intro">
+                        Додайте локальні матеріали перед тим, як ставити
+                        запитання.
+                    </p>
+                    <form
+                        id="upload-form"
+                        method="post"
+                        action="/upload"
+                        enctype="multipart/form-data"
+                    >
+                        <label for="upload_file">Документ</label>
                         <input
-                            id="question"
-                            name="question"
-                            value="{{ question }}"
-                            placeholder="Як мені оцінювати якість пошуку?"
+                            id="upload_file"
+                            name="file"
+                            type="file"
+                            accept=".txt,.md,.pdf"
                             required
                         />
-
+                        <p class="meta">
+                            Підтримувані формати: <code>.txt</code>,
+                            <code>.md</code>, and <code>.pdf</code>
+                        </p>
                         <div class="actions">
-                            <button type="submit">Запитати асистента</button>
-                            <button type="button" id="clear-form">Очистити</button>
+                            <button type="submit" id="upload-button">
+                                Завантажити документ
+                            </button>
                         </div>
                     </form>
-                </article>
-
-                <article class="content-card">
-                    <div class="feature-block">
-                        <h2>Завантаження документів</h2>
-                        <p class="feature-intro">
-                            Додайте локальні матеріали перед тим, як ставити
-                            запитання.
-                        </p>
-                        <form
-                            id="upload-form"
-                            method="post"
-                            action="/upload"
-                            enctype="multipart/form-data"
-                        >
-                            <label for="upload_file">Документ</label>
-                            <input
-                                id="upload_file"
-                                name="file"
-                                type="file"
-                                accept=".txt,.md,.pdf"
-                                required
-                            />
+                    <div id="upload-result" class="upload-result meta">
+                        {% if upload_feedback and upload_feedback.status == "ok"
+                        %}
+                        <div class="upload-result upload-result-card success-text">
+                            <strong>Документ успішно завантажено</strong>
                             <p class="meta">
-                                Підтримувані формати: <code>.txt</code>,
-                                <code>.md</code>, and <code>.pdf</code>
+                                файл={{ upload_feedback.source_name }} |
+                                тип={{ upload_feedback.file_type }} |
+                                фрагментів={{ upload_feedback.chunks_loaded }}
                             </p>
+                            <p class="meta">
+                                Документ тепер є частиною локального пошукового
+                                індексу.
+                            </p>
+                            {% if upload_feedback.preview_text %}
+                            <div class="upload-preview">
+                                <p class="meta"><strong>Попередній перегляд документа</strong></p>
+                                <p class="upload-preview-text">
+                                    {{ upload_feedback.preview_text }}
+                                </p>
+                            </div>
+                            {% endif %}
                             <div class="actions">
-                                <button type="submit" id="upload-button">
-                                    Завантажити документ
+                                <button
+                                    type="button"
+                                    data-demo-question="Про що документ {{ upload_feedback.source_name }}?"
+                                >
+                                    Про що цей документ?
+                                </button>
+                                <button
+                                    type="button"
+                                    data-demo-question="Які ключові моменти в {{ upload_feedback.source_name }}?"
+                                >
+                                    Ключові моменти
+                                </button>
+                                <button
+                                    type="button"
+                                    data-demo-question="Поясни простими словами зміст {{ upload_feedback.source_name }}."
+                                >
+                                    Простий підсумок
                                 </button>
                             </div>
-                        </form>
-                        <div id="upload-result" class="upload-result meta">
-                            {% if upload_feedback and upload_feedback.status == "ok"
-                            %}
-                            <div class="upload-result upload-result-card success-text">
-                                <strong>Документ успішно завантажено</strong>
-                                <p class="meta">
-                                    файл={{ upload_feedback.source_name }} |
-                                    тип={{ upload_feedback.file_type }} |
-                                    фрагментів={{ upload_feedback.chunks_loaded }}
-                                </p>
-                                <p class="meta">
-                                    Документ тепер є частиною локального
-                                    пошукового індексу.
-                                </p>
-                                {% if upload_feedback.preview_text %}
-                                <div class="upload-preview">
-                                    <p class="meta"><strong>Попередній перегляд документа</strong></p>
-                                    <p class="upload-preview-text">
-                                        {{ upload_feedback.preview_text }}
-                                    </p>
-                                </div>
-                                {% endif %}
-                                <div class="actions">
-                                    <button
-                                        type="button"
-                                        data-demo-question="Про що документ {{ upload_feedback.source_name }}?"
-                                    >
-                                        Про що цей документ?
-                                    </button>
-                                    <button
-                                        type="button"
-                                        data-demo-question="Які ключові моменти в {{ upload_feedback.source_name }}?"
-                                    >
-                                        Ключові моменти
-                                    </button>
-                                    <button
-                                        type="button"
-                                        data-demo-question="Поясни простими словами зміст {{ upload_feedback.source_name }}."
-                                    >
-                                        Простий підсумок
-                                    </button>
-                                </div>
-                            </div>
-                            {% elif upload_feedback and upload_feedback.status ==
-                            "error" %}
-                            <div class="upload-result error-text">
-                                {{ upload_feedback.error }}
-                            </div>
-                            {% else %} Завантажте документ, щоб оновити локальну
-                            базу знань. {% endif %}
                         </div>
+                        {% elif upload_feedback and upload_feedback.status ==
+                        "error" %}
+                        <div class="upload-result error-text">
+                            {{ upload_feedback.error }}
+                        </div>
+                        {% else %} Завантажте документ, щоб оновити локальну базу
+                        знань. {% endif %}
                     </div>
+                </article>
 
-                    <div class="section-divider"></div>
-
+                <article class="feature-block feature-panel">
                     <h2>Зовнішній вебпошук</h2>
+                    <p class="feature-intro">
+                        Шукайте зовнішні джерела та порівнюйте їх із локальним
+                        пошуком.
+                    </p>
                     <form method="get" action="/">
                         <label for="web_question">Запит для зовнішнього пошуку</label>
                         <input
@@ -315,6 +287,36 @@
                     </form>
                 </article>
             </section>
+
+            <article class="content-card ask-card">
+                <h2>Запит</h2>
+                <h3>Спробуйте демонстраційний запит</h3>
+                <div class="actions">
+                    {% for item in demo_prompts %}
+                    <button
+                        type="button"
+                        data-demo-question="{{ item.question }}"
+                    >
+                        {{ item.label }}
+                    </button>
+                    {% endfor %}
+                </div>
+                <form id="question-form" method="get" action="/">
+                    <label for="question">Поставте запитання</label>
+                    <input
+                        id="question"
+                        name="question"
+                        value="{{ question }}"
+                        placeholder="Як мені оцінювати якість пошуку?"
+                        required
+                    />
+
+                    <div class="actions">
+                        <button type="submit">Запитати асистента</button>
+                        <button type="button" id="clear-form">Очистити</button>
+                    </div>
+                </form>
+            </article>
 
             <article class="content-card">
                 <h2>Відповідь</h2>

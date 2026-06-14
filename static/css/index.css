@@ -34,9 +34,17 @@ a {
     gap: 20px;
 }
 
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin-bottom: 18px;
+}
+
 .layout-grid > *,
 .overview-grid > *,
-.mode-compare-grid > * {
+.mode-compare-grid > *,
+.feature-grid > * {
     min-width: 0;
 }
 
@@ -62,6 +70,16 @@ a {
     border-radius: 14px;
     padding: 16px;
     margin-bottom: 18px;
+}
+
+.feature-panel {
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.ask-card {
+    border-color: rgba(34, 197, 94, 0.35);
+    box-shadow: 0 16px 34px rgba(6, 95, 70, 0.14);
 }
 
 .overview-card {
@@ -348,7 +366,8 @@ pre {
 
 @media (max-width: 860px) {
     .overview-grid,
-    .layout-grid {
+    .layout-grid,
+    .feature-grid {
         grid-template-columns: 1fr;
     }
 
