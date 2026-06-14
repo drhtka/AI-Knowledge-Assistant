@@ -62,32 +62,32 @@
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Розмір фрагмента</span>
+                            <div class="pill-row stat-pill-row">
+                                {% for preset in system_config.preset_display_options %}
+                                <code
+                                    class="mode-pill {% if system_config.current_preset == preset.value %}is-active{% endif %}"
+                                    >{{ preset.label }}</code
+                                >
+                                {% endfor %}
+                            </div>
                             <span class="stat-value"
                                 >{{ system_config.chunk_size_words }} слів</span
                             >
-                            <div class="pill-row stat-pill-row">
-                                {% for size in system_config.available_chunk_sizes %}
-                                <code
-                                    class="mode-pill {% if system_config.chunk_size_words == size %}is-active{% endif %}"
-                                    >{{ size }}</code
-                                >
-                                {% endfor %}
-                            </div>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Перекриття фрагментів</span>
-                            <span class="stat-value"
-                                >{{ system_config.chunk_overlap_words }} слів</span
-                            >
                             <div class="pill-row stat-pill-row">
-                                {% for overlap in
-                                system_config.available_chunk_overlaps %}
+                                {% for preset in
+                                system_config.preset_display_options %}
                                 <code
-                                    class="mode-pill {% if system_config.chunk_overlap_words == overlap %}is-active{% endif %}"
-                                    >{{ overlap }}</code
+                                    class="mode-pill {% if system_config.current_preset == preset.value %}is-active{% endif %}"
+                                    >{{ preset.label }}</code
                                 >
                                 {% endfor %}
                             </div>
+                            <span class="stat-value"
+                                >{{ system_config.chunk_overlap_words }} слів</span
+                            >
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Топ K</span>
