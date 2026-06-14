@@ -43,6 +43,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             retrieval_execution_path=ranked_result.execution_path,
             retrieval_used_fallback=ranked_result.used_fallback,
             retrieval_execution_issue=ranked_result.execution_issue,
+            retrieval_outcome=ranked_result.outcome,
             hits=hits,
         )
         latency_ms = int((perf_counter() - started_at) * 1000)
@@ -58,6 +59,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
                     "retrieval_execution_path": ranked_result.execution_path,
                     "retrieval_used_fallback": ranked_result.used_fallback,
                     "retrieval_execution_issue": ranked_result.execution_issue,
+                    "retrieval_outcome": ranked_result.outcome,
                     "hit_count": len(hits),
                     "latency_ms": latency_ms,
                 },
@@ -100,6 +102,7 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
             retrieval_execution_path=result.retrieval_execution_path,
             retrieval_used_fallback=result.retrieval_used_fallback,
             retrieval_execution_issue=result.retrieval_execution_issue,
+            retrieval_outcome=result.retrieval_outcome,
             confidence=generated.confidence,
             latency_ms=latency_ms,
             answer_mode=generated.answer_mode,
@@ -116,6 +119,7 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
                     "retrieval_execution_path": result.retrieval_execution_path,
                     "retrieval_used_fallback": result.retrieval_used_fallback,
                     "retrieval_execution_issue": result.retrieval_execution_issue,
+                    "retrieval_outcome": result.retrieval_outcome,
                     "hit_count": len(result.hits),
                     "latency_ms": latency_ms,
                     "answer_mode": generated.answer_mode,

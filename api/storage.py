@@ -47,15 +47,17 @@ class FileChunkStorage:
         return chunks
 
     def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> "RankedChunkResult":
+        ranked_chunks = rank_chunks_by_similarity(
+            question=question,
+            chunks=self.load_chunks(),
+            mode=mode,
+        )[:top_k]
         return RankedChunkResult(
-            ranked_chunks=rank_chunks_by_similarity(
-                question=question,
-                chunks=self.load_chunks(),
-                mode=mode,
-            )[:top_k],
+            ranked_chunks=ranked_chunks,
             execution_path="file_native",
             used_fallback=False,
             execution_issue="none",
+            outcome="success" if ranked_chunks else "zero_results",
         )
 
     def clear_cache(self) -> None:

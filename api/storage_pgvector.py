@@ -162,6 +162,7 @@ class PgvectorChunkStorage:
             execution_path="pgvector_rescue_fallback",
             used_fallback=True,
             execution_issue=reason,
+            outcome="fallback",
         )
 
     def _validate_identifier(self, value: str) -> str:
@@ -467,6 +468,7 @@ class PgvectorChunkStorage:
                 execution_path="pgvector_native",
                 used_fallback=False,
                 execution_issue="none",
+                outcome="zero_results",
             )
 
         query_embedding = encode_query(question)
@@ -532,19 +534,22 @@ class PgvectorChunkStorage:
             execution_path="pgvector_native",
             used_fallback=False,
             execution_issue="none",
+            outcome="success" if ranked_chunks else "zero_results",
         )
 
     def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> RankedChunkResult:
         if mode == "tfidf":
+            ranked_chunks = rank_chunks_by_similarity(
+                question=question,
+                chunks=self.load_chunks(),
+                mode="tfidf",
+            )[:top_k]
             return RankedChunkResult(
-                ranked_chunks=rank_chunks_by_similarity(
-                    question=question,
-                    chunks=self.load_chunks(),
-                    mode="tfidf",
-                )[:top_k],
+                ranked_chunks=ranked_chunks,
                 execution_path="pgvector_local_tfidf",
                 used_fallback=False,
                 execution_issue="none",
+                outcome="success" if ranked_chunks else "zero_results",
             )
 
         started_at = perf_counter()

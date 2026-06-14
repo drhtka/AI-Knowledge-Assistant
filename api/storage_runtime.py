@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from api.ingestion import LoadedChunk
-from api.schemas import RetrievalExecutionIssueValue, RetrievalExecutionPathValue
+from api.schemas import RetrievalExecutionIssueValue, RetrievalExecutionPathValue, RetrievalOutcomeValue
 
 
 @dataclass(frozen=True)
@@ -12,3 +12,4 @@ class RankedChunkResult:
     execution_path: RetrievalExecutionPathValue
     used_fallback: bool
     execution_issue: RetrievalExecutionIssueValue
+    outcome: RetrievalOutcomeValue

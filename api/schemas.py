@@ -26,6 +26,7 @@ RetrievalExecutionIssueValue = Literal[
     "pgvector_unavailable",
     "pgvector_query_failed",
 ]
+RetrievalOutcomeValue = Literal["success", "zero_results", "fallback"]
 
 
 class HealthResponse(BaseModel):
@@ -65,6 +66,7 @@ class SearchResponse(BaseModel):
     retrieval_execution_path: RetrievalExecutionPathValue
     retrieval_used_fallback: bool
     retrieval_execution_issue: RetrievalExecutionIssueValue
+    retrieval_outcome: RetrievalOutcomeValue
     hits: list[SearchHit]
 
 
@@ -84,6 +86,7 @@ class AskResponse(BaseModel):
     retrieval_execution_path: RetrievalExecutionPathValue
     retrieval_used_fallback: bool
     retrieval_execution_issue: RetrievalExecutionIssueValue
+    retrieval_outcome: RetrievalOutcomeValue
     confidence: float
     latency_ms: int
     answer_mode: str
