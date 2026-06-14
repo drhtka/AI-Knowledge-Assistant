@@ -72,6 +72,10 @@ RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 TOP_K_OPTIONS = tuple(range(1, 11))
 
 
+def _preset_label(preset: str) -> str:
+    return preset.split("_", 1)[0]
+
+
 def _build_mode_comparison(question: str, top_k: int) -> list[dict[str, object]]:
     comparisons: list[dict[str, object]] = []
     for mode in RETRIEVAL_MODE_OPTIONS:
@@ -138,14 +142,10 @@ def _build_upload_feedback(request: Request) -> dict[str, object] | None:
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
-    chunk_size_options = sorted(
-        {config["chunk_size_words"] for config in CHUNKING_PRESETS.values()},
-        reverse=True,
-    )
-    chunk_overlap_options = sorted(
-        {config["chunk_overlap_words"] for config in CHUNKING_PRESETS.values()},
-        reverse=True,
-    )
+    preset_display_options = [
+        {"value": preset, "label": _preset_label(preset)}
+        for preset in CHUNKING_PRESETS.keys()
+    ]
     question = request.query_params.get("question", "")
     has_top_k_query = "top_k" in request.query_params
     top_k_raw = request.query_params.get("top_k", "3") or "3"
@@ -184,8 +184,7 @@ def index(request: Request) -> HTMLResponse:
             "system_config": {
                 "default_retrieval_mode": "auto",
                 "available_retrieval_modes": RETRIEVAL_MODE_OPTIONS,
-                "available_chunk_sizes": chunk_size_options,
-                "available_chunk_overlaps": chunk_overlap_options,
+                "preset_display_options": preset_display_options,
                 "available_top_k": TOP_K_OPTIONS,
                 **get_chunking_config(),
             },
