@@ -20,6 +20,7 @@ from api.schemas import (
     ChunkingConfigUpdateRequest,
     HealthResponse,
     IngestResponse,
+    ReindexResponse,
     SearchRequest,
     SearchResponse,
     WebSearchRequest,
@@ -87,6 +88,20 @@ def _build_mode_comparison(question: str, top_k: int) -> list[dict[str, object]]
             }
         )
     return comparisons
+
+
+def _build_reindex_response() -> ReindexResponse:
+    reindex_result = rebuild_index()
+    chunking_config = get_chunking_config()
+    return ReindexResponse(
+        status="ok",
+        document_count=reindex_result.document_count,
+        chunk_count=reindex_result.chunk_count,
+        elapsed_ms=reindex_result.elapsed_ms,
+        current_preset=chunking_config["current_preset"],
+        chunk_size_words=chunking_config["chunk_size_words"],
+        chunk_overlap_words=chunking_config["chunk_overlap_words"],
+    )
 
 
 async def _ingest_uploaded_file(file: UploadFile) -> IngestResponse:
@@ -223,8 +238,13 @@ def chunking_config_endpoint() -> ChunkingConfigResponse:
 @app.post("/chunking-config", response_model=ChunkingConfigResponse)
 def update_chunking_config_endpoint(request: ChunkingConfigUpdateRequest) -> ChunkingConfigResponse:
     updated_config = set_chunking_preset(request.preset)
-    rebuild_index()
+    _build_reindex_response()
     return ChunkingConfigResponse(**updated_config)
+
+
+@app.post("/reindex", response_model=ReindexResponse)
+def reindex_endpoint() -> ReindexResponse:
+    return _build_reindex_response()
 
 
 @app.post("/search", response_model=SearchResponse)

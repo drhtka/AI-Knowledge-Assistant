@@ -75,6 +75,16 @@ class ChunkingConfigResponse(BaseModel):
     available_presets: list[ChunkingPresetValue]
 
 
+class ReindexResponse(BaseModel):
+    status: str
+    document_count: int
+    chunk_count: int
+    elapsed_ms: int
+    current_preset: ChunkingPresetValue
+    chunk_size_words: int
+    chunk_overlap_words: int
+
+
 class WebSearchRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     top_k: int = Field(default=5, ge=1, le=10)
