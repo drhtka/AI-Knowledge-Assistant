@@ -119,21 +119,13 @@ demoButtons.forEach((button) => {
 
 if (clearFormButton && questionForm) {
     clearFormButton.addEventListener("click", () => {
-        const questionInput = questionForm.elements.namedItem("question");
-        const topKInput = questionForm.elements.namedItem("top_k");
-        const retrievalModeInput = questionForm.elements.namedItem("retrieval_mode");
-
-        if (questionInput instanceof HTMLInputElement) {
-            questionInput.value = "";
-        }
-
-        if (topKInput instanceof HTMLInputElement) {
-            topKInput.value = "3";
-        }
-
-        if (retrievalModeInput instanceof HTMLSelectElement) {
-            retrievalModeInput.value = "auto";
-        }
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.delete("question");
+        nextUrl.searchParams.delete("top_k");
+        nextUrl.searchParams.delete("retrieval_mode");
+        nextUrl.searchParams.delete("web_question");
+        nextUrl.searchParams.delete("web_top_k");
+        window.location.assign(nextUrl.pathname + nextUrl.search);
     });
 }
 
