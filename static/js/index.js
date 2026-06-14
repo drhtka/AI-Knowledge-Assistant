@@ -179,7 +179,7 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
         }
 
         chunkingResult.className = "upload-result meta";
-        chunkingResult.textContent = "Applying chunking preset and rebuilding chunks...";
+        chunkingResult.textContent = "Applying chunking preset and scheduling background reindex...";
 
         try {
             const response = await fetch("/chunking-config", {
@@ -200,7 +200,7 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
 
             chunkingResult.className = "upload-result success-text";
             chunkingResult.textContent =
-                `Applied ${payload.current_preset}: chunk_size=${payload.chunk_size_words}, overlap=${payload.chunk_overlap_words}.`;
+                `Applied ${payload.current_preset}: chunk_size=${payload.chunk_size_words}, overlap=${payload.chunk_overlap_words}. ${payload.reindex_message}`;
             window.location.reload();
         } catch {
             chunkingResult.className = "upload-result error-text";

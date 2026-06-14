@@ -79,6 +79,11 @@ class ChunkingConfigResponse(BaseModel):
     chunk_size_words: int
     chunk_overlap_words: int
     available_presets: list[ChunkingPresetValue]
+    reindex_accepted: bool
+    reindex_state: ReindexStateValue
+    reindex_started_at: str | None
+    reindex_message: str
+    rerun_requested: bool
 
 
 class ReindexResponse(BaseModel):

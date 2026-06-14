@@ -27,7 +27,6 @@ from api.schemas import (
     ChunkingConfigUpdateRequest,
     HealthResponse,
     IngestResponse,
-    ReindexResponse,
     ReindexStartResponse,
     ReindexStatusResponse,
     SearchRequest,
@@ -99,20 +98,6 @@ def _build_mode_comparison(question: str, top_k: int) -> list[dict[str, object]]
     return comparisons
 
 
-def _build_reindex_response(trigger: str = "manual") -> ReindexResponse:
-    reindex_result = rebuild_index(trigger=trigger)
-    chunking_config = get_chunking_config()
-    return ReindexResponse(
-        status="ok",
-        document_count=reindex_result.document_count,
-        chunk_count=reindex_result.chunk_count,
-        elapsed_ms=reindex_result.elapsed_ms,
-        current_preset=chunking_config["current_preset"],
-        chunk_size_words=chunking_config["chunk_size_words"],
-        chunk_overlap_words=chunking_config["chunk_overlap_words"],
-    )
-
-
 def _build_reindex_status_response() -> ReindexStatusResponse:
     status_snapshot = get_reindex_status()
     return ReindexStatusResponse(
@@ -162,6 +147,23 @@ def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartRespon
         started_at=start_result.status_snapshot.started_at,
         message=message,
         rerun_requested=start_result.status_snapshot.rerun_requested,
+    )
+
+
+def _build_chunking_config_response(
+    updated_config: dict[str, object],
+    reindex_start: ReindexStartResponse,
+) -> ChunkingConfigResponse:
+    return ChunkingConfigResponse(
+        current_preset=updated_config["current_preset"],
+        chunk_size_words=updated_config["chunk_size_words"],
+        chunk_overlap_words=updated_config["chunk_overlap_words"],
+        available_presets=updated_config["available_presets"],
+        reindex_accepted=reindex_start.accepted,
+        reindex_state=reindex_start.state,
+        reindex_started_at=reindex_start.started_at,
+        reindex_message=reindex_start.message,
+        rerun_requested=reindex_start.rerun_requested,
     )
 
 
@@ -315,14 +317,28 @@ def health() -> HealthResponse:
 
 @app.get("/chunking-config", response_model=ChunkingConfigResponse)
 def chunking_config_endpoint() -> ChunkingConfigResponse:
-    return ChunkingConfigResponse(**get_chunking_config())
+    chunking_config = get_chunking_config()
+    return ChunkingConfigResponse(
+        current_preset=chunking_config["current_preset"],
+        chunk_size_words=chunking_config["chunk_size_words"],
+        chunk_overlap_words=chunking_config["chunk_overlap_words"],
+        available_presets=chunking_config["available_presets"],
+        reindex_accepted=False,
+        reindex_state=get_reindex_status().state,
+        reindex_started_at=get_reindex_status().started_at,
+        reindex_message="No chunking reindex requested in this response.",
+        rerun_requested=get_reindex_status().rerun_requested,
+    )
 
 
 @app.post("/chunking-config", response_model=ChunkingConfigResponse)
-def update_chunking_config_endpoint(request: ChunkingConfigUpdateRequest) -> ChunkingConfigResponse:
+def update_chunking_config_endpoint(
+    request: ChunkingConfigUpdateRequest,
+    background_tasks: BackgroundTasks,
+) -> ChunkingConfigResponse:
     updated_config = set_chunking_preset(request.preset)
-    _build_reindex_response(trigger="chunking_config")
-    return ChunkingConfigResponse(**updated_config)
+    reindex_start = _start_reindex_background_job(background_tasks, trigger="chunking_config")
+    return _build_chunking_config_response(updated_config, reindex_start)
 
 
 @app.post("/reindex", response_model=ReindexStartResponse)
