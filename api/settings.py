@@ -33,8 +33,34 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _env_str(name: str, default: str = "") -> str:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip()
+
+
 CHUNK_SIZE_WORDS = _env_int("CHUNK_SIZE_WORDS", 120)
 CHUNK_OVERLAP_WORDS = _env_int("CHUNK_OVERLAP_WORDS", 30)
+
+CHUNK_STORAGE_BACKEND = _env_str("CHUNK_STORAGE_BACKEND", "file").lower() or "file"
+POSTGRES_HOST = _env_str("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = _env_int("POSTGRES_PORT", 5432)
+POSTGRES_DB = _env_str("POSTGRES_DB", "ai_knowledge_assistant")
+POSTGRES_USER = _env_str("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = _env_str("POSTGRES_PASSWORD", "postgres")
+POSTGRES_SSL_MODE = _env_str("POSTGRES_SSL_MODE", "disable")
+PGVECTOR_SCHEMA = _env_str("PGVECTOR_SCHEMA", "public")
+PGVECTOR_TABLE = _env_str("PGVECTOR_TABLE", "document_chunks")
+PGVECTOR_EMBEDDING_DIM = _env_int("PGVECTOR_EMBEDDING_DIM", 384)
+PGVECTOR_DATABASE_URL = _env_str(
+    "PGVECTOR_DATABASE_URL",
+    (
+        "postgresql://"
+        f"{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/"
+        f"{POSTGRES_DB}?sslmode={POSTGRES_SSL_MODE}"
+    ),
+)
 
 
 LLM_ENABLED = _env_flag("LLM_ENABLED", default=False)

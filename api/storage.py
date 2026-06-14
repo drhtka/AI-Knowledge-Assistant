@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Protocol
 
 from api.ingestion import LoadedChunk, build_processed_chunks, clear_chunks_cache, load_chunks
+from api.settings import CHUNK_STORAGE_BACKEND
+from api.storage_pgvector import build_pgvector_storage
 
 
 class ChunkStorage(Protocol):
@@ -32,8 +35,13 @@ class FileChunkStorage:
         clear_chunks_cache()
 
 
-_default_chunk_storage: ChunkStorage = FileChunkStorage()
-
-
+@lru_cache(maxsize=1)
 def get_chunk_storage() -> ChunkStorage:
-    return _default_chunk_storage
+    if CHUNK_STORAGE_BACKEND == "file":
+        return FileChunkStorage()
+    if CHUNK_STORAGE_BACKEND == "pgvector":
+        return build_pgvector_storage()
+    raise ValueError(
+        f"Unsupported chunk storage backend: {CHUNK_STORAGE_BACKEND!r}. "
+        "Expected one of: 'file', 'pgvector'."
+    )
