@@ -70,9 +70,14 @@
                                 >
                                 {% endfor %}
                             </div>
-                            <span class="stat-value"
-                                >{{ system_config.chunk_size_words }} слів</span
-                            >
+                            <div class="pill-row stat-pill-row">
+                                {% for size in system_config.available_chunk_sizes %}
+                                <code
+                                    class="mode-pill {% if system_config.chunk_size_words == size %}is-active{% endif %}"
+                                    >{{ size }}</code
+                                >
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Перекриття фрагментів</span>
@@ -85,9 +90,15 @@
                                 >
                                 {% endfor %}
                             </div>
-                            <span class="stat-value"
-                                >{{ system_config.chunk_overlap_words }} слів</span
-                            >
+                            <div class="pill-row stat-pill-row">
+                                {% for overlap in
+                                system_config.available_chunk_overlaps %}
+                                <code
+                                    class="mode-pill {% if system_config.chunk_overlap_words == overlap %}is-active{% endif %}"
+                                    >{{ overlap }}</code
+                                >
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Топ K</span>
