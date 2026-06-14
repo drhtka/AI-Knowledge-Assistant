@@ -51,22 +51,56 @@
                         <div class="stat-item">
                             <span class="stat-label">Поточний режим пошуку</span>
                             <code class="stat-value">{{ retrieval_mode }}</code>
+                            <div class="pill-row stat-pill-row">
+                                {% for mode in
+                                system_config.available_retrieval_modes %}
+                                <code
+                                    class="mode-pill {% if retrieval_mode == mode %}is-active{% endif %}"
+                                    >{{ mode }}</code
+                                >
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Розмір фрагмента</span>
                             <span class="stat-value"
                                 >{{ system_config.chunk_size_words }} слів</span
                             >
+                            <div class="pill-row stat-pill-row">
+                                {% for size in system_config.available_chunk_sizes %}
+                                <code
+                                    class="mode-pill {% if system_config.chunk_size_words == size %}is-active{% endif %}"
+                                    >{{ size }}</code
+                                >
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Перекриття фрагментів</span>
                             <span class="stat-value"
                                 >{{ system_config.chunk_overlap_words }} слів</span
                             >
+                            <div class="pill-row stat-pill-row">
+                                {% for overlap in
+                                system_config.available_chunk_overlaps %}
+                                <code
+                                    class="mode-pill {% if system_config.chunk_overlap_words == overlap %}is-active{% endif %}"
+                                    >{{ overlap }}</code
+                                >
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Топ K</span>
                             <span class="stat-value">{{ top_k }}</span>
+                            <div class="pill-row stat-pill-row">
+                                {% for value in system_config.available_top_k %}
+                                <code
+                                    class="mode-pill {% if top_k == value %}is-active{% endif %}"
+                                    >{{ value }}</code
+                                >
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                     <div class="dashboard-panel retrieval-controls-panel">
@@ -102,17 +136,6 @@
                                     поводиться для одного й того самого
                                     запитання.
                                 </p>
-                                <div class="modes-panel">
-                                    <span class="stat-label"
-                                        >Доступні режими</span
-                                    >
-                                    <div class="pill-row">
-                                        {% for mode in
-                                        system_config.available_retrieval_modes %}
-                                        <code class="mode-pill">{{ mode }}</code>
-                                        {% endfor %}
-                                    </div>
-                                </div>
                             </div>
                             <div class="control-field">
                                 <label for="top_k">Топ K</label>

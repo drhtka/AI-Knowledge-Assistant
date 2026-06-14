@@ -216,6 +216,16 @@ a {
     color: #dbeafe;
 }
 
+.mode-pill.is-active {
+    border-color: rgba(134, 239, 172, 0.55);
+    background: rgba(22, 101, 52, 0.32);
+    color: #dcfce7;
+}
+
+.stat-pill-row {
+    margin-top: 4px;
+}
+
 .section-kicker {
     margin: 0 0 10px;
     color: #93c5fd;

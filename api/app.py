@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from api.chunking_config import get_chunking_config, set_chunking_preset
+from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunking_preset
 from api.ingestion import (
     build_document_preview,
     build_processed_chunks,
@@ -69,6 +69,7 @@ DEMO_PROMPTS = [
 ]
 
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
+TOP_K_OPTIONS = tuple(range(1, 11))
 
 
 def _build_mode_comparison(question: str, top_k: int) -> list[dict[str, object]]:
@@ -137,6 +138,14 @@ def _build_upload_feedback(request: Request) -> dict[str, object] | None:
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
+    chunk_size_options = sorted(
+        {config["chunk_size_words"] for config in CHUNKING_PRESETS.values()},
+        reverse=True,
+    )
+    chunk_overlap_options = sorted(
+        {config["chunk_overlap_words"] for config in CHUNKING_PRESETS.values()},
+        reverse=True,
+    )
     question = request.query_params.get("question", "")
     has_top_k_query = "top_k" in request.query_params
     top_k_raw = request.query_params.get("top_k", "3") or "3"
@@ -175,6 +184,9 @@ def index(request: Request) -> HTMLResponse:
             "system_config": {
                 "default_retrieval_mode": "auto",
                 "available_retrieval_modes": RETRIEVAL_MODE_OPTIONS,
+                "available_chunk_sizes": chunk_size_options,
+                "available_chunk_overlaps": chunk_overlap_options,
+                "available_top_k": TOP_K_OPTIONS,
                 **get_chunking_config(),
             },
             "web_question": web_question,
