@@ -49,12 +49,6 @@
                     </div>
                     <div class="dashboard-stats">
                         <div class="stat-item">
-                            <span class="stat-label">Поточний пресет розбиття</span>
-                            <code class="stat-value"
-                                >{{ system_config.current_preset }}</code
-                            >
-                        </div>
-                        <div class="stat-item">
                             <span class="stat-label">Типовий режим пошуку</span>
                             <code class="stat-value"
                                 >{{ system_config.default_retrieval_mode }}</code
@@ -71,6 +65,10 @@
                             <span class="stat-value"
                                 >{{ system_config.chunk_overlap_words }} слів</span
                             >
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Топ K</span>
+                            <span class="stat-value">{{ top_k }}</span>
                         </div>
                     </div>
                     <div class="dashboard-panel retrieval-controls-panel">
