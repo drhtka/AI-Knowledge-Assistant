@@ -79,6 +79,25 @@ class PgvectorChunkStorage:
             exc_info=error is not None,
         )
 
+    def _log_zero_results(
+        self,
+        *,
+        mode: RetrievalModeValue,
+        question: str,
+        top_k: int,
+    ) -> None:
+        logger.info(
+            "pgvector retrieval returned zero results without using local fallback.",
+            extra={
+                "event": "pgvector_retrieval_zero_results",
+                "context": {
+                    "mode": mode,
+                    "question_length": len(question.strip()),
+                    "top_k": top_k,
+                },
+            },
+        )
+
     def _rank_chunks_with_local_fallback(
         self,
         *,
@@ -336,7 +355,13 @@ class PgvectorChunkStorage:
             connection.commit()
         return chunks
 
-    def _rank_chunks_by_pgvector_embeddings(self, question: str, top_k: int) -> list[tuple[LoadedChunk, float]]:
+    def _rank_chunks_by_pgvector_embeddings(
+        self,
+        *,
+        question: str,
+        top_k: int,
+        mode: RetrievalModeValue,
+    ) -> list[tuple[LoadedChunk, float]]:
         if not question.strip() or top_k < 1:
             return []
 
@@ -377,11 +402,14 @@ class PgvectorChunkStorage:
                 )
                 rows = cursor.fetchall()
 
-        return [
+        ranked_chunks = [
             (self._chunk_from_row(row[:-1]), float(row[-1]))
             for row in rows
             if row[-1] is not None and float(row[-1]) > 0
         ]
+        if not ranked_chunks:
+            self._log_zero_results(mode=mode, question=question, top_k=top_k)
+        return ranked_chunks
 
     def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> list[tuple[LoadedChunk, float]]:
         if mode == "tfidf":
@@ -392,7 +420,11 @@ class PgvectorChunkStorage:
             )[:top_k]
 
         try:
-            return self._rank_chunks_by_pgvector_embeddings(question=question, top_k=top_k)
+            return self._rank_chunks_by_pgvector_embeddings(
+                question=question,
+                top_k=top_k,
+                mode=mode,
+            )
         except PgvectorRetrievalUnavailableError as exc:
             return self._rank_chunks_with_local_fallback(
                 question=question,
