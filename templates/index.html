@@ -73,6 +73,50 @@
                             >
                         </div>
                     </div>
+                    <div class="dashboard-panel retrieval-controls-panel">
+                        <span class="stat-label">Параметри пошуку</span>
+                        <div class="control-grid">
+                            <div class="control-field">
+                                <label for="retrieval_mode">Режим пошуку</label>
+                                <select
+                                    id="retrieval_mode"
+                                    name="retrieval_mode"
+                                    form="question-form"
+                                >
+                                    {% for mode in retrieval_mode_options %}
+                                    <option
+                                        value="{{ mode }}"
+                                        {% if retrieval_mode == mode %}selected{% endif %}
+                                    >
+                                        {{ mode }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <p class="meta control-help">
+                                    Перемикайтеся між `auto`, `tfidf` та
+                                    `embeddings`, щоб порівняти, як шар пошуку
+                                    поводиться для одного й того самого
+                                    запитання.
+                                </p>
+                            </div>
+                            <div class="control-field">
+                                <label for="top_k">Топ K</label>
+                                <input
+                                    id="top_k"
+                                    name="top_k"
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value="{{ top_k }}"
+                                    form="question-form"
+                                />
+                                <p class="meta control-help">
+                                    Визначає, скільки найкращих фрагментів
+                                    локальний пошук передасть у відповідь.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="modes-panel">
                         <span class="stat-label">Доступні режими</span>
                         <div class="pill-row">
@@ -129,33 +173,6 @@
                             placeholder="Як мені оцінювати якість пошуку?"
                             required
                         />
-
-                        <label for="top_k">Топ K</label>
-                        <input
-                            id="top_k"
-                            name="top_k"
-                            type="number"
-                            min="1"
-                            max="10"
-                            value="{{ top_k }}"
-                        />
-
-                        <label for="retrieval_mode">Режим пошуку</label>
-                        <select id="retrieval_mode" name="retrieval_mode">
-                            {% for mode in retrieval_mode_options %}
-                            <option
-                                value="{{ mode }}"
-                                {% if retrieval_mode == mode %}selected{% endif %}
-                            >
-                                {{ mode }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <p class="meta">
-                            Перемикайтеся між `auto`, `tfidf` та `embeddings`,
-                            щоб порівняти, як шар пошуку поводиться для одного й
-                            того самого запитання.
-                        </p>
 
                         <div class="actions">
                             <button type="submit">Запитати асистента</button>
