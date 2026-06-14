@@ -16,6 +16,34 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
     started_at = perf_counter()
     try:
         chunk_storage = get_chunk_storage()
+        ranked_chunks: list[tuple[object, float]]
+
+        if retrieval_mode in {"auto", "embeddings"}:
+            pgvector_ranked = chunk_storage.rank_chunks_by_embeddings(question=question, top_k=top_k)
+            if pgvector_ranked:
+                ranked_chunks = pgvector_ranked
+            elif retrieval_mode == "embeddings":
+                chunks = chunk_storage.load_chunks()
+                ranked_chunks = rank_chunks_by_similarity(
+                    question=question,
+                    chunks=chunks,
+                    mode="embeddings",
+                )[:top_k]
+            else:
+                chunks = chunk_storage.load_chunks()
+                ranked_chunks = rank_chunks_by_similarity(
+                    question=question,
+                    chunks=chunks,
+                    mode="auto",
+                )[:top_k]
+        else:
+            chunks = chunk_storage.load_chunks()
+            ranked_chunks = rank_chunks_by_similarity(
+                question=question,
+                chunks=chunks,
+                mode=retrieval_mode,
+            )[:top_k]
+
         hits = [
             SearchHit(
                 document_id=chunk.document_id,
@@ -26,11 +54,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
                 source_name=Path(chunk.source_path).name,
                 chunk_index=chunk.chunk_index,
             )
-            for chunk, score in rank_chunks_by_similarity(
-                question=question,
-                chunks=chunk_storage.load_chunks(),
-                mode=retrieval_mode,
-            )[:top_k]
+            for chunk, score in ranked_chunks
         ]
 
         response = SearchResponse(

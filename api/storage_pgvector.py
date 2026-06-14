@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import re
 
 from api.chunking_config import get_chunking_config
+from api.embeddings import compose_embedding_text, encode_query, encode_texts, vector_to_pgvector_literal
 from api.ingestion import (
     IGNORED_FILENAMES,
     SUPPORTED_EXTENSIONS,
@@ -69,6 +70,18 @@ class PgvectorChunkStorage:
             ) from exc
 
         return psycopg.connect(self.config.database_url)
+
+    def _chunk_from_row(self, row: tuple[object, ...]) -> LoadedChunk:
+        return LoadedChunk(
+            document_id=str(row[0]),
+            title=str(row[1]),
+            content=str(row[2]),
+            source_path=str(row[3]),
+            file_type=str(row[4]),
+            chunk_index=int(row[5]),
+            chunk_size_words=int(row[6]),
+            chunk_overlap_words=int(row[7]),
+        )
 
     def _ensure_schema(self, connection: object) -> None:
         chunks_table = self._chunks_table_name()
@@ -188,22 +201,25 @@ class PgvectorChunkStorage:
                 rows = cursor.fetchall()
 
         return tuple(
-            LoadedChunk(
-                document_id=row[0],
-                title=row[1],
-                content=row[2],
-                source_path=row[3],
-                file_type=row[4],
-                chunk_index=row[5],
-                chunk_size_words=row[6],
-                chunk_overlap_words=row[7],
-            )
+            self._chunk_from_row(row)
             for row in rows
         )
 
     def rebuild_chunks(self) -> tuple[LoadedChunk, ...]:
         config = get_chunking_config()
         chunks = build_experiment_chunks()
+        embedding_rows = encode_texts(
+            tuple(compose_embedding_text(chunk.title, chunk.content) for chunk in chunks)
+        )
+        vector_literals: list[str | None]
+        if embedding_rows is None:
+            vector_literals = [None] * len(chunks)
+        else:
+            vector_literals = [vector_to_pgvector_literal(row) for row in embedding_rows]
+            if vector_literals and len(embedding_rows[0]) != self.config.embedding_dim:
+                raise ValueError(
+                    "Configured PGVECTOR_EMBEDDING_DIM does not match the active embedding model output size."
+                )
         with self._connect() as connection:
             self._ensure_schema(connection)
             with connection.cursor() as cursor:
@@ -221,7 +237,7 @@ class PgvectorChunkStorage:
                         chunk_overlap_words,
                         embedding,
                         indexed_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL, NOW())
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::vector, NOW())
                     """,
                     [
                         (
@@ -233,8 +249,9 @@ class PgvectorChunkStorage:
                             chunk.chunk_index,
                             chunk.chunk_size_words,
                             chunk.chunk_overlap_words,
+                            vector_literal,
                         )
-                        for chunk in chunks
+                        for chunk, vector_literal in zip(chunks, vector_literals, strict=False)
                     ],
                 )
                 cursor.execute(
@@ -261,6 +278,51 @@ class PgvectorChunkStorage:
                 )
             connection.commit()
         return chunks
+
+    def rank_chunks_by_embeddings(self, question: str, top_k: int) -> list[tuple[LoadedChunk, float]] | None:
+        if not question.strip() or top_k < 1:
+            return []
+
+        query_embedding = encode_query(question)
+        if query_embedding is None:
+            return []
+        if len(query_embedding[0]) != self.config.embedding_dim:
+            raise ValueError(
+                "Configured PGVECTOR_EMBEDDING_DIM does not match the active embedding model output size."
+            )
+
+        query_vector = vector_to_pgvector_literal(query_embedding)
+        with self._connect() as connection:
+            self._ensure_schema(connection)
+            if self._is_storage_stale(connection):
+                self.rebuild_chunks()
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT
+                        document_id,
+                        title,
+                        content,
+                        source_path,
+                        file_type,
+                        chunk_index,
+                        chunk_size_words,
+                        chunk_overlap_words,
+                        1 - (embedding <=> %s::vector) AS score
+                    FROM {self._chunks_table_name()}
+                    WHERE embedding IS NOT NULL
+                    ORDER BY embedding <=> %s::vector
+                    LIMIT %s
+                    """,
+                    (query_vector, query_vector, top_k),
+                )
+                rows = cursor.fetchall()
+
+        return [
+            (self._chunk_from_row(row[:-1]), float(row[-1]))
+            for row in rows
+            if row[-1] is not None and float(row[-1]) > 0
+        ]
 
     def clear_cache(self) -> None:
         # The pgvector implementation does not keep a local cache yet.

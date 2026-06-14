@@ -16,6 +16,9 @@ class ChunkStorage(Protocol):
     def rebuild_chunks(self) -> tuple[LoadedChunk, ...]:
         ...
 
+    def rank_chunks_by_embeddings(self, question: str, top_k: int) -> list[tuple[LoadedChunk, float]] | None:
+        ...
+
     def clear_cache(self) -> None:
         ...
 
@@ -30,6 +33,9 @@ class FileChunkStorage:
         chunks = build_processed_chunks()
         clear_chunks_cache()
         return chunks
+
+    def rank_chunks_by_embeddings(self, _question: str, _top_k: int) -> list[tuple[LoadedChunk, float]] | None:
+        return None
 
     def clear_cache(self) -> None:
         clear_chunks_cache()
