@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="uk">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,16 +11,17 @@
     </head>
     <body>
         <main>
-            <h1>AI Knowledge Assistant</h1>
+            <h1>AI Асистент Знань</h1>
             <p class="intro">
-                Portfolio demo for local document ingestion, configurable retrieval,
-                grounded answers, and evaluation-aware search workflows.
+                Демонстрація портфоліо для локального завантаження документів,
+                налаштовуваного пошуку, обґрунтованих відповідей і сценаріїв
+                пошуку з урахуванням оцінювання.
             </p>
 
             <section class="layout-grid">
                 <article class="content-card">
-                    <h2>Ask</h2>
-                    <h3>Try a Demo Prompt</h3>
+                    <h2>Запит</h2>
+                    <h3>Спробуйте демонстраційний запит</h3>
                     <div class="actions">
                         {% for item in demo_prompts %}
                         <button
@@ -32,16 +33,16 @@
                         {% endfor %}
                     </div>
                     <form id="question-form" method="get" action="/">
-                        <label for="question">Ask a Question</label>
+                        <label for="question">Поставте запитання</label>
                         <input
                             id="question"
                             name="question"
                             value="{{ question }}"
-                            placeholder="How should I evaluate retrieval quality?"
+                            placeholder="Як мені оцінювати якість пошуку?"
                             required
                         />
 
-                        <label for="top_k">Top K</label>
+                        <label for="top_k">Топ K</label>
                         <input
                             id="top_k"
                             name="top_k"
@@ -51,7 +52,7 @@
                             value="{{ top_k }}"
                         />
 
-                        <label for="retrieval_mode">Retrieval Mode</label>
+                        <label for="retrieval_mode">Режим пошуку</label>
                         <select id="retrieval_mode" name="retrieval_mode">
                             {% for mode in retrieval_mode_options %}
                             <option
@@ -63,22 +64,24 @@
                             {% endfor %}
                         </select>
                         <p class="meta">
-                            Switch between `auto`, `tfidf`, and `embeddings` to
-                            compare how the retrieval layer behaves on the same question.
+                            Перемикайтеся між `auto`, `tfidf` та `embeddings`,
+                            щоб порівняти, як шар пошуку поводиться для одного й
+                            того самого запитання.
                         </p>
 
                         <div class="actions">
-                            <button type="submit">Ask Assistant</button>
-                            <button type="button" id="clear-form">Clear</button>
+                            <button type="submit">Запитати асистента</button>
+                            <button type="button" id="clear-form">Очистити</button>
                         </div>
                     </form>
                 </article>
 
                 <article class="content-card">
                     <div class="feature-block">
-                        <h2>Upload Documents</h2>
+                        <h2>Завантаження документів</h2>
                         <p class="feature-intro">
-                            Add local source material before asking a question.
+                            Додайте локальні матеріали перед тим, як ставити
+                            запитання.
                         </p>
                         <form
                             id="upload-form"
@@ -86,7 +89,7 @@
                             action="/upload"
                             enctype="multipart/form-data"
                         >
-                            <label for="upload_file">Document</label>
+                            <label for="upload_file">Документ</label>
                             <input
                                 id="upload_file"
                                 name="file"
@@ -95,12 +98,12 @@
                                 required
                             />
                             <p class="meta">
-                                Supported formats: <code>.txt</code>,
+                                Підтримувані формати: <code>.txt</code>,
                                 <code>.md</code>, and <code>.pdf</code>
                             </p>
                             <div class="actions">
                                 <button type="submit" id="upload-button">
-                                    Upload Document
+                                    Завантажити документ
                                 </button>
                             </div>
                         </form>
@@ -108,18 +111,19 @@
                             {% if upload_feedback and upload_feedback.status == "ok"
                             %}
                             <div class="upload-result upload-result-card success-text">
-                                <strong>Document uploaded successfully</strong>
+                                <strong>Документ успішно завантажено</strong>
                                 <p class="meta">
-                                    file={{ upload_feedback.source_name }} |
-                                    type={{ upload_feedback.file_type }} |
-                                    chunks={{ upload_feedback.chunks_loaded }}
+                                    файл={{ upload_feedback.source_name }} |
+                                    тип={{ upload_feedback.file_type }} |
+                                    фрагментів={{ upload_feedback.chunks_loaded }}
                                 </p>
                                 <p class="meta">
-                                    The document is now part of the local retrieval index.
+                                    Документ тепер є частиною локального
+                                    пошукового індексу.
                                 </p>
                                 {% if upload_feedback.preview_text %}
                                 <div class="upload-preview">
-                                    <p class="meta"><strong>Document Preview</strong></p>
+                                    <p class="meta"><strong>Попередній перегляд документа</strong></p>
                                     <p class="upload-preview-text">
                                         {{ upload_feedback.preview_text }}
                                     </p>
@@ -128,21 +132,21 @@
                                 <div class="actions">
                                     <button
                                         type="button"
-                                        data-demo-question="What is {{ upload_feedback.source_name }} about?"
+                                        data-demo-question="Про що документ {{ upload_feedback.source_name }}?"
                                     >
-                                        What is this document about?
+                                        Про що цей документ?
                                     </button>
                                     <button
                                         type="button"
-                                        data-demo-question="What are the key points in {{ upload_feedback.source_name }}?"
+                                        data-demo-question="Які ключові моменти в {{ upload_feedback.source_name }}?"
                                     >
-                                        Key points
+                                        Ключові моменти
                                     </button>
                                     <button
                                         type="button"
-                                        data-demo-question="Summarize {{ upload_feedback.source_name }} in simple terms."
+                                        data-demo-question="Поясни простими словами зміст {{ upload_feedback.source_name }}."
                                     >
-                                        Simple summary
+                                        Простий підсумок
                                     </button>
                                 </div>
                             </div>
@@ -151,24 +155,24 @@
                             <div class="upload-result error-text">
                                 {{ upload_feedback.error }}
                             </div>
-                            {% else %} Upload a document to refresh the local
-                            knowledge base. {% endif %}
+                            {% else %} Завантажте документ, щоб оновити локальну
+                            базу знань. {% endif %}
                         </div>
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <h2>External Web Search</h2>
+                    <h2>Зовнішній вебпошук</h2>
                     <form method="get" action="/">
-                        <label for="web_question">External Search Query</label>
+                        <label for="web_question">Запит для зовнішнього пошуку</label>
                         <input
                             id="web_question"
                             name="web_question"
                             value="{{ web_question }}"
-                            placeholder="Find recent RAG architecture examples"
+                            placeholder="Знайти свіжі приклади архітектур RAG"
                         />
 
-                        <label for="web_top_k">Results Limit</label>
+                        <label for="web_top_k">Ліміт результатів</label>
                         <input
                             id="web_top_k"
                             name="web_top_k"
@@ -179,48 +183,47 @@
                         />
 
                         <div class="actions">
-                            <button type="submit">Search External Web</button>
+                            <button type="submit">Шукати в інтернеті</button>
                         </div>
                     </form>
 
-                    <h2>Project Overview</h2>
+                    <h2>Огляд проєкту</h2>
                     <ul class="list-reset">
                         <li>
-                            <code>api/</code> app, schemas, retrieval baseline
+                            <code>api/</code> застосунок, схеми, базова логіка пошуку
                         </li>
-                        <li><code>data/</code> local corpora and eval sets</li>
-                        <li><code>notebooks/</code> experiments</li>
+                        <li><code>data/</code> локальні корпуси та набори для оцінювання</li>
+                        <li><code>notebooks/</code> експерименти</li>
                         <li>
-                            <code>src/</code> future ingestion and indexing
-                            modules
+                            <code>src/</code> майбутні модулі завантаження та
+                            індексації
                         </li>
                     </ul>
 
-                    <h2>Current System Setup</h2>
+                    <h2>Поточна конфігурація системи</h2>
                     <ul class="list-reset">
                         <li>
-                            <strong>Current chunking preset:</strong>
+                            <strong>Поточний пресет розбиття:</strong>
                             <code>{{ system_config.current_preset }}</code>
                         </li>
                         <li>
-                            <strong>Default retrieval mode:</strong>
+                            <strong>Типовий режим пошуку:</strong>
                             <code
                                 >{{ system_config.default_retrieval_mode
                                 }}</code
                             >
                         </li>
                         <li>
-                            <strong>Chunk size:</strong>
-                            <code>{{ system_config.chunk_size_words }}</code>
-                            words
+                            <strong>Розмір фрагмента:</strong>
+                            <code>{{ system_config.chunk_size_words }}</code> слів
                         </li>
                         <li>
-                            <strong>Chunk overlap:</strong>
+                            <strong>Перекриття фрагментів:</strong>
                             <code>{{ system_config.chunk_overlap_words }}</code>
-                            words
+                            слів
                         </li>
                         <li>
-                            <strong>Available modes:</strong>
+                            <strong>Доступні режими:</strong>
                             {% for mode in
                             system_config.available_retrieval_modes %}
                             <code>{{ mode }}</code>{% if not loop.last %}, {%
@@ -228,7 +231,7 @@
                         </li>
                     </ul>
                     <form id="chunking-preset-form">
-                        <label for="chunking_preset">Chunking Preset</label>
+                        <label for="chunking_preset">Пресет розбиття</label>
                         <select id="chunking_preset" name="chunking_preset">
                             {% for preset in system_config.available_presets %}
                             <option
@@ -240,25 +243,26 @@
                             {% endfor %}
                         </select>
                         <div class="actions">
-                            <button type="submit">Apply Chunking Preset</button>
+                            <button type="submit">Застосувати пресет розбиття</button>
                         </div>
                     </form>
                     <div id="chunking-result" class="upload-result meta">
-                        Apply a preset to rebuild the chunk index with a different baseline.
+                        Застосуйте пресет, щоб перебудувати індекс фрагментів з
+                        іншою базовою конфігурацією.
                     </div>
                 </article>
             </section>
 
             <article class="content-card">
-                <h2>Answer</h2>
+                <h2>Відповідь</h2>
                 {% if ask_result %}
                 <p>{{ ask_result.answer }}</p>
                 <p class="meta">
-                    confidence={{ ask_result.confidence }} | latency_ms={{
-                    ask_result.latency_ms }} | mode={{ ask_result.answer_mode }}
-                    | retrieval={{ ask_result.retrieval_mode }}
+                    впевненість={{ ask_result.confidence }} | затримка_мс={{
+                    ask_result.latency_ms }} | режим={{ ask_result.answer_mode }}
+                    | пошук={{ ask_result.retrieval_mode }}
                 </p>
-                <h3>Sources</h3>
+                <h3>Джерела</h3>
                 <ul class="list-reset">
                     {% for source in ask_result.sources %}
                     <li>{{ source }}</li>
@@ -266,36 +270,38 @@
                 </ul>
                 {% else %}
                 <p class="meta">
-                    Ask a question to preview a grounded answer with cited context.
+                    Поставте запитання, щоб переглянути обґрунтовану відповідь із
+                    посиланнями на контекст.
                 </p>
                 {% endif %}
             </article>
 
             <article class="content-card">
-                <h2>Retrieval Mode Comparison</h2>
+                <h2>Порівняння режимів пошуку</h2>
                 {% if mode_comparison %}
                 <div class="mode-compare-grid">
                     {% for item in mode_comparison %}
                     <div class="mode-compare-card">
                         <h3>{{ item.mode }}</h3>
-                        <p class="meta">top_source={{ item.top_source }}</p>
-                        <p class="meta">top_score={{ item.top_score }}</p>
-                        <p class="meta">hits={{ item.hit_count }}</p>
+                        <p class="meta">топ_джерело={{ item.top_source }}</p>
+                        <p class="meta">топ_оцінка={{ item.top_score }}</p>
+                        <p class="meta">збігів={{ item.hit_count }}</p>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
                 <p class="meta">
-                    Ask a question to compare `auto`, `tfidf`, and `embeddings` side by side.
+                    Поставте запитання, щоб порівняти `auto`, `tfidf` та
+                    `embeddings` поруч.
                 </p>
                 {% endif %}
             </article>
 
             <article class="content-card">
-                <h2>Retrieved Context</h2>
+                <h2>Знайдений контекст</h2>
                 {% if search_result %}
                 <p class="meta">
-                    retrieval_mode={{ search_result.retrieval_mode }}
+                    режим_пошуку={{ search_result.retrieval_mode }}
                 </p>
                 {% endif %} {% if search_result and search_result.hits %}
                 <ul class="list-reset">
@@ -303,20 +309,20 @@
                     <li>
                         <strong>{{ hit.title }}</strong><br />
                         <span class="meta"
-                            >file={{ hit.source_name }} | chunk={{ hit.chunk_index
-                            }} | type={{ hit.file_type }} | score={{ hit.score }}</span
+                            >файл={{ hit.source_name }} | фрагмент={{ hit.chunk_index
+                            }} | тип={{ hit.file_type }} | оцінка={{ hit.score }}</span
                         ><br />
                         {{ hit.snippet }}
                     </li>
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="meta">Ask a question to inspect the retrieved context.</p>
+                <p class="meta">Поставте запитання, щоб переглянути знайдений контекст.</p>
                 {% endif %}
             </article>
 
             <article class="content-card">
-                <h2>Web Results</h2>
+                <h2>Результати з вебу</h2>
                 {% if web_search_error %}
                 <p class="error-text">{{ web_search_error }}</p>
                 {% elif web_search_result and web_search_result.hits %}
@@ -331,7 +337,7 @@
                         >
                             {{ hit.link }} </a
                         ><br />
-                        <span class="meta">position={{ hit.position }}</span
+                        <span class="meta">позиція={{ hit.position }}</span
                         ><br />
                         {{ hit.snippet }}
                     </li>
@@ -339,23 +345,24 @@
                 </ul>
                 {% else %}
                 <p class="meta">
-                    Run an external web search to inspect `SerpAPI` results here.
+                    Запустіть зовнішній вебпошук, щоб переглянути тут результати
+                    `SerpAPI`.
                 </p>
                 {% endif %}
             </article>
 
             <section class="layout-grid">
                 <article class="content-card">
-                    <h2>Search Response JSON</h2>
+                    <h2>JSON відповіді пошуку</h2>
                     <pre>{{ search_result_json | tojson(indent=2) }}</pre>
                 </article>
                 <article class="content-card">
-                    <h2>Ask Response JSON</h2>
+                    <h2>JSON відповіді на запит</h2>
                     <pre>{{ ask_result_json | tojson(indent=2) }}</pre>
                 </article>
             </section>
             <article class="content-card">
-                <h2>Web Search Response JSON</h2>
+                <h2>JSON відповіді вебпошуку</h2>
                 <pre>{{ web_search_result_json | tojson(indent=2) }}</pre>
             </article>
         </main>
