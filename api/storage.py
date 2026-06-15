@@ -42,6 +42,9 @@ class ChunkStorage(Protocol):
     def prepare_runtime(self) -> StorageWarmupResult:
         ...
 
+    def sync_source_corpus(self) -> bool:
+        ...
+
 
 @dataclass(frozen=True)
 class FileChunkStorage:
@@ -77,6 +80,9 @@ class FileChunkStorage:
             chunk_count=len(chunks),
             loaded_into_memory=True,
         )
+
+    def sync_source_corpus(self) -> bool:
+        return True
 
 
 def _normalize_storage_backend(value: str) -> StorageBackendValue:
@@ -251,3 +257,19 @@ def _build_chunk_storage(backend: str) -> ChunkStorage:
 
 def get_chunk_storage() -> ChunkStorage:
     return _build_chunk_storage(get_active_storage_backend())
+
+
+def sync_active_storage_source_corpus() -> bool:
+    backend = get_active_storage_backend()
+    sync_succeeded = get_chunk_storage().sync_source_corpus()
+    if not sync_succeeded:
+        logger.warning(
+            "Active storage backend failed to synchronize source corpus state.",
+            extra={
+                "event": "storage_source_corpus_sync_failed",
+                "context": {
+                    "active_storage_backend": backend,
+                },
+            },
+        )
+    return sync_succeeded

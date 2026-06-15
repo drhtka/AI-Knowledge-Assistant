@@ -823,7 +823,7 @@ class PgvectorChunkStorage:
             snapshot_hash=digest.hexdigest(),
         )
 
-    def refresh_source_manifest(self) -> bool:
+    def sync_source_corpus(self) -> bool:
         try:
             with self._connect() as connection:
                 self._ensure_schema(connection)
@@ -1205,7 +1205,3 @@ class PgvectorChunkStorage:
 
 def build_pgvector_storage() -> PgvectorChunkStorage:
     return PgvectorChunkStorage.from_settings()
-
-
-def refresh_pgvector_source_manifest() -> bool:
-    return build_pgvector_storage().refresh_source_manifest()
