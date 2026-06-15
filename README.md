@@ -83,6 +83,61 @@ set +a
 
 If optional services are not configured, the app keeps working with the local baseline.
 
+## Docker Swarm Run
+
+This repository now includes a swarm-compatible stack for the `FastAPI` app and `PostgreSQL + pgvector`.
+
+Files:
+
+- `Dockerfile`
+- `docker-stack.yml`
+- `docker/app/entrypoint.sh`
+- `docker/postgres/init/01-init.sql`
+
+Build the application image first:
+
+```bash
+docker build -t ai-knowledge-assistant:local .
+```
+
+Initialize swarm on the local machine if needed:
+
+```bash
+docker swarm init
+```
+
+Deploy the stack:
+
+```bash
+docker stack deploy -c docker-stack.yml ai-knowledge-assistant
+```
+
+Check services:
+
+```bash
+docker stack services ai-knowledge-assistant
+docker stack ps ai-knowledge-assistant
+```
+
+Open the app:
+
+```text
+http://localhost:8000
+```
+
+Remove the stack:
+
+```bash
+docker stack rm ai-knowledge-assistant
+```
+
+Notes:
+
+- the stack runs the app with `CHUNK_STORAGE_BACKEND=pgvector`;
+- the database service uses a `pgvector`-enabled Postgres image and creates `EXTENSION vector` on first initialization;
+- the app waits for the database before starting `uvicorn`;
+- Docker daemon must be running before `docker build` or `docker stack deploy`.
+
 ## Optional LLM Mode
 
 The project supports OpenAI-compatible grounded answer generation through environment variables.
