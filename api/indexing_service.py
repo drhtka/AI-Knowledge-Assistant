@@ -24,6 +24,7 @@ from api.runtime_state_store import (
     save_runtime_state,
 )
 from api.storage import get_active_storage_backend, get_chunk_storage
+from api.storage_pgvector import refresh_pgvector_source_manifest
 
 logger = logging.getLogger("ai_knowledge_assistant.indexing")
 
@@ -629,6 +630,7 @@ def rebuild_index(
 
 def ingest_uploaded_document(filename: str, content: bytes) -> UploadedDocumentResult:
     stored_path = save_uploaded_document(filename, content)
+    refresh_pgvector_source_manifest()
     reindex_result = rebuild_index(trigger="upload")
     result = UploadedDocumentResult(
         original_filename=filename,
@@ -656,6 +658,7 @@ def ingest_uploaded_document(filename: str, content: bytes) -> UploadedDocumentR
 
 def prepare_uploaded_document(filename: str, content: bytes) -> UploadedDocumentResult:
     stored_path = save_uploaded_document(filename, content)
+    refresh_pgvector_source_manifest()
     result = UploadedDocumentResult(
         original_filename=filename,
         stored_path=stored_path,

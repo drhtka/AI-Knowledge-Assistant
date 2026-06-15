@@ -93,6 +93,14 @@ class RawSourceSnapshot:
 
 
 @dataclass(frozen=True)
+class SourceManifestSnapshot:
+    file_count: int
+    total_bytes: int
+    latest_modified_at: datetime | None
+    snapshot_hash: str
+
+
+@dataclass(frozen=True)
 class PgvectorMetadataContractVerdict:
     snapshot: PgvectorMetadataSnapshot | None
     issue: str
@@ -227,6 +235,11 @@ class PgvectorChunkStorage:
         table_name = self._validate_identifier(f"{self.config.table_name}_meta")
         return f"{schema_name}.{table_name}"
 
+    def _source_manifest_table_name(self) -> str:
+        schema_name = self._validate_identifier(self.config.schema_name)
+        table_name = self._validate_identifier(f"{self.config.table_name}_source_manifest")
+        return f"{schema_name}.{table_name}"
+
     def _load_metadata_snapshot(self, connection: object) -> PgvectorMetadataSnapshot | None:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -267,6 +280,86 @@ class PgvectorChunkStorage:
                 None if row[9] is None else row[9].astimezone(timezone.utc)
             ),
             source_total_bytes=int(row[10]),
+        )
+
+    def _load_source_manifest_snapshot(
+        self,
+        connection: object,
+    ) -> SourceManifestSnapshot | None:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT
+                    source_file_count,
+                    source_snapshot_hash,
+                    source_latest_modified_at,
+                    source_total_bytes
+                FROM {self._source_manifest_table_name()}
+                WHERE manifest_key = %s
+                """,
+                ("active",),
+            )
+            row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return SourceManifestSnapshot(
+            file_count=int(row[0]),
+            snapshot_hash=str(row[1]),
+            latest_modified_at=(
+                None if row[2] is None else row[2].astimezone(timezone.utc)
+            ),
+            total_bytes=int(row[3]),
+        )
+
+    def _persist_source_manifest_snapshot(
+        self,
+        connection: object,
+        snapshot: RawSourceSnapshot,
+    ) -> None:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                INSERT INTO {self._source_manifest_table_name()} (
+                    manifest_key,
+                    source_file_count,
+                    source_snapshot_hash,
+                    source_latest_modified_at,
+                    source_total_bytes,
+                    updated_at
+                ) VALUES (%s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (manifest_key) DO UPDATE SET
+                    source_file_count = EXCLUDED.source_file_count,
+                    source_snapshot_hash = EXCLUDED.source_snapshot_hash,
+                    source_latest_modified_at = EXCLUDED.source_latest_modified_at,
+                    source_total_bytes = EXCLUDED.source_total_bytes,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                (
+                    "active",
+                    snapshot.file_count,
+                    snapshot.snapshot_hash,
+                    snapshot.latest_modified_at,
+                    snapshot.total_bytes,
+                ),
+            )
+
+    def _load_or_repair_source_manifest_snapshot(
+        self,
+        connection: object,
+    ) -> SourceManifestSnapshot:
+        manifest_snapshot = self._load_source_manifest_snapshot(connection)
+        if manifest_snapshot is not None:
+            return manifest_snapshot
+
+        current_snapshot = self._build_source_snapshot(self._iter_supported_raw_files())
+        self._persist_source_manifest_snapshot(connection, current_snapshot)
+        return SourceManifestSnapshot(
+            file_count=current_snapshot.file_count,
+            total_bytes=current_snapshot.total_bytes,
+            latest_modified_at=current_snapshot.latest_modified_at,
+            snapshot_hash=current_snapshot.snapshot_hash,
         )
 
     def _connect(self) -> object:
@@ -314,17 +407,16 @@ class PgvectorChunkStorage:
                 should_rebuild=True,
             )
 
-        raw_files = self._iter_supported_raw_files()
-        source_snapshot = self._build_source_snapshot(raw_files)
+        source_manifest = self._load_or_repair_source_manifest_snapshot(connection)
         if metadata.chunk_count < 1:
             return PgvectorMetadataContractVerdict(
                 snapshot=metadata,
                 issue=(
                     "metadata_snapshot_empty"
-                    if source_snapshot.file_count > 0
+                    if source_manifest.file_count > 0
                     else "none"
                 ),
-                should_rebuild=source_snapshot.file_count > 0,
+                should_rebuild=source_manifest.file_count > 0,
             )
         if metadata.lexical_document_count < metadata.chunk_count:
             return PgvectorMetadataContractVerdict(
@@ -332,25 +424,25 @@ class PgvectorChunkStorage:
                 issue="metadata_snapshot_incomplete",
                 should_rebuild=True,
             )
-        if metadata.source_file_count != source_snapshot.file_count:
+        if metadata.source_file_count != source_manifest.file_count:
             return PgvectorMetadataContractVerdict(
                 snapshot=metadata,
                 issue="metadata_snapshot_stale",
                 should_rebuild=True,
             )
-        if metadata.source_snapshot_hash != source_snapshot.snapshot_hash:
+        if metadata.source_snapshot_hash != source_manifest.snapshot_hash:
             return PgvectorMetadataContractVerdict(
                 snapshot=metadata,
                 issue="metadata_snapshot_stale",
                 should_rebuild=True,
             )
-        if metadata.source_total_bytes != source_snapshot.total_bytes:
+        if metadata.source_total_bytes != source_manifest.total_bytes:
             return PgvectorMetadataContractVerdict(
                 snapshot=metadata,
                 issue="metadata_snapshot_stale",
                 should_rebuild=True,
             )
-        if metadata.source_latest_modified_at != source_snapshot.latest_modified_at:
+        if metadata.source_latest_modified_at != source_manifest.latest_modified_at:
             return PgvectorMetadataContractVerdict(
                 snapshot=metadata,
                 issue="metadata_snapshot_stale",
@@ -537,6 +629,9 @@ class PgvectorChunkStorage:
         schema_name = self._validate_identifier(self.config.schema_name)
         table_name = self._validate_identifier(self.config.table_name)
         meta_table_name = self._validate_identifier(f"{self.config.table_name}_meta")
+        source_manifest_table_name = self._validate_identifier(
+            f"{self.config.table_name}_source_manifest"
+        )
         index_name = self._validate_identifier(f"{table_name}_source_chunk_idx")
         lexical_index_name = self._validate_identifier(f"{table_name}_lexical_gin_idx")
 
@@ -609,6 +704,18 @@ class PgvectorChunkStorage:
             )
             cursor.execute(
                 f"""
+                CREATE TABLE IF NOT EXISTS {schema_name}.{source_manifest_table_name} (
+                    manifest_key TEXT PRIMARY KEY,
+                    source_file_count INTEGER NOT NULL DEFAULT 0,
+                    source_snapshot_hash TEXT NOT NULL DEFAULT '',
+                    source_latest_modified_at TIMESTAMPTZ,
+                    source_total_bytes BIGINT NOT NULL DEFAULT 0,
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            cursor.execute(
+                f"""
                 ALTER TABLE {self._meta_table_name()}
                 ADD COLUMN IF NOT EXISTS chunk_count INTEGER NOT NULL DEFAULT 0
                 """
@@ -649,6 +756,36 @@ class PgvectorChunkStorage:
                 ADD COLUMN IF NOT EXISTS source_total_bytes BIGINT NOT NULL DEFAULT 0
                 """
             )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._source_manifest_table_name()}
+                ADD COLUMN IF NOT EXISTS source_file_count INTEGER NOT NULL DEFAULT 0
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._source_manifest_table_name()}
+                ADD COLUMN IF NOT EXISTS source_snapshot_hash TEXT NOT NULL DEFAULT ''
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._source_manifest_table_name()}
+                ADD COLUMN IF NOT EXISTS source_latest_modified_at TIMESTAMPTZ
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._source_manifest_table_name()}
+                ADD COLUMN IF NOT EXISTS source_total_bytes BIGINT NOT NULL DEFAULT 0
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._source_manifest_table_name()}
+                ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                """
+            )
 
     def _iter_supported_raw_files(self) -> list[Path]:
         if not RAW_DATA_DIR.exists():
@@ -685,6 +822,27 @@ class PgvectorChunkStorage:
             latest_modified_at=latest_modified_at,
             snapshot_hash=digest.hexdigest(),
         )
+
+    def refresh_source_manifest(self) -> bool:
+        try:
+            with self._connect() as connection:
+                self._ensure_schema(connection)
+                current_snapshot = self._build_source_snapshot(self._iter_supported_raw_files())
+                self._persist_source_manifest_snapshot(connection, current_snapshot)
+                connection.commit()
+        except Exception as exc:
+            logger.warning(
+                "Failed to refresh pgvector source manifest.",
+                extra={
+                    "event": "pgvector_source_manifest_refresh_failed",
+                    "context": {
+                        "error_type": type(exc).__name__,
+                    },
+                },
+            )
+            return False
+
+        return True
 
     def load_chunks(self) -> tuple[LoadedChunk, ...]:
         with self._connect() as connection:
@@ -836,6 +994,7 @@ class PgvectorChunkStorage:
                         source_snapshot.total_bytes,
                     ),
                 )
+                self._persist_source_manifest_snapshot(connection, source_snapshot)
             connection.commit()
         return chunks
 
@@ -1046,3 +1205,7 @@ class PgvectorChunkStorage:
 
 def build_pgvector_storage() -> PgvectorChunkStorage:
     return PgvectorChunkStorage.from_settings()
+
+
+def refresh_pgvector_source_manifest() -> bool:
+    return build_pgvector_storage().refresh_source_manifest()
