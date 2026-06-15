@@ -93,6 +93,13 @@ class RawSourceSnapshot:
 
 
 @dataclass(frozen=True)
+class PgvectorMetadataContractVerdict:
+    snapshot: PgvectorMetadataSnapshot | None
+    issue: str
+    should_rebuild: bool
+
+
+@dataclass(frozen=True)
 class PgvectorChunkStorage:
     config: PgvectorChunkStorageConfig
 
@@ -273,6 +280,89 @@ class PgvectorChunkStorage:
 
         return psycopg.connect(self.config.database_url)
 
+    def _evaluate_metadata_contract(
+        self,
+        connection: object,
+    ) -> PgvectorMetadataContractVerdict:
+        # Keep one canonical verdict for pgvector index validity so readiness,
+        # warmup, and rebuild decisions do not drift apart over time.
+        metadata = self._load_metadata_snapshot(connection)
+        if metadata is None:
+            return PgvectorMetadataContractVerdict(
+                snapshot=None,
+                issue="metadata_snapshot_missing",
+                should_rebuild=True,
+            )
+
+        config = get_chunking_config()
+        if metadata.chunk_size_words != int(config["chunk_size_words"]):
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue="metadata_snapshot_stale",
+                should_rebuild=True,
+            )
+        if metadata.chunk_overlap_words != int(config["chunk_overlap_words"]):
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue="metadata_snapshot_stale",
+                should_rebuild=True,
+            )
+        if metadata.chunking_version != CHUNKING_VERSION:
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue="metadata_snapshot_stale",
+                should_rebuild=True,
+            )
+
+        raw_files = self._iter_supported_raw_files()
+        source_snapshot = self._build_source_snapshot(raw_files)
+        if metadata.chunk_count < 1:
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue=(
+                    "metadata_snapshot_empty"
+                    if source_snapshot.file_count > 0
+                    else "none"
+                ),
+                should_rebuild=source_snapshot.file_count > 0,
+            )
+        if metadata.lexical_document_count < metadata.chunk_count:
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue="metadata_snapshot_incomplete",
+                should_rebuild=True,
+            )
+        if metadata.source_file_count != source_snapshot.file_count:
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue="metadata_snapshot_stale",
+                should_rebuild=True,
+            )
+        if metadata.source_snapshot_hash != source_snapshot.snapshot_hash:
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue="metadata_snapshot_stale",
+                should_rebuild=True,
+            )
+        if metadata.source_total_bytes != source_snapshot.total_bytes:
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue="metadata_snapshot_stale",
+                should_rebuild=True,
+            )
+        if metadata.source_latest_modified_at != source_snapshot.latest_modified_at:
+            return PgvectorMetadataContractVerdict(
+                snapshot=metadata,
+                issue="metadata_snapshot_stale",
+                should_rebuild=True,
+            )
+
+        return PgvectorMetadataContractVerdict(
+            snapshot=metadata,
+            issue="none",
+            should_rebuild=False,
+        )
+
     def get_readiness_status(self) -> dict[str, object]:
         embedding_stack_ready = embedding_stack_available()
         embedding_model_ready = bool(get_embedding_model()) if embedding_stack_ready else False
@@ -280,8 +370,7 @@ class PgvectorChunkStorage:
         try:
             with self._connect() as connection:
                 self._ensure_schema(connection)
-                metadata_snapshot = self._load_metadata_snapshot(connection)
-                metadata_snapshot_stale = self._is_storage_stale(connection)
+                metadata_verdict = self._evaluate_metadata_contract(connection)
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT 1")
                     cursor.fetchone()
@@ -305,7 +394,9 @@ class PgvectorChunkStorage:
             }
 
         metadata_payload = (
-            None if metadata_snapshot is None else metadata_snapshot.to_response_payload()
+            None
+            if metadata_verdict.snapshot is None
+            else metadata_verdict.snapshot.to_response_payload()
         )
         indexing_preflight = "native"
         indexing_message = "pgvector backend is ready for reindex requests."
@@ -320,7 +411,7 @@ class PgvectorChunkStorage:
                 "pgvector backend can reindex in degraded mode, but embeddings will be unavailable because the embedding model is unavailable."
             )
 
-        if metadata_snapshot is None:
+        if metadata_verdict.issue == "metadata_snapshot_missing":
             return {
                 "active_backend_state": "degraded",
                 "active_backend_issue": "metadata_snapshot_missing",
@@ -336,7 +427,7 @@ class PgvectorChunkStorage:
                 "active_backend_indexing_message": indexing_message,
             }
 
-        if metadata_snapshot.chunk_count < 1:
+        if metadata_verdict.issue == "metadata_snapshot_empty":
             return {
                 "active_backend_state": "degraded",
                 "active_backend_issue": "metadata_snapshot_empty",
@@ -352,7 +443,7 @@ class PgvectorChunkStorage:
                 "active_backend_indexing_message": indexing_message,
             }
 
-        if metadata_snapshot.lexical_document_count < metadata_snapshot.chunk_count:
+        if metadata_verdict.issue == "metadata_snapshot_incomplete":
             return {
                 "active_backend_state": "degraded",
                 "active_backend_issue": "metadata_snapshot_incomplete",
@@ -368,7 +459,7 @@ class PgvectorChunkStorage:
                 "active_backend_indexing_message": indexing_message,
             }
 
-        if metadata_snapshot_stale:
+        if metadata_verdict.issue == "metadata_snapshot_stale":
             return {
                 "active_backend_state": "degraded",
                 "active_backend_issue": "metadata_snapshot_stale",
@@ -595,37 +686,11 @@ class PgvectorChunkStorage:
             snapshot_hash=digest.hexdigest(),
         )
 
-    def _is_storage_stale(self, connection: object) -> bool:
-        config = get_chunking_config()
-        metadata = self._load_metadata_snapshot(connection)
-        if metadata is None:
-            return True
-
-        if metadata.chunk_size_words != int(config["chunk_size_words"]):
-            return True
-        if metadata.chunk_overlap_words != int(config["chunk_overlap_words"]):
-            return True
-        if metadata.chunking_version != CHUNKING_VERSION:
-            return True
-        raw_files = self._iter_supported_raw_files()
-        source_snapshot = self._build_source_snapshot(raw_files)
-        if metadata.chunk_count < 1:
-            return source_snapshot.file_count > 0
-        if metadata.lexical_document_count < metadata.chunk_count:
-            return True
-        if metadata.source_file_count != source_snapshot.file_count:
-            return True
-        if metadata.source_snapshot_hash != source_snapshot.snapshot_hash:
-            return True
-        if metadata.source_total_bytes != source_snapshot.total_bytes:
-            return True
-
-        return metadata.source_latest_modified_at != source_snapshot.latest_modified_at
-
     def load_chunks(self) -> tuple[LoadedChunk, ...]:
         with self._connect() as connection:
             self._ensure_schema(connection)
-            if self._is_storage_stale(connection):
+            metadata_verdict = self._evaluate_metadata_contract(connection)
+            if metadata_verdict.should_rebuild:
                 return self.rebuild_chunks()
 
             with connection.cursor() as cursor:
@@ -654,16 +719,18 @@ class PgvectorChunkStorage:
     def prepare_runtime(self) -> StorageWarmupResult:
         with self._connect() as connection:
             self._ensure_schema(connection)
-            if self._is_storage_stale(connection):
+            metadata_verdict = self._evaluate_metadata_contract(connection)
+            if metadata_verdict.should_rebuild:
                 chunks = self.rebuild_chunks()
                 return StorageWarmupResult(
                     chunk_count=len(chunks),
                     loaded_into_memory=False,
                 )
 
-            metadata = self._load_metadata_snapshot(connection)
             return StorageWarmupResult(
-                chunk_count=0 if metadata is None else metadata.chunk_count,
+                chunk_count=(
+                    0 if metadata_verdict.snapshot is None else metadata_verdict.snapshot.chunk_count
+                ),
                 loaded_into_memory=False,
             )
 
