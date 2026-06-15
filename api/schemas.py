@@ -269,6 +269,27 @@ class ReindexHistoryResponse(BaseModel):
     entries: list[ReindexHistoryEntryResponse]
 
 
+class RetrievalHistoryEntryResponse(BaseModel):
+    history_entry_id: int
+    request_kind: str
+    status: str
+    question_length: int
+    retrieval_mode: str
+    active_storage_backend: StorageBackendValue
+    retrieval_execution_path: str
+    retrieval_execution_issue: str
+    retrieval_outcome: str
+    retrieval_summary_message: str
+    hit_count: int
+    latency_ms: int
+    updated_at: str
+    error_type: str
+
+
+class RetrievalHistoryResponse(BaseModel):
+    entries: list[RetrievalHistoryEntryResponse]
+
+
 class WebSearchRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     top_k: int = Field(default=5, ge=1, le=10)

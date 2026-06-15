@@ -20,7 +20,7 @@ from api.indexing_service import (
 )
 from api.ingestion import build_document_preview
 from api.logging_utils import configure_logging
-from api.retrieval import ask, get_retrieval_runtime_snapshot, search
+from api.retrieval import ask, get_retrieval_history, get_retrieval_runtime_snapshot, search
 from api.schemas import (
     AskRequest,
     AskResponse,
@@ -32,6 +32,8 @@ from api.schemas import (
     ReindexHistoryResponse,
     ReindexStartResponse,
     ReindexStatusResponse,
+    RetrievalHistoryEntryResponse,
+    RetrievalHistoryResponse,
     RetrievalRuntimeSnapshotResponse,
     RuntimeObservabilityResponse,
     SearchRequest,
@@ -93,7 +95,13 @@ def _preset_label(preset: str) -> str:
 def _build_mode_comparison(question: str, top_k: int) -> list[dict[str, object]]:
     comparisons: list[dict[str, object]] = []
     for mode in RETRIEVAL_MODE_OPTIONS:
-        result = search(question, top_k, retrieval_mode=mode)
+        result = search(
+            question,
+            top_k,
+            retrieval_mode=mode,
+            record_runtime_snapshot=False,
+            record_history=False,
+        )
         top_hit = result.hits[0] if result.hits else None
         comparisons.append(
             {
@@ -145,6 +153,30 @@ def _build_reindex_history_response(limit: int) -> ReindexHistoryResponse:
                 elapsed_ms=entry.elapsed_ms,
             )
             for entry in get_reindex_history(limit=limit)
+        ]
+    )
+
+
+def _build_retrieval_history_response(limit: int) -> RetrievalHistoryResponse:
+    return RetrievalHistoryResponse(
+        entries=[
+            RetrievalHistoryEntryResponse(
+                history_entry_id=entry.history_entry_id,
+                request_kind=entry.request_kind,
+                status=entry.status,
+                question_length=entry.question_length,
+                retrieval_mode=entry.retrieval_mode,
+                active_storage_backend=entry.active_storage_backend,
+                retrieval_execution_path=entry.retrieval_execution_path,
+                retrieval_execution_issue=entry.retrieval_execution_issue,
+                retrieval_outcome=entry.retrieval_outcome,
+                retrieval_summary_message=entry.retrieval_summary_message,
+                hit_count=entry.hit_count,
+                latency_ms=entry.latency_ms,
+                updated_at=entry.updated_at,
+                error_type=entry.error_type,
+            )
+            for entry in get_retrieval_history(limit=limit)
         ]
     )
 
@@ -547,6 +579,11 @@ def reindex_status_endpoint() -> ReindexStatusResponse:
 @app.get("/reindex-history", response_model=ReindexHistoryResponse)
 def reindex_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> ReindexHistoryResponse:
     return _build_reindex_history_response(limit=limit)
+
+
+@app.get("/retrieval-history", response_model=RetrievalHistoryResponse)
+def retrieval_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> RetrievalHistoryResponse:
+    return _build_retrieval_history_response(limit=limit)
 
 
 @app.post("/search", response_model=SearchResponse)

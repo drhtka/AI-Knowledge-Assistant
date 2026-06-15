@@ -8,6 +8,11 @@ from datetime import datetime, timezone
 from time import perf_counter
 
 from api.generation import generate_grounded_answer
+from api.retrieval_history_store import (
+    RetrievalHistoryEntry,
+    create_retrieval_history_entry,
+    list_retrieval_history_entries,
+)
 from api.runtime_state_store import (
     RETRIEVAL_RUNTIME_SNAPSHOT_STATE_KEY,
     load_runtime_state,
@@ -244,7 +249,51 @@ def _build_retrieval_summary_message(
     )
 
 
-def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> SearchResponse:
+def _record_retrieval_history(
+    *,
+    request_kind: str,
+    status: str,
+    question_length: int,
+    retrieval_mode: str,
+    active_storage_backend: str,
+    retrieval_execution_path: str,
+    retrieval_execution_issue: str,
+    retrieval_outcome: str,
+    retrieval_summary_message: str,
+    hit_count: int,
+    latency_ms: int,
+    updated_at: str,
+    error_type: str,
+) -> None:
+    create_retrieval_history_entry(
+        request_kind=request_kind,
+        status=status,
+        question_length=question_length,
+        retrieval_mode=retrieval_mode,
+        active_storage_backend=active_storage_backend,
+        retrieval_execution_path=retrieval_execution_path,
+        retrieval_execution_issue=retrieval_execution_issue,
+        retrieval_outcome=retrieval_outcome,
+        retrieval_summary_message=retrieval_summary_message,
+        hit_count=hit_count,
+        latency_ms=latency_ms,
+        updated_at=updated_at,
+        error_type=error_type,
+    )
+
+
+def get_retrieval_history(limit: int = 20) -> tuple[RetrievalHistoryEntry, ...]:
+    return list_retrieval_history_entries(limit=limit)
+
+
+def search(
+    question: str,
+    top_k: int,
+    retrieval_mode: RetrievalModeValue = "auto",
+    *,
+    record_runtime_snapshot: bool = True,
+    record_history: bool = True,
+) -> SearchResponse:
     _ensure_retrieval_runtime_initialized()
     started_at = perf_counter()
     active_storage_backend = get_active_storage_backend()
@@ -288,22 +337,40 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
             hits=hits,
         )
         latency_ms = int((perf_counter() - started_at) * 1000)
-        _set_retrieval_runtime_snapshot(
-            available=True,
-            request_kind="search",
-            status="completed",
-            question_length=len(question.strip()),
-            retrieval_mode=retrieval_mode,
-            active_storage_backend=active_storage_backend,
-            retrieval_execution_path=ranked_result.execution_path,
-            retrieval_execution_issue=ranked_result.execution_issue,
-            retrieval_outcome=ranked_result.outcome,
-            retrieval_summary_message=retrieval_summary_message,
-            hit_count=len(hits),
-            latency_ms=latency_ms,
-            updated_at=_utc_now_iso(),
-            error_type="",
-        )
+        updated_at = _utc_now_iso()
+        if record_runtime_snapshot:
+            _set_retrieval_runtime_snapshot(
+                available=True,
+                request_kind="search",
+                status="completed",
+                question_length=len(question.strip()),
+                retrieval_mode=retrieval_mode,
+                active_storage_backend=active_storage_backend,
+                retrieval_execution_path=ranked_result.execution_path,
+                retrieval_execution_issue=ranked_result.execution_issue,
+                retrieval_outcome=ranked_result.outcome,
+                retrieval_summary_message=retrieval_summary_message,
+                hit_count=len(hits),
+                latency_ms=latency_ms,
+                updated_at=updated_at,
+                error_type="",
+            )
+        if record_history:
+            _record_retrieval_history(
+                request_kind="search",
+                status="completed",
+                question_length=len(question.strip()),
+                retrieval_mode=retrieval_mode,
+                active_storage_backend=active_storage_backend,
+                retrieval_execution_path=ranked_result.execution_path,
+                retrieval_execution_issue=ranked_result.execution_issue,
+                retrieval_outcome=ranked_result.outcome,
+                retrieval_summary_message=retrieval_summary_message,
+                hit_count=len(hits),
+                latency_ms=latency_ms,
+                updated_at=updated_at,
+                error_type="",
+            )
         logger.info(
             "Search request completed.",
             extra={
@@ -326,22 +393,40 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
         return response
     except Exception as exc:
         latency_ms = int((perf_counter() - started_at) * 1000)
-        _set_retrieval_runtime_snapshot(
-            available=True,
-            request_kind="search",
-            status="failed",
-            question_length=len(question.strip()),
-            retrieval_mode=retrieval_mode,
-            active_storage_backend=active_storage_backend,
-            retrieval_execution_path="unknown",
-            retrieval_execution_issue="none",
-            retrieval_outcome="none",
-            retrieval_summary_message="Search request failed before producing a retrieval result.",
-            hit_count=0,
-            latency_ms=latency_ms,
-            updated_at=_utc_now_iso(),
-            error_type=type(exc).__name__,
-        )
+        updated_at = _utc_now_iso()
+        if record_runtime_snapshot:
+            _set_retrieval_runtime_snapshot(
+                available=True,
+                request_kind="search",
+                status="failed",
+                question_length=len(question.strip()),
+                retrieval_mode=retrieval_mode,
+                active_storage_backend=active_storage_backend,
+                retrieval_execution_path="unknown",
+                retrieval_execution_issue="none",
+                retrieval_outcome="none",
+                retrieval_summary_message="Search request failed before producing a retrieval result.",
+                hit_count=0,
+                latency_ms=latency_ms,
+                updated_at=updated_at,
+                error_type=type(exc).__name__,
+            )
+        if record_history:
+            _record_retrieval_history(
+                request_kind="search",
+                status="failed",
+                question_length=len(question.strip()),
+                retrieval_mode=retrieval_mode,
+                active_storage_backend=active_storage_backend,
+                retrieval_execution_path="unknown",
+                retrieval_execution_issue="none",
+                retrieval_outcome="none",
+                retrieval_summary_message="Search request failed before producing a retrieval result.",
+                hit_count=0,
+                latency_ms=latency_ms,
+                updated_at=updated_at,
+                error_type=type(exc).__name__,
+            )
         logger.exception(
             "Search request failed.",
             extra={
@@ -359,30 +444,62 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
         raise
 
 
-def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> AskResponse:
+def ask(
+    question: str,
+    top_k: int,
+    retrieval_mode: RetrievalModeValue = "auto",
+    *,
+    record_runtime_snapshot: bool = True,
+    record_history: bool = True,
+) -> AskResponse:
     _ensure_retrieval_runtime_initialized()
     started_at = perf_counter()
     active_storage_backend = get_active_storage_backend()
     try:
-        result = search(question=question, top_k=top_k, retrieval_mode=retrieval_mode)
+        # Internal search should not create duplicate runtime/history entries for ask requests.
+        result = search(
+            question=question,
+            top_k=top_k,
+            retrieval_mode=retrieval_mode,
+            record_runtime_snapshot=False,
+            record_history=False,
+        )
         generated = generate_grounded_answer(question=question, hits=result.hits)
         latency_ms = int((perf_counter() - started_at) * 1000)
-        _set_retrieval_runtime_snapshot(
-            available=True,
-            request_kind="ask",
-            status="completed",
-            question_length=len(question.strip()),
-            retrieval_mode=result.retrieval_mode,
-            active_storage_backend=result.active_storage_backend,
-            retrieval_execution_path=result.retrieval_execution_path,
-            retrieval_execution_issue=result.retrieval_execution_issue,
-            retrieval_outcome=result.retrieval_outcome,
-            retrieval_summary_message=result.retrieval_summary_message,
-            hit_count=len(result.hits),
-            latency_ms=latency_ms,
-            updated_at=_utc_now_iso(),
-            error_type="",
-        )
+        updated_at = _utc_now_iso()
+        if record_runtime_snapshot:
+            _set_retrieval_runtime_snapshot(
+                available=True,
+                request_kind="ask",
+                status="completed",
+                question_length=len(question.strip()),
+                retrieval_mode=result.retrieval_mode,
+                active_storage_backend=result.active_storage_backend,
+                retrieval_execution_path=result.retrieval_execution_path,
+                retrieval_execution_issue=result.retrieval_execution_issue,
+                retrieval_outcome=result.retrieval_outcome,
+                retrieval_summary_message=result.retrieval_summary_message,
+                hit_count=len(result.hits),
+                latency_ms=latency_ms,
+                updated_at=updated_at,
+                error_type="",
+            )
+        if record_history:
+            _record_retrieval_history(
+                request_kind="ask",
+                status="completed",
+                question_length=len(question.strip()),
+                retrieval_mode=result.retrieval_mode,
+                active_storage_backend=result.active_storage_backend,
+                retrieval_execution_path=result.retrieval_execution_path,
+                retrieval_execution_issue=result.retrieval_execution_issue,
+                retrieval_outcome=result.retrieval_outcome,
+                retrieval_summary_message=result.retrieval_summary_message,
+                hit_count=len(result.hits),
+                latency_ms=latency_ms,
+                updated_at=updated_at,
+                error_type="",
+            )
 
         response = AskResponse(
             question=question,
@@ -423,22 +540,40 @@ def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") 
         return response
     except Exception as exc:
         latency_ms = int((perf_counter() - started_at) * 1000)
-        _set_retrieval_runtime_snapshot(
-            available=True,
-            request_kind="ask",
-            status="failed",
-            question_length=len(question.strip()),
-            retrieval_mode=retrieval_mode,
-            active_storage_backend=active_storage_backend,
-            retrieval_execution_path="unknown",
-            retrieval_execution_issue="none",
-            retrieval_outcome="none",
-            retrieval_summary_message="Ask request failed before producing a grounded answer.",
-            hit_count=0,
-            latency_ms=latency_ms,
-            updated_at=_utc_now_iso(),
-            error_type=type(exc).__name__,
-        )
+        updated_at = _utc_now_iso()
+        if record_runtime_snapshot:
+            _set_retrieval_runtime_snapshot(
+                available=True,
+                request_kind="ask",
+                status="failed",
+                question_length=len(question.strip()),
+                retrieval_mode=retrieval_mode,
+                active_storage_backend=active_storage_backend,
+                retrieval_execution_path="unknown",
+                retrieval_execution_issue="none",
+                retrieval_outcome="none",
+                retrieval_summary_message="Ask request failed before producing a grounded answer.",
+                hit_count=0,
+                latency_ms=latency_ms,
+                updated_at=updated_at,
+                error_type=type(exc).__name__,
+            )
+        if record_history:
+            _record_retrieval_history(
+                request_kind="ask",
+                status="failed",
+                question_length=len(question.strip()),
+                retrieval_mode=retrieval_mode,
+                active_storage_backend=active_storage_backend,
+                retrieval_execution_path="unknown",
+                retrieval_execution_issue="none",
+                retrieval_outcome="none",
+                retrieval_summary_message="Ask request failed before producing a grounded answer.",
+                hit_count=0,
+                latency_ms=latency_ms,
+                updated_at=updated_at,
+                error_type=type(exc).__name__,
+            )
         logger.exception(
             "Ask request failed.",
             extra={
