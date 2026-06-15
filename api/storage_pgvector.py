@@ -278,6 +278,7 @@ class PgvectorChunkStorage:
         table_name = self._validate_identifier(self.config.table_name)
         meta_table_name = self._validate_identifier(f"{self.config.table_name}_meta")
         index_name = self._validate_identifier(f"{table_name}_source_chunk_idx")
+        lexical_index_name = self._validate_identifier(f"{table_name}_lexical_gin_idx")
 
         with connection.cursor() as cursor:
             cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
@@ -293,6 +294,7 @@ class PgvectorChunkStorage:
                     chunk_index INTEGER NOT NULL,
                     chunk_size_words INTEGER NOT NULL,
                     chunk_overlap_words INTEGER NOT NULL,
+                    lexical_document tsvector,
                     embedding vector({self.config.embedding_dim}),
                     indexed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 )
@@ -300,8 +302,31 @@ class PgvectorChunkStorage:
             )
             cursor.execute(
                 f"""
+                ALTER TABLE {chunks_table}
+                ADD COLUMN IF NOT EXISTS lexical_document tsvector
+                """
+            )
+            cursor.execute(
+                f"""
                 CREATE UNIQUE INDEX IF NOT EXISTS {index_name}
                 ON {chunks_table} (source_path, chunk_index)
+                """
+            )
+            cursor.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS {lexical_index_name}
+                ON {chunks_table} USING GIN (lexical_document)
+                """
+            )
+            # Backfill lexical vectors for pre-existing rows before the GIN-backed path is used.
+            cursor.execute(
+                f"""
+                UPDATE {chunks_table}
+                SET lexical_document = to_tsvector(
+                    'simple',
+                    COALESCE(title, '') || ' ' || COALESCE(content, '')
+                )
+                WHERE lexical_document IS NULL
                 """
             )
             cursor.execute(
@@ -445,9 +470,15 @@ class PgvectorChunkStorage:
                         chunk_index,
                         chunk_size_words,
                         chunk_overlap_words,
+                        lexical_document,
                         embedding,
                         indexed_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::vector, NOW())
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s,
+                        to_tsvector('simple', COALESCE(%s, '') || ' ' || COALESCE(%s, '')),
+                        %s::vector,
+                        NOW()
+                    )
                     """,
                     [
                         (
@@ -459,6 +490,8 @@ class PgvectorChunkStorage:
                             chunk.chunk_index,
                             chunk.chunk_size_words,
                             chunk.chunk_overlap_words,
+                            chunk.title,
+                            chunk.content,
                             vector_literal,
                         )
                         for chunk, vector_literal in zip(chunks, vector_literals, strict=False)
@@ -524,6 +557,9 @@ class PgvectorChunkStorage:
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"""
+                    WITH lexical_query AS (
+                        SELECT plainto_tsquery('simple', %s) AS query
+                    )
                     SELECT
                         document_id,
                         title,
@@ -608,17 +644,13 @@ class PgvectorChunkStorage:
                         chunk_index,
                         chunk_size_words,
                         chunk_overlap_words,
-                        ts_rank_cd(
-                            to_tsvector('simple', COALESCE(title, '') || ' ' || COALESCE(content, '')),
-                            plainto_tsquery('simple', %s)
-                        ) AS score
-                    FROM {self._chunks_table_name()}
-                    WHERE to_tsvector('simple', COALESCE(title, '') || ' ' || COALESCE(content, ''))
-                        @@ plainto_tsquery('simple', %s)
+                        ts_rank_cd(lexical_document, lexical_query.query) AS score
+                    FROM {self._chunks_table_name()}, lexical_query
+                    WHERE lexical_document @@ lexical_query.query
                     ORDER BY score DESC, source_path, chunk_index
                     LIMIT %s
                     """,
-                    (question, question, top_k),
+                    (question, top_k),
                 )
                 rows = cursor.fetchall()
 
