@@ -146,6 +146,14 @@ def _build_backend_summary_message(
         return "pgvector backend is ready and can serve DB-first retrieval."
     if issue == "connection_failed":
         return "pgvector backend is degraded because the database connection is unavailable."
+    if issue == "metadata_snapshot_missing":
+        return "pgvector backend is degraded because no indexing metadata snapshot exists yet."
+    if issue == "metadata_snapshot_empty":
+        return "pgvector backend is degraded because the persisted metadata snapshot contains no indexed chunks."
+    if issue == "metadata_snapshot_stale":
+        return "pgvector backend is degraded because the persisted metadata snapshot is stale."
+    if issue == "metadata_snapshot_incomplete":
+        return "pgvector backend is degraded because the persisted metadata snapshot is incomplete."
     if issue == "embedding_stack_unavailable":
         return "pgvector backend is degraded because the embedding stack is unavailable."
     if issue == "embedding_model_unavailable":

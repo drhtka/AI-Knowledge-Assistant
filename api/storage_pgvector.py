@@ -253,6 +253,7 @@ class PgvectorChunkStorage:
             with self._connect() as connection:
                 self._ensure_schema(connection)
                 metadata_snapshot = self._load_metadata_snapshot(connection)
+                metadata_snapshot_stale = self._is_storage_stale(connection)
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT 1")
                     cursor.fetchone()
@@ -278,6 +279,82 @@ class PgvectorChunkStorage:
         metadata_payload = (
             None if metadata_snapshot is None else metadata_snapshot.to_response_payload()
         )
+        indexing_preflight = "native"
+        indexing_message = "pgvector backend is ready for reindex requests."
+        if not embedding_stack_ready:
+            indexing_preflight = "degraded"
+            indexing_message = (
+                "pgvector backend can reindex in degraded mode, but embeddings will be unavailable because the embedding stack is unavailable."
+            )
+        elif not embedding_model_ready:
+            indexing_preflight = "degraded"
+            indexing_message = (
+                "pgvector backend can reindex in degraded mode, but embeddings will be unavailable because the embedding model is unavailable."
+            )
+
+        if metadata_snapshot is None:
+            return {
+                "active_backend_state": "degraded",
+                "active_backend_issue": "metadata_snapshot_missing",
+                "active_backend_ready": True,
+                "active_backend_can_connect": True,
+                "active_backend_retrieval_ready": False,
+                "active_backend_indexing_ready": True,
+                "active_backend_indexing_preflight": indexing_preflight,
+                "pgvector_metadata_snapshot": metadata_payload,
+                "active_backend_message": (
+                    "pgvector backend can connect, but no persisted indexing metadata snapshot exists yet."
+                ),
+                "active_backend_indexing_message": indexing_message,
+            }
+
+        if metadata_snapshot.chunk_count < 1:
+            return {
+                "active_backend_state": "degraded",
+                "active_backend_issue": "metadata_snapshot_empty",
+                "active_backend_ready": True,
+                "active_backend_can_connect": True,
+                "active_backend_retrieval_ready": False,
+                "active_backend_indexing_ready": True,
+                "active_backend_indexing_preflight": indexing_preflight,
+                "pgvector_metadata_snapshot": metadata_payload,
+                "active_backend_message": (
+                    "pgvector backend can connect, but the persisted indexing metadata snapshot contains no indexed chunks yet."
+                ),
+                "active_backend_indexing_message": indexing_message,
+            }
+
+        if metadata_snapshot.lexical_document_count < metadata_snapshot.chunk_count:
+            return {
+                "active_backend_state": "degraded",
+                "active_backend_issue": "metadata_snapshot_incomplete",
+                "active_backend_ready": True,
+                "active_backend_can_connect": True,
+                "active_backend_retrieval_ready": False,
+                "active_backend_indexing_ready": True,
+                "active_backend_indexing_preflight": indexing_preflight,
+                "pgvector_metadata_snapshot": metadata_payload,
+                "active_backend_message": (
+                    "pgvector backend can connect, but the persisted indexing metadata snapshot is incomplete for lexical retrieval."
+                ),
+                "active_backend_indexing_message": indexing_message,
+            }
+
+        if metadata_snapshot_stale:
+            return {
+                "active_backend_state": "degraded",
+                "active_backend_issue": "metadata_snapshot_stale",
+                "active_backend_ready": True,
+                "active_backend_can_connect": True,
+                "active_backend_retrieval_ready": False,
+                "active_backend_indexing_ready": True,
+                "active_backend_indexing_preflight": indexing_preflight,
+                "pgvector_metadata_snapshot": metadata_payload,
+                "active_backend_message": (
+                    "pgvector backend can connect, but the persisted indexing metadata snapshot is stale and should be rebuilt."
+                ),
+                "active_backend_indexing_message": indexing_message,
+            }
 
         if not embedding_stack_ready:
             return {
@@ -287,14 +364,12 @@ class PgvectorChunkStorage:
                 "active_backend_can_connect": True,
                 "active_backend_retrieval_ready": False,
                 "active_backend_indexing_ready": True,
-                "active_backend_indexing_preflight": "degraded",
+                "active_backend_indexing_preflight": indexing_preflight,
                 "pgvector_metadata_snapshot": metadata_payload,
                 "active_backend_message": (
                     "pgvector backend can connect, but the embedding stack is unavailable."
                 ),
-                "active_backend_indexing_message": (
-                    "pgvector backend can reindex in degraded mode, but embeddings will be unavailable because the embedding stack is unavailable."
-                ),
+                "active_backend_indexing_message": indexing_message,
             }
 
         if not embedding_model_ready:
@@ -305,14 +380,12 @@ class PgvectorChunkStorage:
                 "active_backend_can_connect": True,
                 "active_backend_retrieval_ready": False,
                 "active_backend_indexing_ready": True,
-                "active_backend_indexing_preflight": "degraded",
+                "active_backend_indexing_preflight": indexing_preflight,
                 "pgvector_metadata_snapshot": metadata_payload,
                 "active_backend_message": (
                     "pgvector backend can connect, but the embedding model is not ready."
                 ),
-                "active_backend_indexing_message": (
-                    "pgvector backend can reindex in degraded mode, but embeddings will be unavailable because the embedding model is unavailable."
-                ),
+                "active_backend_indexing_message": indexing_message,
             }
 
         return {
@@ -322,10 +395,10 @@ class PgvectorChunkStorage:
             "active_backend_can_connect": True,
             "active_backend_retrieval_ready": True,
             "active_backend_indexing_ready": True,
-            "active_backend_indexing_preflight": "native",
+            "active_backend_indexing_preflight": indexing_preflight,
             "pgvector_metadata_snapshot": metadata_payload,
             "active_backend_message": "pgvector backend is ready for retrieval requests.",
-            "active_backend_indexing_message": "pgvector backend is ready for reindex requests.",
+            "active_backend_indexing_message": indexing_message,
         }
 
     def _chunk_from_row(self, row: tuple[object, ...]) -> LoadedChunk:

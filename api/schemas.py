@@ -16,6 +16,10 @@ StorageBackendIssueValue = Literal[
     "connection_failed",
     "embedding_stack_unavailable",
     "embedding_model_unavailable",
+    "metadata_snapshot_missing",
+    "metadata_snapshot_empty",
+    "metadata_snapshot_stale",
+    "metadata_snapshot_incomplete",
 ]
 RetrievalExecutionPathValue = Literal[
     "file_native",
@@ -46,6 +50,7 @@ class HealthResponse(BaseModel):
     active_storage_backend_indexing_preflight: IndexingPreflightValue
     active_storage_backend_message: str
     active_storage_backend_indexing_message: str
+    pgvector_metadata_snapshot: "PgvectorMetadataSnapshotResponse | None" = None
 
 
 class SearchRequest(BaseModel):
