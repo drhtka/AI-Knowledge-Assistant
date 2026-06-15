@@ -40,6 +40,8 @@ from api.schemas import (
     SearchResponse,
     StorageConfigResponse,
     StorageConfigUpdateRequest,
+    WebSearchHistoryEntryResponse,
+    WebSearchHistoryResponse,
     WebSearchRequest,
     WebSearchResponse,
 )
@@ -49,7 +51,7 @@ from api.settings import (
     STATIC_DIR,
     TEMPLATES_DIR,
 )
-from api.web_search import web_search
+from api.web_search import get_web_search_history, web_search
 
 
 @asynccontextmanager
@@ -177,6 +179,25 @@ def _build_retrieval_history_response(limit: int) -> RetrievalHistoryResponse:
                 error_type=entry.error_type,
             )
             for entry in get_retrieval_history(limit=limit)
+        ]
+    )
+
+
+def _build_web_search_history_response(limit: int) -> WebSearchHistoryResponse:
+    return WebSearchHistoryResponse(
+        entries=[
+            WebSearchHistoryEntryResponse(
+                history_entry_id=entry.history_entry_id,
+                question_length=entry.question_length,
+                top_k=entry.top_k,
+                engine=entry.engine,
+                status=entry.status,
+                hit_count=entry.hit_count,
+                latency_ms=entry.latency_ms,
+                updated_at=entry.updated_at,
+                error_type=entry.error_type,
+            )
+            for entry in get_web_search_history(limit=limit)
         ]
     )
 
@@ -584,6 +605,11 @@ def reindex_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> Re
 @app.get("/retrieval-history", response_model=RetrievalHistoryResponse)
 def retrieval_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> RetrievalHistoryResponse:
     return _build_retrieval_history_response(limit=limit)
+
+
+@app.get("/web-search-history", response_model=WebSearchHistoryResponse)
+def web_search_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> WebSearchHistoryResponse:
+    return _build_web_search_history_response(limit=limit)
 
 
 @app.post("/search", response_model=SearchResponse)

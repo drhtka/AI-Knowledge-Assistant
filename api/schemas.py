@@ -290,6 +290,22 @@ class RetrievalHistoryResponse(BaseModel):
     entries: list[RetrievalHistoryEntryResponse]
 
 
+class WebSearchHistoryEntryResponse(BaseModel):
+    history_entry_id: int
+    question_length: int
+    top_k: int
+    engine: str
+    status: str
+    hit_count: int
+    latency_ms: int
+    updated_at: str
+    error_type: str
+
+
+class WebSearchHistoryResponse(BaseModel):
+    entries: list[WebSearchHistoryEntryResponse]
+
+
 class WebSearchRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     top_k: int = Field(default=5, ge=1, le=10)

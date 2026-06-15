@@ -5,6 +5,11 @@ import logging
 from time import perf_counter
 from urllib import error, parse, request
 
+from api.web_search_history_store import (
+    WebSearchHistoryEntry,
+    create_web_search_history_entry,
+    list_web_search_history_entries,
+)
 from api.schemas import WebSearchHit, WebSearchResponse
 from api.settings import (
     SERPAPI_API_KEY,
@@ -16,6 +21,12 @@ from api.settings import (
 
 SERPAPI_ENDPOINT = "https://serpapi.com/search.json"
 logger = logging.getLogger("ai_knowledge_assistant.web_search")
+
+
+def _utc_now_iso() -> str:
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _normalize_snippet(result: dict) -> str:
@@ -50,9 +61,43 @@ def _log_web_search_failure(
     )
 
 
+def _record_web_search_history(
+    *,
+    question: str,
+    top_k: int,
+    status: str,
+    hit_count: int,
+    latency_ms: int,
+    error_type: str,
+) -> None:
+    create_web_search_history_entry(
+        question_length=len(question.strip()),
+        top_k=top_k,
+        engine=SERPAPI_ENGINE,
+        status=status,
+        hit_count=hit_count,
+        latency_ms=latency_ms,
+        updated_at=_utc_now_iso(),
+        error_type=error_type,
+    )
+
+
+def get_web_search_history(limit: int = 20) -> tuple[WebSearchHistoryEntry, ...]:
+    return list_web_search_history_entries(limit=limit)
+
+
 def web_search(question: str, top_k: int) -> WebSearchResponse:
     started_at = perf_counter()
     if not SERPAPI_ENABLED:
+        latency_ms = int((perf_counter() - started_at) * 1000)
+        _record_web_search_history(
+            question=question,
+            top_k=top_k,
+            status="failed",
+            hit_count=0,
+            latency_ms=latency_ms,
+            error_type="ValueError",
+        )
         _log_web_search_failure(
             question=question,
             top_k=top_k,
@@ -61,6 +106,15 @@ def web_search(question: str, top_k: int) -> WebSearchResponse:
         )
         raise ValueError("SerpAPI integration is disabled. Set SERPAPI_ENABLED=true.")
     if not SERPAPI_API_KEY.strip():
+        latency_ms = int((perf_counter() - started_at) * 1000)
+        _record_web_search_history(
+            question=question,
+            top_k=top_k,
+            status="failed",
+            hit_count=0,
+            latency_ms=latency_ms,
+            error_type="ValueError",
+        )
         _log_web_search_failure(
             question=question,
             top_k=top_k,
@@ -83,6 +137,15 @@ def web_search(question: str, top_k: int) -> WebSearchResponse:
         with request.urlopen(url, timeout=SERPAPI_TIMEOUT_SEC) as response:
             body = response.read().decode("utf-8")
     except (error.HTTPError, error.URLError, TimeoutError) as exc:
+        latency_ms = int((perf_counter() - started_at) * 1000)
+        _record_web_search_history(
+            question=question,
+            top_k=top_k,
+            status="failed",
+            hit_count=0,
+            latency_ms=latency_ms,
+            error_type=type(exc).__name__,
+        )
         _log_web_search_failure(
             question=question,
             top_k=top_k,
@@ -95,6 +158,15 @@ def web_search(question: str, top_k: int) -> WebSearchResponse:
     try:
         payload = json.loads(body)
     except json.JSONDecodeError as exc:
+        latency_ms = int((perf_counter() - started_at) * 1000)
+        _record_web_search_history(
+            question=question,
+            top_k=top_k,
+            status="failed",
+            hit_count=0,
+            latency_ms=latency_ms,
+            error_type=type(exc).__name__,
+        )
         _log_web_search_failure(
             question=question,
             top_k=top_k,
@@ -123,6 +195,15 @@ def web_search(question: str, top_k: int) -> WebSearchResponse:
         engine=SERPAPI_ENGINE,
         hits=hits,
     )
+    latency_ms = int((perf_counter() - started_at) * 1000)
+    _record_web_search_history(
+        question=question,
+        top_k=top_k,
+        status="completed",
+        hit_count=len(hits),
+        latency_ms=latency_ms,
+        error_type="",
+    )
     logger.info(
         "Web search request completed.",
         extra={
@@ -132,7 +213,7 @@ def web_search(question: str, top_k: int) -> WebSearchResponse:
                 "top_k": top_k,
                 "engine": SERPAPI_ENGINE,
                 "hit_count": len(hits),
-                "latency_ms": int((perf_counter() - started_at) * 1000),
+                "latency_ms": latency_ms,
             },
         },
     )
