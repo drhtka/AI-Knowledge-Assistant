@@ -232,14 +232,14 @@ def _build_retrieval_summary_message(
             return "pgvector DB-first retrieval completed normally but returned zero results."
         return "pgvector DB-first retrieval served the request successfully."
 
-    if execution_path == "pgvector_local_tfidf":
+    if execution_path == "pgvector_lexical":
         if outcome == "zero_results":
-            return "pgvector backend used the local tfidf path and returned zero results."
-        return "pgvector backend used the expected local tfidf path successfully."
+            return "pgvector backend used the PostgreSQL lexical path and returned zero results."
+        return "pgvector backend used the PostgreSQL lexical path successfully."
 
-    if execution_path == "pgvector_rescue_fallback":
+    if execution_path == "pgvector_lexical_fallback":
         return (
-            "pgvector retrieval used the rescue fallback to local ranking"
+            "pgvector retrieval used the rescue fallback to PostgreSQL lexical ranking"
             f" because of {execution_issue}."
         )
 

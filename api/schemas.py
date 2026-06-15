@@ -20,8 +20,8 @@ StorageBackendIssueValue = Literal[
 RetrievalExecutionPathValue = Literal[
     "file_native",
     "pgvector_native",
-    "pgvector_local_tfidf",
-    "pgvector_rescue_fallback",
+    "pgvector_lexical",
+    "pgvector_lexical_fallback",
 ]
 RetrievalExecutionIssueValue = Literal[
     "none",

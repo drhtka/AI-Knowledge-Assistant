@@ -31,13 +31,12 @@ from api.settings import (
     PGVECTOR_TABLE,
 )
 from api.storage_runtime import RankedChunkResult, StorageWarmupResult
-from api.vector_search import rank_chunks_by_similarity
 
 logger = logging.getLogger("ai_knowledge_assistant.pgvector_storage")
 
 
 class PgvectorRetrievalUnavailableError(RuntimeError):
-    """Raised when pgvector retrieval cannot be used and a rescue fallback is needed."""
+    """Raised when pgvector retrieval cannot be used and a lexical DB fallback is needed."""
 
 
 
@@ -75,7 +74,7 @@ class PgvectorChunkStorage:
         error: Exception | None = None,
     ) -> None:
         logger.warning(
-            "pgvector retrieval fell back to local ranking.",
+            "pgvector retrieval fell back to PostgreSQL lexical ranking.",
             extra={
                 "event": "pgvector_retrieval_fallback",
                 "context": {
@@ -134,13 +133,13 @@ class PgvectorChunkStorage:
             },
         )
 
-    def _rank_chunks_with_local_fallback(
+    def _rank_chunks_with_lexical_fallback(
         self,
         *,
         question: str,
         top_k: int,
         mode: RetrievalModeValue,
-        latency_ms: float,
+        started_at: float,
         reason: str,
         error: Exception | None = None,
     ) -> RankedChunkResult:
@@ -148,21 +147,18 @@ class PgvectorChunkStorage:
             mode=mode,
             question=question,
             top_k=top_k,
-            latency_ms=latency_ms,
+            latency_ms=(perf_counter() - started_at) * 1000,
             reason=reason,
             error=error,
         )
-        fallback_mode: RetrievalModeValue = "embeddings" if mode == "embeddings" else "auto"
-        return RankedChunkResult(
-            ranked_chunks=rank_chunks_by_similarity(
-                question=question,
-                chunks=self.load_chunks(),
-                mode=fallback_mode,
-            )[:top_k],
-            execution_path="pgvector_rescue_fallback",
+        return self._rank_chunks_by_postgres_lexical(
+            question=question,
+            top_k=top_k,
+            mode=mode,
+            started_at=started_at,
+            execution_path="pgvector_lexical_fallback",
             used_fallback=True,
             execution_issue=reason,
-            outcome="fallback",
         )
 
     def _validate_identifier(self, value: str) -> str:
@@ -576,22 +572,98 @@ class PgvectorChunkStorage:
             outcome="success" if ranked_chunks else "zero_results",
         )
 
-    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> RankedChunkResult:
-        if mode == "tfidf":
-            ranked_chunks = rank_chunks_by_similarity(
-                question=question,
-                chunks=self.load_chunks(),
-                mode="tfidf",
-            )[:top_k]
+    def _rank_chunks_by_postgres_lexical(
+        self,
+        *,
+        question: str,
+        top_k: int,
+        mode: RetrievalModeValue,
+        started_at: float,
+        execution_path: str,
+        used_fallback: bool,
+        execution_issue: str,
+    ) -> RankedChunkResult:
+        if not question.strip() or top_k < 1:
             return RankedChunkResult(
-                ranked_chunks=ranked_chunks,
-                execution_path="pgvector_local_tfidf",
-                used_fallback=False,
-                execution_issue="none",
-                outcome="success" if ranked_chunks else "zero_results",
+                ranked_chunks=[],
+                execution_path=execution_path,
+                used_fallback=used_fallback,
+                execution_issue=execution_issue,
+                outcome="fallback" if used_fallback else "zero_results",
             )
 
+        with self._connect() as connection:
+            self._ensure_schema(connection)
+            if self._is_storage_stale(connection):
+                self.rebuild_chunks()
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT
+                        document_id,
+                        title,
+                        content,
+                        source_path,
+                        file_type,
+                        chunk_index,
+                        chunk_size_words,
+                        chunk_overlap_words,
+                        ts_rank_cd(
+                            to_tsvector('simple', COALESCE(title, '') || ' ' || COALESCE(content, '')),
+                            plainto_tsquery('simple', %s)
+                        ) AS score
+                    FROM {self._chunks_table_name()}
+                    WHERE to_tsvector('simple', COALESCE(title, '') || ' ' || COALESCE(content, ''))
+                        @@ plainto_tsquery('simple', %s)
+                    ORDER BY score DESC, source_path, chunk_index
+                    LIMIT %s
+                    """,
+                    (question, question, top_k),
+                )
+                rows = cursor.fetchall()
+
+        ranked_chunks = [
+            (self._chunk_from_row(row[:-1]), float(row[-1]))
+            for row in rows
+            if row[-1] is not None and float(row[-1]) > 0
+        ]
+        latency_ms = (perf_counter() - started_at) * 1000
+        if not ranked_chunks:
+            self._log_zero_results(
+                mode=mode,
+                question=question,
+                top_k=top_k,
+                latency_ms=latency_ms,
+            )
+        else:
+            self._log_successful_retrieval(
+                mode=mode,
+                question=question,
+                top_k=top_k,
+                hit_count=len(ranked_chunks),
+                latency_ms=latency_ms,
+            )
+        return RankedChunkResult(
+            ranked_chunks=ranked_chunks,
+            execution_path=execution_path,
+            used_fallback=used_fallback,
+            execution_issue=execution_issue,
+            outcome="fallback" if used_fallback else ("success" if ranked_chunks else "zero_results"),
+        )
+
+    def rank_chunks(self, question: str, top_k: int, mode: RetrievalModeValue) -> RankedChunkResult:
         started_at = perf_counter()
+        if mode == "tfidf":
+            return self._rank_chunks_by_postgres_lexical(
+                question=question,
+                top_k=top_k,
+                mode="tfidf",
+                started_at=started_at,
+                execution_path="pgvector_lexical",
+                used_fallback=False,
+                execution_issue="none",
+            )
+
         try:
             return self._rank_chunks_by_pgvector_embeddings(
                 question=question,
@@ -600,20 +672,20 @@ class PgvectorChunkStorage:
                 started_at=started_at,
             )
         except PgvectorRetrievalUnavailableError as exc:
-            return self._rank_chunks_with_local_fallback(
+            return self._rank_chunks_with_lexical_fallback(
                 question=question,
                 top_k=top_k,
                 mode=mode,
-                latency_ms=(perf_counter() - started_at) * 1000,
+                started_at=started_at,
                 reason="pgvector_unavailable",
                 error=exc,
             )
         except Exception as exc:
-            return self._rank_chunks_with_local_fallback(
+            return self._rank_chunks_with_lexical_fallback(
                 question=question,
                 top_k=top_k,
                 mode=mode,
-                latency_ms=(perf_counter() - started_at) * 1000,
+                started_at=started_at,
                 reason="pgvector_query_failed",
                 error=exc,
             )
