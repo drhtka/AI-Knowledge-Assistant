@@ -59,6 +59,18 @@ class PgvectorMetadataSnapshot:
     embedding_document_count: int
     lexical_document_count: int
 
+    def to_response_payload(self) -> dict[str, object]:
+        return {
+            "chunk_size_words": self.chunk_size_words,
+            "chunk_overlap_words": self.chunk_overlap_words,
+            "chunking_version": self.chunking_version,
+            "indexed_at": self.indexed_at.isoformat(),
+            "chunk_count": self.chunk_count,
+            "source_file_count": self.source_file_count,
+            "embedding_document_count": self.embedding_document_count,
+            "lexical_document_count": self.lexical_document_count,
+        }
+
 
 @dataclass(frozen=True)
 class PgvectorChunkStorage:
@@ -239,6 +251,8 @@ class PgvectorChunkStorage:
 
         try:
             with self._connect() as connection:
+                self._ensure_schema(connection)
+                metadata_snapshot = self._load_metadata_snapshot(connection)
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT 1")
                     cursor.fetchone()
@@ -255,10 +269,15 @@ class PgvectorChunkStorage:
                     "pgvector backend is not ready: "
                     f"{type(exc).__name__}: {exc}"
                 ),
+                "pgvector_metadata_snapshot": None,
                 "active_backend_indexing_message": (
                     "pgvector backend cannot reindex because the database connection is unavailable."
                 ),
             }
+
+        metadata_payload = (
+            None if metadata_snapshot is None else metadata_snapshot.to_response_payload()
+        )
 
         if not embedding_stack_ready:
             return {
@@ -269,6 +288,7 @@ class PgvectorChunkStorage:
                 "active_backend_retrieval_ready": False,
                 "active_backend_indexing_ready": True,
                 "active_backend_indexing_preflight": "degraded",
+                "pgvector_metadata_snapshot": metadata_payload,
                 "active_backend_message": (
                     "pgvector backend can connect, but the embedding stack is unavailable."
                 ),
@@ -286,6 +306,7 @@ class PgvectorChunkStorage:
                 "active_backend_retrieval_ready": False,
                 "active_backend_indexing_ready": True,
                 "active_backend_indexing_preflight": "degraded",
+                "pgvector_metadata_snapshot": metadata_payload,
                 "active_backend_message": (
                     "pgvector backend can connect, but the embedding model is not ready."
                 ),
@@ -302,6 +323,7 @@ class PgvectorChunkStorage:
             "active_backend_retrieval_ready": True,
             "active_backend_indexing_ready": True,
             "active_backend_indexing_preflight": "native",
+            "pgvector_metadata_snapshot": metadata_payload,
             "active_backend_message": "pgvector backend is ready for retrieval requests.",
             "active_backend_indexing_message": "pgvector backend is ready for reindex requests.",
         }

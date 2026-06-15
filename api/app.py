@@ -28,6 +28,7 @@ from api.schemas import (
     ChunkingConfigUpdateRequest,
     HealthResponse,
     IngestResponse,
+    PgvectorMetadataSnapshotResponse,
     ReindexHistoryEntryResponse,
     ReindexHistoryResponse,
     ReindexStartResponse,
@@ -263,6 +264,24 @@ def _build_chunking_config_response(
     )
 
 
+def _build_pgvector_metadata_snapshot_response(
+    payload: object,
+) -> PgvectorMetadataSnapshotResponse | None:
+    if not isinstance(payload, dict):
+        return None
+
+    return PgvectorMetadataSnapshotResponse(
+        chunk_size_words=int(payload["chunk_size_words"]),
+        chunk_overlap_words=int(payload["chunk_overlap_words"]),
+        chunking_version=str(payload["chunking_version"]),
+        indexed_at=str(payload["indexed_at"]),
+        chunk_count=int(payload["chunk_count"]),
+        source_file_count=int(payload["source_file_count"]),
+        embedding_document_count=int(payload["embedding_document_count"]),
+        lexical_document_count=int(payload["lexical_document_count"]),
+    )
+
+
 def _build_storage_config_response(
     storage_config: dict[str, object],
     reindex_start: ReindexStartResponse,
@@ -282,6 +301,9 @@ def _build_storage_config_response(
         active_backend_indexing_preflight=storage_config["active_backend_indexing_preflight"],
         active_backend_message=storage_config["active_backend_message"],
         active_backend_indexing_message=storage_config["active_backend_indexing_message"],
+        pgvector_metadata_snapshot=_build_pgvector_metadata_snapshot_response(
+            storage_config.get("pgvector_metadata_snapshot")
+        ),
         reindex_accepted=reindex_start.accepted,
         reindex_state=reindex_start.state,
         reindex_started_at=reindex_start.started_at,
@@ -462,6 +484,9 @@ def health() -> HealthResponse:
         active_storage_backend_indexing_preflight=storage_config["active_backend_indexing_preflight"],
         active_storage_backend_message=storage_config["active_backend_message"],
         active_storage_backend_indexing_message=storage_config["active_backend_indexing_message"],
+        pgvector_metadata_snapshot=_build_pgvector_metadata_snapshot_response(
+            storage_config.get("pgvector_metadata_snapshot")
+        ),
     )
 
 
@@ -533,6 +558,9 @@ def _build_runtime_observability_response() -> RuntimeObservabilityResponse:
         active_backend_indexing_preflight=storage_config["active_backend_indexing_preflight"],
         active_backend_message=storage_config["active_backend_message"],
         active_backend_indexing_message=storage_config["active_backend_indexing_message"],
+        pgvector_metadata_snapshot=_build_pgvector_metadata_snapshot_response(
+            storage_config.get("pgvector_metadata_snapshot")
+        ),
         reindex_state=reindex_status.state,
         reindex_trigger=reindex_status.trigger,
         reindex_backend=reindex_status.backend,

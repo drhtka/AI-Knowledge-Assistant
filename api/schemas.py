@@ -151,6 +151,7 @@ class StorageConfigResponse(BaseModel):
     active_backend_indexing_preflight: IndexingPreflightValue
     active_backend_message: str
     active_backend_indexing_message: str
+    pgvector_metadata_snapshot: "PgvectorMetadataSnapshotResponse | None" = None
     reindex_accepted: bool
     reindex_state: ReindexStateValue
     reindex_started_at: str | None
@@ -187,6 +188,7 @@ class RuntimeObservabilityResponse(BaseModel):
     active_backend_indexing_preflight: IndexingPreflightValue
     active_backend_message: str
     active_backend_indexing_message: str
+    pgvector_metadata_snapshot: "PgvectorMetadataSnapshotResponse | None" = None
     reindex_state: ReindexStateValue
     reindex_trigger: str
     reindex_backend: StorageBackendValue
@@ -213,6 +215,17 @@ class ReindexResponse(BaseModel):
     current_preset: ChunkingPresetValue
     chunk_size_words: int
     chunk_overlap_words: int
+
+
+class PgvectorMetadataSnapshotResponse(BaseModel):
+    chunk_size_words: int
+    chunk_overlap_words: int
+    chunking_version: str
+    indexed_at: str
+    chunk_count: int
+    source_file_count: int
+    embedding_document_count: int
+    lexical_document_count: int
 
 
 class ReindexStartResponse(BaseModel):
