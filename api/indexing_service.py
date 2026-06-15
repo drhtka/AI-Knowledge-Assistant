@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import logging
 from pathlib import Path
@@ -11,6 +11,11 @@ from api.ingestion import (
     build_document_preview,
     estimate_document_chunk_count,
     save_uploaded_document,
+)
+from api.runtime_state_store import (
+    REINDEX_STATUS_STATE_KEY,
+    load_runtime_state,
+    save_runtime_state,
 )
 from api.storage import get_active_storage_backend, get_chunk_storage
 
@@ -59,6 +64,29 @@ class ReindexStartResult:
 
 
 _reindex_status_lock = RLock()
+_reindex_status_initialized = False
+
+
+def _default_reindex_status_snapshot() -> ReindexStatusSnapshot:
+    return ReindexStatusSnapshot(
+        state="idle",
+        trigger="startup",
+        backend=get_active_storage_backend(),
+        started_at=None,
+        finished_at=None,
+        last_error="",
+        rerun_requested=False,
+        rerun_trigger="",
+        document_count=0,
+        chunk_count=0,
+        elapsed_ms=0,
+        outcome="idle",
+        summary_message="No reindex job has been recorded yet.",
+        last_successful_backend=None,
+        last_successful_finished_at=None,
+    )
+
+
 _reindex_status = ReindexStatusSnapshot(
     state="idle",
     trigger="startup",
@@ -72,7 +100,7 @@ _reindex_status = ReindexStatusSnapshot(
     chunk_count=0,
     elapsed_ms=0,
     outcome="idle",
-    summary_message="No reindex job has been started in this process yet.",
+    summary_message="No reindex job has been recorded yet.",
     last_successful_backend=None,
     last_successful_finished_at=None,
 )
@@ -103,7 +131,7 @@ def _build_reindex_summary_message(
     last_error: str,
 ) -> str:
     if outcome == "idle":
-        return "No reindex job has been started in this process yet."
+        return "No reindex job has been recorded yet."
     if outcome == "rerun_requested":
         requested_trigger = rerun_trigger or trigger
         return (
@@ -128,8 +156,122 @@ def _build_reindex_summary_message(
     )
 
 
+def _coerce_optional_str(value: object) -> str | None:
+    if value in {None, ""}:
+        return None
+    return str(value)
+
+
+def _coerce_optional_backend(value: object) -> str | None:
+    if value in {None, ""}:
+        return None
+    backend = str(value)
+    if backend in {"file", "pgvector"}:
+        return backend
+    return None
+
+
+def _coerce_reindex_status_snapshot(payload: dict[str, object]) -> ReindexStatusSnapshot:
+    default_snapshot = _default_reindex_status_snapshot()
+    state = str(payload.get("state", default_snapshot.state))
+    if state not in {"idle", "running", "succeeded", "failed"}:
+        state = default_snapshot.state
+
+    trigger = str(payload.get("trigger", default_snapshot.trigger))
+    backend = str(payload.get("backend", default_snapshot.backend))
+    if backend not in {"file", "pgvector"}:
+        backend = default_snapshot.backend
+
+    last_error = str(payload.get("last_error", default_snapshot.last_error))
+    rerun_requested = bool(payload.get("rerun_requested", default_snapshot.rerun_requested))
+    rerun_trigger = str(payload.get("rerun_trigger", default_snapshot.rerun_trigger))
+    document_count = int(payload.get("document_count", default_snapshot.document_count))
+    chunk_count = int(payload.get("chunk_count", default_snapshot.chunk_count))
+    elapsed_ms = int(payload.get("elapsed_ms", default_snapshot.elapsed_ms))
+    outcome = str(
+        payload.get(
+            "outcome",
+            _derive_reindex_outcome(state=state, rerun_requested=rerun_requested),
+        )
+    )
+    if outcome not in {"idle", "running", "succeeded", "failed", "rerun_requested"}:
+        outcome = _derive_reindex_outcome(state=state, rerun_requested=rerun_requested)
+
+    summary_message = str(
+        payload.get(
+            "summary_message",
+            _build_reindex_summary_message(
+                state=state,
+                outcome=outcome,
+                backend=backend,
+                trigger=trigger,
+                rerun_requested=rerun_requested,
+                rerun_trigger=rerun_trigger,
+                document_count=document_count,
+                chunk_count=chunk_count,
+                last_error=last_error,
+            ),
+        )
+    )
+
+    return ReindexStatusSnapshot(
+        state=state,
+        trigger=trigger,
+        backend=backend,
+        started_at=_coerce_optional_str(payload.get("started_at")),
+        finished_at=_coerce_optional_str(payload.get("finished_at")),
+        last_error=last_error,
+        rerun_requested=rerun_requested,
+        rerun_trigger=rerun_trigger,
+        document_count=document_count,
+        chunk_count=chunk_count,
+        elapsed_ms=elapsed_ms,
+        outcome=outcome,
+        summary_message=summary_message,
+        last_successful_backend=_coerce_optional_backend(
+            payload.get("last_successful_backend")
+        ),
+        last_successful_finished_at=_coerce_optional_str(
+            payload.get("last_successful_finished_at")
+        ),
+    )
+
+
+def _ensure_reindex_status_initialized() -> None:
+    global _reindex_status, _reindex_status_initialized
+
+    snapshot_to_persist: ReindexStatusSnapshot | None = None
+    with _reindex_status_lock:
+        if _reindex_status_initialized:
+            return
+
+        persisted_state = load_runtime_state(REINDEX_STATUS_STATE_KEY)
+        if isinstance(persisted_state, dict):
+            _reindex_status = _coerce_reindex_status_snapshot(persisted_state)
+            if _reindex_status.state == "running":
+                _reindex_status = _coerce_reindex_status_snapshot(
+                    {
+                        **asdict(_reindex_status),
+                        "state": "failed",
+                        "finished_at": _utc_now_iso(),
+                        "last_error": "Process restarted before the background reindex finished.",
+                        "rerun_requested": False,
+                        "rerun_trigger": "",
+                    }
+                )
+                snapshot_to_persist = _reindex_status
+        else:
+            _reindex_status = _default_reindex_status_snapshot()
+            snapshot_to_persist = _reindex_status
+        _reindex_status_initialized = True
+
+    if snapshot_to_persist is not None:
+        save_runtime_state(REINDEX_STATUS_STATE_KEY, asdict(snapshot_to_persist))
+
+
 def _set_reindex_status(**changes: object) -> ReindexStatusSnapshot:
     global _reindex_status
+    persisted_snapshot: ReindexStatusSnapshot
     with _reindex_status_lock:
         state = str(changes.get("state", _reindex_status.state))
         trigger = str(changes.get("trigger", _reindex_status.trigger))
@@ -195,15 +337,20 @@ def _set_reindex_status(**changes: object) -> ReindexStatusSnapshot:
                 else str(last_successful_finished_at)
             ),
         )
-        return _reindex_status
+        persisted_snapshot = _reindex_status
+
+    save_runtime_state(REINDEX_STATUS_STATE_KEY, asdict(persisted_snapshot))
+    return persisted_snapshot
 
 
 def get_reindex_status() -> ReindexStatusSnapshot:
+    _ensure_reindex_status_initialized()
     with _reindex_status_lock:
         return ReindexStatusSnapshot(**_reindex_status.__dict__)
 
 
 def consume_rerun_request() -> str:
+    _ensure_reindex_status_initialized()
     with _reindex_status_lock:
         if not _reindex_status.rerun_requested:
             return ""
@@ -213,6 +360,7 @@ def consume_rerun_request() -> str:
 
 
 def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
+    _ensure_reindex_status_initialized()
     active_storage_backend = get_active_storage_backend()
     with _reindex_status_lock:
         if _reindex_status.state == "running":
@@ -296,6 +444,7 @@ def rebuild_index(
     started_at_iso: str | None = None,
     assume_running: bool = False,
 ) -> ReindexResult:
+    _ensure_reindex_status_initialized()
     started_at = perf_counter()
     active_storage_backend = get_active_storage_backend()
     chunk_storage = get_chunk_storage()

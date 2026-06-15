@@ -7,6 +7,11 @@ from threading import Lock
 from typing import Protocol
 
 from api.ingestion import LoadedChunk, build_processed_chunks, clear_chunks_cache, load_chunks
+from api.runtime_state_store import (
+    ACTIVE_STORAGE_BACKEND_STATE_KEY,
+    load_runtime_state,
+    save_runtime_state,
+)
 from api.schemas import (
     RetrievalModeValue,
     StorageBackendValue,
@@ -76,6 +81,46 @@ def _normalize_storage_backend(value: str) -> StorageBackendValue:
 
 _default_storage_backend: StorageBackendValue = _normalize_storage_backend(CHUNK_STORAGE_BACKEND)
 _current_storage_backend: StorageBackendValue = _default_storage_backend
+_storage_backend_initialized = False
+
+
+def _ensure_storage_backend_initialized() -> None:
+    global _current_storage_backend, _storage_backend_initialized
+
+    backend_to_persist: StorageBackendValue | None = None
+    with _storage_backend_lock:
+        if _storage_backend_initialized:
+            return
+
+        persisted_state = load_runtime_state(ACTIVE_STORAGE_BACKEND_STATE_KEY)
+        persisted_backend = (
+            persisted_state.get("backend") if isinstance(persisted_state, dict) else None
+        )
+        if isinstance(persisted_backend, str):
+            try:
+                _current_storage_backend = _normalize_storage_backend(persisted_backend)
+            except ValueError:
+                logger.warning(
+                    "Ignoring invalid persisted storage backend and falling back to default.",
+                    extra={
+                        "event": "storage_backend_state_invalid",
+                        "context": {
+                            "persisted_backend": persisted_backend,
+                            "default_backend": _default_storage_backend,
+                        },
+                    },
+                )
+                backend_to_persist = _default_storage_backend
+        else:
+            backend_to_persist = _default_storage_backend
+
+        _storage_backend_initialized = True
+
+    if backend_to_persist is not None:
+        save_runtime_state(
+            ACTIVE_STORAGE_BACKEND_STATE_KEY,
+            {"backend": backend_to_persist},
+        )
 
 
 def _build_backend_summary_message(
@@ -99,6 +144,7 @@ def _build_backend_summary_message(
 
 
 def get_active_storage_backend() -> StorageBackendValue:
+    _ensure_storage_backend_initialized()
     with _storage_backend_lock:
         return _current_storage_backend
 
@@ -149,10 +195,16 @@ def get_active_storage_backend_status() -> dict[str, object]:
 
 def set_active_storage_backend(backend: StorageBackendValue) -> dict[str, object]:
     global _current_storage_backend
+    _ensure_storage_backend_initialized()
     normalized_backend = _normalize_storage_backend(backend)
     with _storage_backend_lock:
         previous_backend = _current_storage_backend
         _current_storage_backend = normalized_backend
+
+    save_runtime_state(
+        ACTIVE_STORAGE_BACKEND_STATE_KEY,
+        {"backend": normalized_backend},
+    )
 
     logger.info(
         "Storage backend runtime selector updated.",
