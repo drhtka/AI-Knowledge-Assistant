@@ -20,6 +20,7 @@ from api.reindex_history_store import (
 )
 from api.runtime_state_store import (
     REINDEX_STATUS_STATE_KEY,
+    SOURCE_UPDATE_JOB_STATE_KEY,
     load_runtime_state,
     save_runtime_state,
 )
@@ -74,8 +75,21 @@ class ReindexStartResult:
     status_snapshot: ReindexStatusSnapshot
 
 
+@dataclass(frozen=True)
+class SourceUpdateJobSnapshot:
+    state: str
+    trigger: str
+    source_name: str | None
+    requested_at: str | None
+    manifest_sync_succeeded: bool
+    reindex_started_at: str | None
+    finished_at: str | None
+    last_error: str
+
+
 _reindex_status_lock = RLock()
 _reindex_status_initialized = False
+_source_update_job_lock = RLock()
 
 
 def _default_reindex_status_snapshot() -> ReindexStatusSnapshot:
@@ -117,6 +131,19 @@ _reindex_status = ReindexStatusSnapshot(
     last_successful_backend=None,
     last_successful_finished_at=None,
 )
+
+
+def _default_source_update_job_snapshot() -> SourceUpdateJobSnapshot:
+    return SourceUpdateJobSnapshot(
+        state="idle",
+        trigger="none",
+        source_name=None,
+        requested_at=None,
+        manifest_sync_succeeded=False,
+        reindex_started_at=None,
+        finished_at=None,
+        last_error="",
+    )
 
 
 def _utc_now_iso() -> str:
@@ -190,6 +217,33 @@ def _coerce_optional_int(value: object) -> int | None:
     return int(value)
 
 
+def _coerce_source_update_job_snapshot(payload: dict[str, object]) -> SourceUpdateJobSnapshot:
+    default_snapshot = _default_source_update_job_snapshot()
+    state = str(payload.get("state", default_snapshot.state))
+    if state not in {"idle", "pending", "reindexing", "succeeded", "failed"}:
+        state = default_snapshot.state
+
+    trigger = str(payload.get("trigger", default_snapshot.trigger))
+    if not trigger:
+        trigger = default_snapshot.trigger
+
+    return SourceUpdateJobSnapshot(
+        state=state,
+        trigger=trigger,
+        source_name=_coerce_optional_str(payload.get("source_name")),
+        requested_at=_coerce_optional_str(payload.get("requested_at")),
+        manifest_sync_succeeded=bool(
+            payload.get(
+                "manifest_sync_succeeded",
+                default_snapshot.manifest_sync_succeeded,
+            )
+        ),
+        reindex_started_at=_coerce_optional_str(payload.get("reindex_started_at")),
+        finished_at=_coerce_optional_str(payload.get("finished_at")),
+        last_error=str(payload.get("last_error", default_snapshot.last_error)),
+    )
+
+
 def _coerce_reindex_status_snapshot(payload: dict[str, object]) -> ReindexStatusSnapshot:
     default_snapshot = _default_reindex_status_snapshot()
     state = str(payload.get("state", default_snapshot.state))
@@ -254,6 +308,103 @@ def _coerce_reindex_status_snapshot(payload: dict[str, object]) -> ReindexStatus
         last_successful_finished_at=_coerce_optional_str(
             payload.get("last_successful_finished_at")
         ),
+    )
+
+
+def get_source_update_job() -> SourceUpdateJobSnapshot:
+    with _source_update_job_lock:
+        persisted_state = load_runtime_state(SOURCE_UPDATE_JOB_STATE_KEY)
+        if not isinstance(persisted_state, dict):
+            return _default_source_update_job_snapshot()
+
+        snapshot = _coerce_source_update_job_snapshot(persisted_state)
+        if snapshot.state != "reindexing":
+            return snapshot
+
+        interrupted_snapshot = SourceUpdateJobSnapshot(
+            state="failed",
+            trigger=snapshot.trigger,
+            source_name=snapshot.source_name,
+            requested_at=snapshot.requested_at,
+            manifest_sync_succeeded=snapshot.manifest_sync_succeeded,
+            reindex_started_at=snapshot.reindex_started_at,
+            finished_at=_utc_now_iso(),
+            last_error="Process restarted before the source update reindex finished.",
+        )
+        save_runtime_state(SOURCE_UPDATE_JOB_STATE_KEY, asdict(interrupted_snapshot))
+        return interrupted_snapshot
+
+
+def _set_source_update_job(**changes: object) -> SourceUpdateJobSnapshot:
+    with _source_update_job_lock:
+        current_snapshot = get_source_update_job()
+        next_snapshot = SourceUpdateJobSnapshot(
+            state=str(changes.get("state", current_snapshot.state)),
+            trigger=str(changes.get("trigger", current_snapshot.trigger)),
+            source_name=_coerce_optional_str(
+                changes.get("source_name", current_snapshot.source_name)
+            ),
+            requested_at=_coerce_optional_str(
+                changes.get("requested_at", current_snapshot.requested_at)
+            ),
+            manifest_sync_succeeded=bool(
+                changes.get(
+                    "manifest_sync_succeeded",
+                    current_snapshot.manifest_sync_succeeded,
+                )
+            ),
+            reindex_started_at=_coerce_optional_str(
+                changes.get("reindex_started_at", current_snapshot.reindex_started_at)
+            ),
+            finished_at=_coerce_optional_str(
+                changes.get("finished_at", current_snapshot.finished_at)
+            ),
+            last_error=str(changes.get("last_error", current_snapshot.last_error)),
+        )
+        save_runtime_state(SOURCE_UPDATE_JOB_STATE_KEY, asdict(next_snapshot))
+        return next_snapshot
+
+
+def _mark_source_update_job_pending(
+    *,
+    trigger: str,
+    source_name: str,
+    manifest_sync_succeeded: bool,
+    last_error: str,
+) -> SourceUpdateJobSnapshot:
+    return _set_source_update_job(
+        state="pending",
+        trigger=trigger,
+        source_name=source_name,
+        requested_at=_utc_now_iso(),
+        manifest_sync_succeeded=manifest_sync_succeeded,
+        reindex_started_at=None,
+        finished_at=None,
+        last_error=last_error,
+    )
+
+
+def _mark_source_update_reindex_started(*, trigger: str, started_at: str) -> None:
+    snapshot = get_source_update_job()
+    if snapshot.state != "pending":
+        return
+    if snapshot.trigger != trigger:
+        return
+    _set_source_update_job(
+        state="reindexing",
+        reindex_started_at=started_at,
+        finished_at=None,
+    )
+
+
+def _finalize_source_update_job(*, state: str, finished_at: str, last_error: str) -> None:
+    snapshot = get_source_update_job()
+    if snapshot.state != "reindexing":
+        return
+    _set_source_update_job(
+        state=state,
+        finished_at=finished_at,
+        last_error=last_error,
     )
 
 
@@ -471,6 +622,16 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
     return ReindexStartResult(accepted=True, status_snapshot=status_snapshot)
 
 
+def start_source_update_job() -> ReindexStartResult:
+    source_update_job = get_source_update_job()
+    trigger = (
+        source_update_job.trigger
+        if source_update_job.state == "pending"
+        else "upload"
+    )
+    return start_reindex_job(trigger=trigger)
+
+
 def ensure_index_loaded() -> tuple:
     active_storage_backend = get_active_storage_backend()
     warmup_result = get_chunk_storage().prepare_runtime()
@@ -514,6 +675,7 @@ def rebuild_index(
     chunk_storage = get_chunk_storage()
     if started_at_iso is None:
         started_at_iso = _utc_now_iso()
+    _mark_source_update_reindex_started(trigger=trigger, started_at=started_at_iso)
     if not assume_running:
         history_entry_id = create_reindex_history_entry(
             trigger=trigger,
@@ -559,6 +721,11 @@ def rebuild_index(
             last_successful_backend=active_storage_backend,
             last_successful_finished_at=finished_at,
         )
+        _finalize_source_update_job(
+            state="succeeded",
+            finished_at=finished_at,
+            last_error="",
+        )
         if status_snapshot.history_entry_id is not None:
             finalize_reindex_history_entry(
                 status_snapshot.history_entry_id,
@@ -601,6 +768,11 @@ def rebuild_index(
             chunk_count=0,
             elapsed_ms=elapsed_ms,
         )
+        _finalize_source_update_job(
+            state="failed",
+            finished_at=str(status_snapshot.finished_at),
+            last_error=status_snapshot.last_error,
+        )
         if status_snapshot.history_entry_id is not None and status_snapshot.finished_at is not None:
             finalize_reindex_history_entry(
                 status_snapshot.history_entry_id,
@@ -632,16 +804,8 @@ def rebuild_index(
 
 
 def ingest_uploaded_document(filename: str, content: bytes) -> UploadedDocumentResult:
-    stored_path = save_uploaded_document(filename, content)
-    sync_active_storage_source_corpus()
+    result = prepare_uploaded_document(filename, content)
     reindex_result = rebuild_index(trigger="upload")
-    result = UploadedDocumentResult(
-        original_filename=filename,
-        stored_path=stored_path,
-        file_type=stored_path.suffix.lower().lstrip(".") or "unknown",
-        estimated_chunks=estimate_document_chunk_count(stored_path),
-        preview_text=build_document_preview(stored_path),
-    )
     logger.info(
         "Uploaded document ingested and indexed.",
         extra={
@@ -661,7 +825,18 @@ def ingest_uploaded_document(filename: str, content: bytes) -> UploadedDocumentR
 
 def prepare_uploaded_document(filename: str, content: bytes) -> UploadedDocumentResult:
     stored_path = save_uploaded_document(filename, content)
-    sync_active_storage_source_corpus()
+    sync_succeeded = sync_active_storage_source_corpus()
+    sync_error = (
+        ""
+        if sync_succeeded
+        else "Active storage backend failed to synchronize source corpus state."
+    )
+    _mark_source_update_job_pending(
+        trigger="upload",
+        source_name=stored_path.name,
+        manifest_sync_succeeded=sync_succeeded,
+        last_error=sync_error,
+    )
     result = UploadedDocumentResult(
         original_filename=filename,
         stored_path=stored_path,

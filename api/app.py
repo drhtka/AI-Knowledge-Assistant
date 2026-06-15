@@ -17,6 +17,7 @@ from api.indexing_service import (
     prepare_uploaded_document,
     rebuild_index,
     start_reindex_job,
+    start_source_update_job,
 )
 from api.ingestion import build_document_preview
 from api.logging_utils import configure_logging
@@ -223,6 +224,12 @@ def _run_reindex_background_job(trigger: str, started_at: str | None) -> None:
 
 def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartResponse:
     start_result = start_reindex_job(trigger=trigger)
+    return _build_reindex_start_response_from_result(start_result)
+
+
+def _build_reindex_start_response_from_result(start_result: object) -> ReindexStartResponse:
+    if not hasattr(start_result, "accepted") or not hasattr(start_result, "status_snapshot"):
+        raise TypeError("Unsupported reindex start result payload.")
     message = (
         "Reindex job started in the background."
         if start_result.accepted
@@ -244,6 +251,10 @@ def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartRespon
         message=message,
         rerun_requested=start_result.status_snapshot.rerun_requested,
     )
+
+
+def _build_source_update_reindex_start_response() -> ReindexStartResponse:
+    return _build_reindex_start_response_from_result(start_source_update_job())
 
 
 def _build_chunking_config_response(
@@ -345,7 +356,13 @@ async def _ingest_uploaded_file(file: UploadFile, background_tasks: BackgroundTa
         ingested_document = prepare_uploaded_document(file.filename, file_content)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    reindex_start = _start_reindex_background_job(background_tasks, trigger="upload")
+    reindex_start = _build_source_update_reindex_start_response()
+    if reindex_start.accepted:
+        background_tasks.add_task(
+            _run_reindex_background_job,
+            reindex_start.trigger,
+            reindex_start.started_at,
+        )
 
     return IngestResponse(
         status="ok",
