@@ -231,6 +231,9 @@ class PgvectorMetadataSnapshotResponse(BaseModel):
     source_file_count: int
     embedding_document_count: int
     lexical_document_count: int
+    source_snapshot_hash: str
+    source_latest_modified_at: str | None
+    source_total_bytes: int
 
 
 class ReindexStartResponse(BaseModel):

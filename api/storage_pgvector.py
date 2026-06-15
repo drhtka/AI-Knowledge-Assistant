@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import hashlib
 import logging
+from pathlib import Path
 import re
 from time import perf_counter
 
@@ -58,6 +60,9 @@ class PgvectorMetadataSnapshot:
     source_file_count: int
     embedding_document_count: int
     lexical_document_count: int
+    source_snapshot_hash: str
+    source_latest_modified_at: datetime | None
+    source_total_bytes: int
 
     def to_response_payload(self) -> dict[str, object]:
         return {
@@ -69,7 +74,22 @@ class PgvectorMetadataSnapshot:
             "source_file_count": self.source_file_count,
             "embedding_document_count": self.embedding_document_count,
             "lexical_document_count": self.lexical_document_count,
+            "source_snapshot_hash": self.source_snapshot_hash,
+            "source_latest_modified_at": (
+                None
+                if self.source_latest_modified_at is None
+                else self.source_latest_modified_at.isoformat()
+            ),
+            "source_total_bytes": self.source_total_bytes,
         }
+
+
+@dataclass(frozen=True)
+class RawSourceSnapshot:
+    file_count: int
+    total_bytes: int
+    latest_modified_at: datetime | None
+    snapshot_hash: str
 
 
 @dataclass(frozen=True)
@@ -212,7 +232,10 @@ class PgvectorChunkStorage:
                     chunk_count,
                     source_file_count,
                     embedding_document_count,
-                    lexical_document_count
+                    lexical_document_count,
+                    source_snapshot_hash,
+                    source_latest_modified_at,
+                    source_total_bytes
                 FROM {self._meta_table_name()}
                 WHERE storage_key = %s
                 """,
@@ -232,6 +255,11 @@ class PgvectorChunkStorage:
             source_file_count=int(row[5]),
             embedding_document_count=int(row[6]),
             lexical_document_count=int(row[7]),
+            source_snapshot_hash=str(row[8]),
+            source_latest_modified_at=(
+                None if row[9] is None else row[9].astimezone(timezone.utc)
+            ),
+            source_total_bytes=int(row[10]),
         )
 
     def _connect(self) -> object:
@@ -481,6 +509,9 @@ class PgvectorChunkStorage:
                     source_file_count INTEGER NOT NULL DEFAULT 0,
                     embedding_document_count INTEGER NOT NULL DEFAULT 0,
                     lexical_document_count INTEGER NOT NULL DEFAULT 0,
+                    source_snapshot_hash TEXT NOT NULL DEFAULT '',
+                    source_latest_modified_at TIMESTAMPTZ,
+                    source_total_bytes BIGINT NOT NULL DEFAULT 0,
                     indexed_at TIMESTAMPTZ NOT NULL
                 )
                 """
@@ -509,8 +540,26 @@ class PgvectorChunkStorage:
                 ADD COLUMN IF NOT EXISTS lexical_document_count INTEGER NOT NULL DEFAULT 0
                 """
             )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._meta_table_name()}
+                ADD COLUMN IF NOT EXISTS source_snapshot_hash TEXT NOT NULL DEFAULT ''
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._meta_table_name()}
+                ADD COLUMN IF NOT EXISTS source_latest_modified_at TIMESTAMPTZ
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._meta_table_name()}
+                ADD COLUMN IF NOT EXISTS source_total_bytes BIGINT NOT NULL DEFAULT 0
+                """
+            )
 
-    def _iter_supported_raw_files(self) -> list[object]:
+    def _iter_supported_raw_files(self) -> list[Path]:
         if not RAW_DATA_DIR.exists():
             return []
         return [
@@ -520,6 +569,31 @@ class PgvectorChunkStorage:
             and path.name not in IGNORED_FILENAMES
             and path.suffix.lower() in SUPPORTED_EXTENSIONS
         ]
+
+    def _build_source_snapshot(self, raw_files: list[Path]) -> RawSourceSnapshot:
+        digest = hashlib.sha256()
+        latest_modified_at: datetime | None = None
+        total_bytes = 0
+        for path in raw_files:
+            stat = path.stat()
+            modified_at = datetime.fromtimestamp(stat.st_mtime, timezone.utc)
+            relative_path = path.relative_to(RAW_DATA_DIR).as_posix()
+            total_bytes += int(stat.st_size)
+            if latest_modified_at is None or modified_at > latest_modified_at:
+                latest_modified_at = modified_at
+            digest.update(relative_path.encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(str(int(stat.st_size)).encode("ascii"))
+            digest.update(b"\0")
+            digest.update(str(stat.st_mtime_ns).encode("ascii"))
+            digest.update(b"\n")
+
+        return RawSourceSnapshot(
+            file_count=len(raw_files),
+            total_bytes=total_bytes,
+            latest_modified_at=latest_modified_at,
+            snapshot_hash=digest.hexdigest(),
+        )
 
     def _is_storage_stale(self, connection: object) -> bool:
         config = get_chunking_config()
@@ -533,15 +607,20 @@ class PgvectorChunkStorage:
             return True
         if metadata.chunking_version != CHUNKING_VERSION:
             return True
+        raw_files = self._iter_supported_raw_files()
+        source_snapshot = self._build_source_snapshot(raw_files)
         if metadata.chunk_count < 1:
-            return bool(self._iter_supported_raw_files())
+            return source_snapshot.file_count > 0
         if metadata.lexical_document_count < metadata.chunk_count:
             return True
+        if metadata.source_file_count != source_snapshot.file_count:
+            return True
+        if metadata.source_snapshot_hash != source_snapshot.snapshot_hash:
+            return True
+        if metadata.source_total_bytes != source_snapshot.total_bytes:
+            return True
 
-        return any(
-            datetime.fromtimestamp(path.stat().st_mtime, timezone.utc) > metadata.indexed_at
-            for path in self._iter_supported_raw_files()
-        )
+        return metadata.source_latest_modified_at != source_snapshot.latest_modified_at
 
     def load_chunks(self) -> tuple[LoadedChunk, ...]:
         with self._connect() as connection:
@@ -590,6 +669,7 @@ class PgvectorChunkStorage:
 
     def rebuild_chunks(self) -> tuple[LoadedChunk, ...]:
         config = get_chunking_config()
+        source_snapshot = self._build_source_snapshot(self._iter_supported_raw_files())
         chunks = build_experiment_chunks()
         embedding_rows = encode_texts(
             tuple(compose_embedding_text(chunk.title, chunk.content) for chunk in chunks)
@@ -603,7 +683,6 @@ class PgvectorChunkStorage:
                 raise ValueError(
                     "Configured PGVECTOR_EMBEDDING_DIM does not match the active embedding model output size."
                 )
-        source_file_count = len({chunk.source_path for chunk in chunks})
         embedding_document_count = sum(1 for literal in vector_literals if literal is not None)
         with self._connect() as connection:
             self._ensure_schema(connection)
@@ -658,8 +737,11 @@ class PgvectorChunkStorage:
                         source_file_count,
                         embedding_document_count,
                         lexical_document_count,
+                        source_snapshot_hash,
+                        source_latest_modified_at,
+                        source_total_bytes,
                         indexed_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                     ON CONFLICT (storage_key) DO UPDATE SET
                         chunk_size_words = EXCLUDED.chunk_size_words,
                         chunk_overlap_words = EXCLUDED.chunk_overlap_words,
@@ -668,6 +750,9 @@ class PgvectorChunkStorage:
                         source_file_count = EXCLUDED.source_file_count,
                         embedding_document_count = EXCLUDED.embedding_document_count,
                         lexical_document_count = EXCLUDED.lexical_document_count,
+                        source_snapshot_hash = EXCLUDED.source_snapshot_hash,
+                        source_latest_modified_at = EXCLUDED.source_latest_modified_at,
+                        source_total_bytes = EXCLUDED.source_total_bytes,
                         indexed_at = EXCLUDED.indexed_at
                     """,
                     (
@@ -676,9 +761,12 @@ class PgvectorChunkStorage:
                         int(config["chunk_overlap_words"]),
                         CHUNKING_VERSION,
                         len(chunks),
-                        source_file_count,
+                        source_snapshot.file_count,
                         embedding_document_count,
                         len(chunks),
+                        source_snapshot.snapshot_hash,
+                        source_snapshot.latest_modified_at,
+                        source_snapshot.total_bytes,
                     ),
                 )
             connection.commit()

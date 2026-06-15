@@ -279,6 +279,13 @@ def _build_pgvector_metadata_snapshot_response(
         source_file_count=int(payload["source_file_count"]),
         embedding_document_count=int(payload["embedding_document_count"]),
         lexical_document_count=int(payload["lexical_document_count"]),
+        source_snapshot_hash=str(payload["source_snapshot_hash"]),
+        source_latest_modified_at=(
+            None
+            if payload["source_latest_modified_at"] is None
+            else str(payload["source_latest_modified_at"])
+        ),
+        source_total_bytes=int(payload["source_total_bytes"]),
     )
 
 
