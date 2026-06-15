@@ -306,6 +306,77 @@
                             {% endif %}
                         </p>
                     </div>
+                    <div class="dashboard-panel reindex-status-panel">
+                        <div class="reindex-status-header">
+                            <span class="stat-label">Storage Diagnostics</span>
+                            <span class="dashboard-badge">
+                                {{ system_config.active_backend_state }}
+                            </span>
+                        </div>
+                        <div class="reindex-status-grid">
+                            <div class="reindex-status-item">
+                                <span class="meta">summary</span>
+                                <strong>{{ system_config.active_backend_summary_message }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">issue</span>
+                                <strong>{{ system_config.active_backend_issue }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">retrieval ready</span>
+                                <strong>
+                                    {% if system_config.active_backend_retrieval_ready %}yes{% else %}no{% endif %}
+                                </strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">indexing ready</span>
+                                <strong>
+                                    {% if system_config.active_backend_indexing_ready %}yes{% else %}no{% endif %}
+                                </strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">preflight</span>
+                                <strong>{{ system_config.active_backend_indexing_preflight }}</strong>
+                            </div>
+                            {% if system_config.pgvector_metadata_snapshot %}
+                            <div class="reindex-status-item">
+                                <span class="meta">db chunks</span>
+                                <strong>{{ system_config.pgvector_metadata_snapshot.chunk_count }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">source files</span>
+                                <strong>{{ system_config.pgvector_metadata_snapshot.source_file_count }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">embeddings</span>
+                                <strong>{{ system_config.pgvector_metadata_snapshot.embedding_document_count }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">lexical docs</span>
+                                <strong>{{ system_config.pgvector_metadata_snapshot.lexical_document_count }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">indexed at</span>
+                                <strong>{{ system_config.pgvector_metadata_snapshot.indexed_at }}</strong>
+                            </div>
+                            <div class="reindex-status-item">
+                                <span class="meta">chunking snapshot</span>
+                                <strong>
+                                    {{ system_config.pgvector_metadata_snapshot.chunk_size_words }}/{{ system_config.pgvector_metadata_snapshot.chunk_overlap_words }}
+                                </strong>
+                            </div>
+                            {% else %}
+                            <div class="reindex-status-item">
+                                <span class="meta">db snapshot</span>
+                                <strong>n/a for {{ system_config.current_storage_backend }}</strong>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <p class="meta reindex-status-message">
+                            Runtime page now shows the persisted DB snapshot for
+                            `pgvector`, not just in-memory readiness flags.
+                        </p>
+                    </div>
                 </article>
             </section>
 
@@ -564,6 +635,14 @@
                 <article class="content-card json-card">
                     <h2>JSON відповіді вебпошуку</h2>
                     <pre>{{ web_search_result_json | tojson(indent=2) }}</pre>
+                </article>
+                <article class="content-card json-card">
+                    <h2>JSON storage diagnostics</h2>
+                    <pre>{{ storage_config_json | tojson(indent=2) }}</pre>
+                </article>
+                <article class="content-card json-card">
+                    <h2>JSON runtime observability</h2>
+                    <pre>{{ runtime_observability_json | tojson(indent=2) }}</pre>
                 </article>
             </section>
         </main>

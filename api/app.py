@@ -419,6 +419,7 @@ def index(request: Request) -> HTMLResponse:
     mode_comparison = _build_mode_comparison(question, top_k) if question else []
     upload_feedback = _build_upload_feedback(request)
     storage_config = get_storage_backend_config()
+    runtime_observability = _build_runtime_observability_response()
 
     return templates.TemplateResponse(
         request=request,
@@ -442,6 +443,13 @@ def index(request: Request) -> HTMLResponse:
                 "default_storage_backend": storage_config["default_backend"],
                 "available_storage_backends": storage_config["available_backends"],
                 "storage_runtime_override_active": storage_config["runtime_override_active"],
+                "active_backend_state": storage_config["active_backend_state"],
+                "active_backend_issue": storage_config["active_backend_issue"],
+                "active_backend_summary_message": storage_config["active_backend_summary_message"],
+                "active_backend_retrieval_ready": storage_config["active_backend_retrieval_ready"],
+                "active_backend_indexing_ready": storage_config["active_backend_indexing_ready"],
+                "active_backend_indexing_preflight": storage_config["active_backend_indexing_preflight"],
+                "pgvector_metadata_snapshot": storage_config.get("pgvector_metadata_snapshot"),
                 **get_chunking_config(),
             },
             "web_question": web_question,
@@ -452,8 +460,11 @@ def index(request: Request) -> HTMLResponse:
             "mode_comparison": mode_comparison,
             "upload_feedback": upload_feedback,
             "reindex_status": _build_reindex_status_response(),
+            "runtime_observability": runtime_observability,
             "web_search_result": web_search_result,
             "web_search_error": web_search_error,
+            "storage_config_json": storage_config,
+            "runtime_observability_json": runtime_observability.model_dump(mode="json"),
             "search_result_json": search_result.model_dump(mode="json") if search_result else {},
             "ask_result_json": ask_result.model_dump(mode="json") if ask_result else {},
             "web_search_result_json": web_search_result.model_dump(mode="json") if web_search_result else {},
