@@ -12,6 +12,7 @@ logger = logging.getLogger("ai_knowledge_assistant.runtime_state")
 
 ACTIVE_STORAGE_BACKEND_STATE_KEY = "active_storage_backend"
 REINDEX_STATUS_STATE_KEY = "reindex_status"
+RETRIEVAL_RUNTIME_SNAPSHOT_STATE_KEY = "retrieval_runtime_snapshot"
 
 _schema_lock = Lock()
 _schema_ready = False

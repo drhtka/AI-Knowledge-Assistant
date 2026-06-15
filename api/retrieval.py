@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import logging
 from pathlib import Path
 from threading import RLock
@@ -8,6 +8,11 @@ from datetime import datetime, timezone
 from time import perf_counter
 
 from api.generation import generate_grounded_answer
+from api.runtime_state_store import (
+    RETRIEVAL_RUNTIME_SNAPSHOT_STATE_KEY,
+    load_runtime_state,
+    save_runtime_state,
+)
 from api.schemas import AskResponse, RetrievalModeValue, SearchHit, SearchResponse
 from api.storage import get_active_storage_backend, get_chunk_storage
 
@@ -33,6 +38,7 @@ class RetrievalRuntimeSnapshot:
 
 
 _retrieval_runtime_lock = RLock()
+_retrieval_runtime_initialized = False
 _retrieval_runtime_snapshot = RetrievalRuntimeSnapshot(
     available=False,
     request_kind="none",
@@ -55,8 +61,100 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _default_retrieval_runtime_snapshot() -> RetrievalRuntimeSnapshot:
+    return RetrievalRuntimeSnapshot(
+        available=False,
+        request_kind="none",
+        status="idle",
+        question_length=0,
+        retrieval_mode="auto",
+        active_storage_backend=get_active_storage_backend(),
+        retrieval_execution_path="none",
+        retrieval_execution_issue="none",
+        retrieval_outcome="none",
+        retrieval_summary_message="No retrieval requests have been recorded yet.",
+        hit_count=0,
+        latency_ms=0,
+        updated_at=None,
+        error_type="",
+    )
+
+
+def _coerce_optional_str(value: object) -> str | None:
+    if value in {None, ""}:
+        return None
+    return str(value)
+
+
+def _coerce_retrieval_runtime_snapshot(payload: dict[str, object]) -> RetrievalRuntimeSnapshot:
+    default_snapshot = _default_retrieval_runtime_snapshot()
+    active_storage_backend = str(
+        payload.get("active_storage_backend", default_snapshot.active_storage_backend)
+    )
+    if active_storage_backend not in {"file", "pgvector"}:
+        active_storage_backend = default_snapshot.active_storage_backend
+
+    return RetrievalRuntimeSnapshot(
+        available=bool(payload.get("available", default_snapshot.available)),
+        request_kind=str(payload.get("request_kind", default_snapshot.request_kind)),
+        status=str(payload.get("status", default_snapshot.status)),
+        question_length=int(payload.get("question_length", default_snapshot.question_length)),
+        retrieval_mode=str(payload.get("retrieval_mode", default_snapshot.retrieval_mode)),
+        active_storage_backend=active_storage_backend,
+        retrieval_execution_path=str(
+            payload.get(
+                "retrieval_execution_path",
+                default_snapshot.retrieval_execution_path,
+            )
+        ),
+        retrieval_execution_issue=str(
+            payload.get(
+                "retrieval_execution_issue",
+                default_snapshot.retrieval_execution_issue,
+            )
+        ),
+        retrieval_outcome=str(
+            payload.get("retrieval_outcome", default_snapshot.retrieval_outcome)
+        ),
+        retrieval_summary_message=str(
+            payload.get(
+                "retrieval_summary_message",
+                default_snapshot.retrieval_summary_message,
+            )
+        ),
+        hit_count=int(payload.get("hit_count", default_snapshot.hit_count)),
+        latency_ms=int(payload.get("latency_ms", default_snapshot.latency_ms)),
+        updated_at=_coerce_optional_str(payload.get("updated_at")),
+        error_type=str(payload.get("error_type", default_snapshot.error_type)),
+    )
+
+
+def _ensure_retrieval_runtime_initialized() -> None:
+    global _retrieval_runtime_initialized, _retrieval_runtime_snapshot
+
+    snapshot_to_persist: RetrievalRuntimeSnapshot | None = None
+    with _retrieval_runtime_lock:
+        if _retrieval_runtime_initialized:
+            return
+
+        persisted_state = load_runtime_state(RETRIEVAL_RUNTIME_SNAPSHOT_STATE_KEY)
+        if isinstance(persisted_state, dict):
+            _retrieval_runtime_snapshot = _coerce_retrieval_runtime_snapshot(persisted_state)
+        else:
+            _retrieval_runtime_snapshot = _default_retrieval_runtime_snapshot()
+            snapshot_to_persist = _retrieval_runtime_snapshot
+        _retrieval_runtime_initialized = True
+
+    if snapshot_to_persist is not None:
+        save_runtime_state(
+            RETRIEVAL_RUNTIME_SNAPSHOT_STATE_KEY,
+            asdict(snapshot_to_persist),
+        )
+
+
 def _set_retrieval_runtime_snapshot(**changes: object) -> RetrievalRuntimeSnapshot:
     global _retrieval_runtime_snapshot
+    persisted_snapshot: RetrievalRuntimeSnapshot
     with _retrieval_runtime_lock:
         _retrieval_runtime_snapshot = RetrievalRuntimeSnapshot(
             available=bool(changes.get("available", _retrieval_runtime_snapshot.available)),
@@ -96,10 +194,18 @@ def _set_retrieval_runtime_snapshot(**changes: object) -> RetrievalRuntimeSnapsh
             updated_at=changes.get("updated_at", _retrieval_runtime_snapshot.updated_at),
             error_type=str(changes.get("error_type", _retrieval_runtime_snapshot.error_type)),
         )
-        return _retrieval_runtime_snapshot
+        persisted_snapshot = _retrieval_runtime_snapshot
+
+    # Persist the latest retrieval snapshot so runtime observability survives process restarts.
+    save_runtime_state(
+        RETRIEVAL_RUNTIME_SNAPSHOT_STATE_KEY,
+        asdict(persisted_snapshot),
+    )
+    return persisted_snapshot
 
 
 def get_retrieval_runtime_snapshot() -> RetrievalRuntimeSnapshot:
+    _ensure_retrieval_runtime_initialized()
     with _retrieval_runtime_lock:
         return RetrievalRuntimeSnapshot(**_retrieval_runtime_snapshot.__dict__)
 
@@ -139,6 +245,7 @@ def _build_retrieval_summary_message(
 
 
 def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> SearchResponse:
+    _ensure_retrieval_runtime_initialized()
     started_at = perf_counter()
     active_storage_backend = get_active_storage_backend()
     try:
@@ -253,6 +360,7 @@ def search(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto
 
 
 def ask(question: str, top_k: int, retrieval_mode: RetrievalModeValue = "auto") -> AskResponse:
+    _ensure_retrieval_runtime_initialized()
     started_at = perf_counter()
     active_storage_backend = get_active_storage_backend()
     try:
