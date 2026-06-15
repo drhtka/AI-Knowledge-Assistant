@@ -13,3 +13,9 @@ class RankedChunkResult:
     used_fallback: bool
     execution_issue: RetrievalExecutionIssueValue
     outcome: RetrievalOutcomeValue
+
+
+@dataclass(frozen=True)
+class StorageWarmupResult:
+    chunk_count: int
+    loaded_into_memory: bool

@@ -30,7 +30,7 @@ from api.settings import (
     PGVECTOR_SCHEMA,
     PGVECTOR_TABLE,
 )
-from api.storage_runtime import RankedChunkResult
+from api.storage_runtime import RankedChunkResult, StorageWarmupResult
 from api.vector_search import rank_chunks_by_similarity
 
 logger = logging.getLogger("ai_knowledge_assistant.pgvector_storage")
@@ -337,6 +337,12 @@ class PgvectorChunkStorage:
             row = cursor.fetchone()
         return bool(row and row[0])
 
+    def _stored_chunk_count(self, connection: object) -> int:
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT COUNT(*) FROM {self._chunks_table_name()}")
+            row = cursor.fetchone()
+        return 0 if row is None else int(row[0])
+
     def _is_storage_stale(self, connection: object) -> bool:
         config = get_chunking_config()
         with connection.cursor() as cursor:
@@ -397,6 +403,21 @@ class PgvectorChunkStorage:
             self._chunk_from_row(row)
             for row in rows
         )
+
+    def prepare_runtime(self) -> StorageWarmupResult:
+        with self._connect() as connection:
+            self._ensure_schema(connection)
+            if self._is_storage_stale(connection):
+                chunks = self.rebuild_chunks()
+                return StorageWarmupResult(
+                    chunk_count=len(chunks),
+                    loaded_into_memory=False,
+                )
+
+            return StorageWarmupResult(
+                chunk_count=self._stored_chunk_count(connection),
+                loaded_into_memory=False,
+            )
 
     def rebuild_chunks(self) -> tuple[LoadedChunk, ...]:
         config = get_chunking_config()

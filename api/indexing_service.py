@@ -469,18 +469,33 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
 
 def ensure_index_loaded() -> tuple:
     active_storage_backend = get_active_storage_backend()
-    chunks = get_chunk_storage().load_chunks()
-    logger.info(
-        "Index loaded into memory.",
-        extra={
-            "event": "index_loaded",
-            "context": {
-                "chunk_count": len(chunks),
-                "active_storage_backend": active_storage_backend,
+    warmup_result = get_chunk_storage().prepare_runtime()
+    if warmup_result.loaded_into_memory:
+        logger.info(
+            "Index loaded into memory.",
+            extra={
+                "event": "index_loaded",
+                "context": {
+                    "chunk_count": warmup_result.chunk_count,
+                    "active_storage_backend": active_storage_backend,
+                    "loaded_into_memory": True,
+                },
             },
-        },
-    )
-    return chunks
+        )
+    else:
+        # pgvector runtime should prepare the DB path without pretending chunks were hydrated locally.
+        logger.info(
+            "Storage runtime prepared without loading chunks into memory.",
+            extra={
+                "event": "storage_runtime_prepared",
+                "context": {
+                    "chunk_count": warmup_result.chunk_count,
+                    "active_storage_backend": active_storage_backend,
+                    "loaded_into_memory": False,
+                },
+            },
+        )
+    return ()
 
 
 def rebuild_index(

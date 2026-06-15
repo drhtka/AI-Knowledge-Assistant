@@ -16,7 +16,7 @@ from api.schemas import (
     RetrievalModeValue,
     StorageBackendValue,
 )
-from api.storage_runtime import RankedChunkResult
+from api.storage_runtime import RankedChunkResult, StorageWarmupResult
 from api.settings import CHUNK_STORAGE_BACKEND
 from api.storage_pgvector import PgvectorChunkStorage, build_pgvector_storage
 from api.vector_search import rank_chunks_by_similarity
@@ -37,6 +37,9 @@ class ChunkStorage(Protocol):
         ...
 
     def clear_cache(self) -> None:
+        ...
+
+    def prepare_runtime(self) -> StorageWarmupResult:
         ...
 
 
@@ -67,6 +70,13 @@ class FileChunkStorage:
 
     def clear_cache(self) -> None:
         clear_chunks_cache()
+
+    def prepare_runtime(self) -> StorageWarmupResult:
+        chunks = self.load_chunks()
+        return StorageWarmupResult(
+            chunk_count=len(chunks),
+            loaded_into_memory=True,
+        )
 
 
 def _normalize_storage_backend(value: str) -> StorageBackendValue:
