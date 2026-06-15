@@ -12,6 +12,12 @@ from api.ingestion import (
     estimate_document_chunk_count,
     save_uploaded_document,
 )
+from api.reindex_history_store import (
+    ReindexHistoryEntry,
+    create_reindex_history_entry,
+    finalize_reindex_history_entry,
+    list_reindex_history_entries,
+)
 from api.runtime_state_store import (
     REINDEX_STATUS_STATE_KEY,
     load_runtime_state,
@@ -43,6 +49,7 @@ class ReindexStatusSnapshot:
     state: str
     trigger: str
     backend: str
+    history_entry_id: int | None
     started_at: str | None
     finished_at: str | None
     last_error: str
@@ -72,6 +79,7 @@ def _default_reindex_status_snapshot() -> ReindexStatusSnapshot:
         state="idle",
         trigger="startup",
         backend=get_active_storage_backend(),
+        history_entry_id=None,
         started_at=None,
         finished_at=None,
         last_error="",
@@ -91,6 +99,7 @@ _reindex_status = ReindexStatusSnapshot(
     state="idle",
     trigger="startup",
     backend="file",
+    history_entry_id=None,
     started_at=None,
     finished_at=None,
     last_error="",
@@ -171,6 +180,12 @@ def _coerce_optional_backend(value: object) -> str | None:
     return None
 
 
+def _coerce_optional_int(value: object) -> int | None:
+    if value in {None, ""}:
+        return None
+    return int(value)
+
+
 def _coerce_reindex_status_snapshot(payload: dict[str, object]) -> ReindexStatusSnapshot:
     default_snapshot = _default_reindex_status_snapshot()
     state = str(payload.get("state", default_snapshot.state))
@@ -218,6 +233,7 @@ def _coerce_reindex_status_snapshot(payload: dict[str, object]) -> ReindexStatus
         state=state,
         trigger=trigger,
         backend=backend,
+        history_entry_id=_coerce_optional_int(payload.get("history_entry_id")),
         started_at=_coerce_optional_str(payload.get("started_at")),
         finished_at=_coerce_optional_str(payload.get("finished_at")),
         last_error=last_error,
@@ -259,6 +275,18 @@ def _ensure_reindex_status_initialized() -> None:
                         "rerun_trigger": "",
                     }
                 )
+                if _reindex_status.history_entry_id is not None:
+                    finalize_reindex_history_entry(
+                        _reindex_status.history_entry_id,
+                        state=_reindex_status.state,
+                        outcome=_reindex_status.outcome,
+                        finished_at=str(_reindex_status.finished_at),
+                        document_count=_reindex_status.document_count,
+                        chunk_count=_reindex_status.chunk_count,
+                        elapsed_ms=_reindex_status.elapsed_ms,
+                        last_error=_reindex_status.last_error,
+                        summary_message=_reindex_status.summary_message,
+                    )
                 snapshot_to_persist = _reindex_status
         else:
             _reindex_status = _default_reindex_status_snapshot()
@@ -276,6 +304,7 @@ def _set_reindex_status(**changes: object) -> ReindexStatusSnapshot:
         state = str(changes.get("state", _reindex_status.state))
         trigger = str(changes.get("trigger", _reindex_status.trigger))
         backend = str(changes.get("backend", _reindex_status.backend))
+        history_entry_id = changes.get("history_entry_id", _reindex_status.history_entry_id)
         started_at = changes.get("started_at", _reindex_status.started_at)
         finished_at = changes.get("finished_at", _reindex_status.finished_at)
         last_error = str(changes.get("last_error", _reindex_status.last_error))
@@ -318,6 +347,9 @@ def _set_reindex_status(**changes: object) -> ReindexStatusSnapshot:
             state=state,
             trigger=trigger,
             backend=backend,
+            history_entry_id=(
+                None if history_entry_id is None else int(history_entry_id)
+            ),
             started_at=started_at,
             finished_at=finished_at,
             last_error=last_error,
@@ -347,6 +379,10 @@ def get_reindex_status() -> ReindexStatusSnapshot:
     _ensure_reindex_status_initialized()
     with _reindex_status_lock:
         return ReindexStatusSnapshot(**_reindex_status.__dict__)
+
+
+def get_reindex_history(limit: int = 20) -> tuple[ReindexHistoryEntry, ...]:
+    return list_reindex_history_entries(limit=limit)
 
 
 def consume_rerun_request() -> str:
@@ -390,10 +426,19 @@ def start_reindex_job(trigger: str = "manual") -> ReindexStartResult:
             )
 
         started_at = _utc_now_iso()
+        history_entry_id = create_reindex_history_entry(
+            trigger=trigger,
+            backend=active_storage_backend,
+            state="running",
+            outcome="running",
+            started_at=started_at,
+            summary_message=f"Reindex is running on backend {active_storage_backend} with trigger {trigger}.",
+        )
         status_snapshot = _set_reindex_status(
             state="running",
             trigger=trigger,
             backend=active_storage_backend,
+            history_entry_id=history_entry_id,
             started_at=started_at,
             finished_at=None,
             last_error="",
@@ -451,10 +496,19 @@ def rebuild_index(
     if started_at_iso is None:
         started_at_iso = _utc_now_iso()
     if not assume_running:
+        history_entry_id = create_reindex_history_entry(
+            trigger=trigger,
+            backend=active_storage_backend,
+            state="running",
+            outcome="running",
+            started_at=started_at_iso,
+            summary_message=f"Reindex is running on backend {active_storage_backend} with trigger {trigger}.",
+        )
         _set_reindex_status(
             state="running",
             trigger=trigger,
             backend=active_storage_backend,
+            history_entry_id=history_entry_id,
             started_at=started_at_iso,
             finished_at=None,
             last_error="",
@@ -486,6 +540,18 @@ def rebuild_index(
             last_successful_backend=active_storage_backend,
             last_successful_finished_at=finished_at,
         )
+        if status_snapshot.history_entry_id is not None:
+            finalize_reindex_history_entry(
+                status_snapshot.history_entry_id,
+                state=status_snapshot.state,
+                outcome=status_snapshot.outcome,
+                finished_at=finished_at,
+                document_count=result.document_count,
+                chunk_count=result.chunk_count,
+                elapsed_ms=result.elapsed_ms,
+                last_error=status_snapshot.last_error,
+                summary_message=status_snapshot.summary_message,
+            )
         logger.info(
             "Rebuilt processed chunks index.",
             extra={
@@ -516,6 +582,18 @@ def rebuild_index(
             chunk_count=0,
             elapsed_ms=elapsed_ms,
         )
+        if status_snapshot.history_entry_id is not None and status_snapshot.finished_at is not None:
+            finalize_reindex_history_entry(
+                status_snapshot.history_entry_id,
+                state=status_snapshot.state,
+                outcome=status_snapshot.outcome,
+                finished_at=status_snapshot.finished_at,
+                document_count=status_snapshot.document_count,
+                chunk_count=status_snapshot.chunk_count,
+                elapsed_ms=status_snapshot.elapsed_ms,
+                last_error=status_snapshot.last_error,
+                summary_message=status_snapshot.summary_message,
+            )
         logger.exception(
             "Reindex failed.",
             extra={

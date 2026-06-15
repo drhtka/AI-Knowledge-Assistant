@@ -250,6 +250,25 @@ class ReindexStatusResponse(BaseModel):
     elapsed_ms: int
 
 
+class ReindexHistoryEntryResponse(BaseModel):
+    history_entry_id: int
+    trigger: str
+    active_storage_backend: StorageBackendValue
+    state: ReindexStateValue
+    outcome: ReindexOutcomeValue
+    started_at: str
+    finished_at: str | None
+    summary_message: str
+    last_error: str
+    document_count: int
+    chunk_count: int
+    elapsed_ms: int
+
+
+class ReindexHistoryResponse(BaseModel):
+    entries: list[ReindexHistoryEntryResponse]
+
+
 class WebSearchRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     top_k: int = Field(default=5, ge=1, le=10)

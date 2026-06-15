@@ -3,7 +3,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from urllib.parse import urlencode
 
-from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -12,6 +12,7 @@ from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunk
 from api.indexing_service import (
     consume_rerun_request,
     ensure_index_loaded,
+    get_reindex_history,
     get_reindex_status,
     prepare_uploaded_document,
     rebuild_index,
@@ -27,6 +28,8 @@ from api.schemas import (
     ChunkingConfigUpdateRequest,
     HealthResponse,
     IngestResponse,
+    ReindexHistoryEntryResponse,
+    ReindexHistoryResponse,
     ReindexStartResponse,
     ReindexStatusResponse,
     RetrievalRuntimeSnapshotResponse,
@@ -121,6 +124,28 @@ def _build_reindex_status_response() -> ReindexStatusResponse:
         document_count=status_snapshot.document_count,
         chunk_count=status_snapshot.chunk_count,
         elapsed_ms=status_snapshot.elapsed_ms,
+    )
+
+
+def _build_reindex_history_response(limit: int) -> ReindexHistoryResponse:
+    return ReindexHistoryResponse(
+        entries=[
+            ReindexHistoryEntryResponse(
+                history_entry_id=entry.history_entry_id,
+                trigger=entry.trigger,
+                active_storage_backend=entry.backend,
+                state=entry.state,
+                outcome=entry.outcome,
+                started_at=entry.started_at,
+                finished_at=entry.finished_at,
+                summary_message=entry.summary_message,
+                last_error=entry.last_error,
+                document_count=entry.document_count,
+                chunk_count=entry.chunk_count,
+                elapsed_ms=entry.elapsed_ms,
+            )
+            for entry in get_reindex_history(limit=limit)
+        ]
     )
 
 
@@ -517,6 +542,11 @@ def reindex_endpoint(background_tasks: BackgroundTasks) -> ReindexStartResponse:
 @app.get("/reindex-status", response_model=ReindexStatusResponse)
 def reindex_status_endpoint() -> ReindexStatusResponse:
     return _build_reindex_status_response()
+
+
+@app.get("/reindex-history", response_model=ReindexHistoryResponse)
+def reindex_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> ReindexHistoryResponse:
+    return _build_reindex_history_response(limit=limit)
 
 
 @app.post("/search", response_model=SearchResponse)
