@@ -49,6 +49,18 @@ class PgvectorChunkStorageConfig:
 
 
 @dataclass(frozen=True)
+class PgvectorMetadataSnapshot:
+    chunk_size_words: int
+    chunk_overlap_words: int
+    chunking_version: str
+    indexed_at: datetime
+    chunk_count: int
+    source_file_count: int
+    embedding_document_count: int
+    lexical_document_count: int
+
+
+@dataclass(frozen=True)
 class PgvectorChunkStorage:
     config: PgvectorChunkStorageConfig
 
@@ -175,6 +187,40 @@ class PgvectorChunkStorage:
         schema_name = self._validate_identifier(self.config.schema_name)
         table_name = self._validate_identifier(f"{self.config.table_name}_meta")
         return f"{schema_name}.{table_name}"
+
+    def _load_metadata_snapshot(self, connection: object) -> PgvectorMetadataSnapshot | None:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT
+                    chunk_size_words,
+                    chunk_overlap_words,
+                    chunking_version,
+                    indexed_at,
+                    chunk_count,
+                    source_file_count,
+                    embedding_document_count,
+                    lexical_document_count
+                FROM {self._meta_table_name()}
+                WHERE storage_key = %s
+                """,
+                ("active",),
+            )
+            row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return PgvectorMetadataSnapshot(
+            chunk_size_words=int(row[0]),
+            chunk_overlap_words=int(row[1]),
+            chunking_version=str(row[2]),
+            indexed_at=row[3].astimezone(timezone.utc),
+            chunk_count=int(row[4]),
+            source_file_count=int(row[5]),
+            embedding_document_count=int(row[6]),
+            lexical_document_count=int(row[7]),
+        )
 
     def _connect(self) -> object:
         try:
@@ -336,8 +382,36 @@ class PgvectorChunkStorage:
                     chunk_size_words INTEGER NOT NULL,
                     chunk_overlap_words INTEGER NOT NULL,
                     chunking_version TEXT NOT NULL,
+                    chunk_count INTEGER NOT NULL DEFAULT 0,
+                    source_file_count INTEGER NOT NULL DEFAULT 0,
+                    embedding_document_count INTEGER NOT NULL DEFAULT 0,
+                    lexical_document_count INTEGER NOT NULL DEFAULT 0,
                     indexed_at TIMESTAMPTZ NOT NULL
                 )
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._meta_table_name()}
+                ADD COLUMN IF NOT EXISTS chunk_count INTEGER NOT NULL DEFAULT 0
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._meta_table_name()}
+                ADD COLUMN IF NOT EXISTS source_file_count INTEGER NOT NULL DEFAULT 0
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._meta_table_name()}
+                ADD COLUMN IF NOT EXISTS embedding_document_count INTEGER NOT NULL DEFAULT 0
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {self._meta_table_name()}
+                ADD COLUMN IF NOT EXISTS lexical_document_count INTEGER NOT NULL DEFAULT 0
                 """
             )
 
@@ -352,47 +426,25 @@ class PgvectorChunkStorage:
             and path.suffix.lower() in SUPPORTED_EXTENSIONS
         ]
 
-    def _has_stored_chunks(self, connection: object) -> bool:
-        with connection.cursor() as cursor:
-            cursor.execute(f"SELECT EXISTS (SELECT 1 FROM {self._chunks_table_name()} LIMIT 1)")
-            row = cursor.fetchone()
-        return bool(row and row[0])
-
-    def _stored_chunk_count(self, connection: object) -> int:
-        with connection.cursor() as cursor:
-            cursor.execute(f"SELECT COUNT(*) FROM {self._chunks_table_name()}")
-            row = cursor.fetchone()
-        return 0 if row is None else int(row[0])
-
     def _is_storage_stale(self, connection: object) -> bool:
         config = get_chunking_config()
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"""
-                SELECT chunk_size_words, chunk_overlap_words, chunking_version, indexed_at
-                FROM {self._meta_table_name()}
-                WHERE storage_key = %s
-                """,
-                ("active",),
-            )
-            row = cursor.fetchone()
-
-        if row is None:
+        metadata = self._load_metadata_snapshot(connection)
+        if metadata is None:
             return True
 
-        chunk_size_words, chunk_overlap_words, chunking_version, indexed_at = row
-        if chunk_size_words != int(config["chunk_size_words"]):
+        if metadata.chunk_size_words != int(config["chunk_size_words"]):
             return True
-        if chunk_overlap_words != int(config["chunk_overlap_words"]):
+        if metadata.chunk_overlap_words != int(config["chunk_overlap_words"]):
             return True
-        if chunking_version != CHUNKING_VERSION:
+        if metadata.chunking_version != CHUNKING_VERSION:
             return True
-        if not self._has_stored_chunks(connection):
+        if metadata.chunk_count < 1:
             return bool(self._iter_supported_raw_files())
+        if metadata.lexical_document_count < metadata.chunk_count:
+            return True
 
-        indexed_at_utc = indexed_at.astimezone(timezone.utc)
         return any(
-            datetime.fromtimestamp(path.stat().st_mtime, timezone.utc) > indexed_at_utc
+            datetime.fromtimestamp(path.stat().st_mtime, timezone.utc) > metadata.indexed_at
             for path in self._iter_supported_raw_files()
         )
 
@@ -435,8 +487,9 @@ class PgvectorChunkStorage:
                     loaded_into_memory=False,
                 )
 
+            metadata = self._load_metadata_snapshot(connection)
             return StorageWarmupResult(
-                chunk_count=self._stored_chunk_count(connection),
+                chunk_count=0 if metadata is None else metadata.chunk_count,
                 loaded_into_memory=False,
             )
 
@@ -455,6 +508,8 @@ class PgvectorChunkStorage:
                 raise ValueError(
                     "Configured PGVECTOR_EMBEDDING_DIM does not match the active embedding model output size."
                 )
+        source_file_count = len({chunk.source_path for chunk in chunks})
+        embedding_document_count = sum(1 for literal in vector_literals if literal is not None)
         with self._connect() as connection:
             self._ensure_schema(connection)
             with connection.cursor() as cursor:
@@ -504,12 +559,20 @@ class PgvectorChunkStorage:
                         chunk_size_words,
                         chunk_overlap_words,
                         chunking_version,
+                        chunk_count,
+                        source_file_count,
+                        embedding_document_count,
+                        lexical_document_count,
                         indexed_at
-                    ) VALUES (%s, %s, %s, %s, NOW())
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
                     ON CONFLICT (storage_key) DO UPDATE SET
                         chunk_size_words = EXCLUDED.chunk_size_words,
                         chunk_overlap_words = EXCLUDED.chunk_overlap_words,
                         chunking_version = EXCLUDED.chunking_version,
+                        chunk_count = EXCLUDED.chunk_count,
+                        source_file_count = EXCLUDED.source_file_count,
+                        embedding_document_count = EXCLUDED.embedding_document_count,
+                        lexical_document_count = EXCLUDED.lexical_document_count,
                         indexed_at = EXCLUDED.indexed_at
                     """,
                     (
@@ -517,6 +580,10 @@ class PgvectorChunkStorage:
                         int(config["chunk_size_words"]),
                         int(config["chunk_overlap_words"]),
                         CHUNKING_VERSION,
+                        len(chunks),
+                        source_file_count,
+                        embedding_document_count,
+                        len(chunks),
                     ),
                 )
             connection.commit()
@@ -557,9 +624,6 @@ class PgvectorChunkStorage:
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"""
-                    WITH lexical_query AS (
-                        SELECT plainto_tsquery('simple', %s) AS query
-                    )
                     SELECT
                         document_id,
                         title,
@@ -635,6 +699,9 @@ class PgvectorChunkStorage:
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"""
+                    WITH lexical_query AS (
+                        SELECT plainto_tsquery('simple', %s) AS query
+                    )
                     SELECT
                         document_id,
                         title,
