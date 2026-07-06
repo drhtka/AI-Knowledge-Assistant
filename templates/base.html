@@ -39,14 +39,7 @@
                         </a>
                     </nav>
                     <section class="admin-auth-card">
-                        <div class="admin-auth-header">
-                            <p class="stat-label">Admin Access</p>
-                            <span
-                                class="admin-badge {% if admin_auth.is_authenticated %}admin-badge-on{% else %}admin-badge-off{% endif %}"
-                            >
-                                Admin: {% if admin_auth.is_authenticated %}On{% else %}Off{% endif %}
-                            </span>
-                        </div>
+                        <p class="stat-label">Admin Access</p>
                         {% if admin_auth.flash_message %}
                         <p class="admin-auth-message admin-auth-message-{{ admin_auth.flash_tone }}">
                             {{ admin_auth.flash_message }}
