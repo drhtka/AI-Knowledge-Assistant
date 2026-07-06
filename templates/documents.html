@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if not admin_auth.is_authenticated %}
+<article class="content-card admin-guard-card">
+    <p class="section-kicker">Admin Preview</p>
+    <h2>Керування джерелами доступне тільки адміну</h2>
+    <p class="meta">
+        Кнопки залишаються видимими для демо, але upload, зовнішній вебпошук,
+        chunking і reindex виконуються тільки після admin auth.
+    </p>
+</article>
+{% endif %}
+
 <section class="feature-grid">
     <article class="feature-block feature-panel">
         <p class="section-kicker">Ingestion</p>
@@ -21,6 +32,7 @@
                 name="file"
                 type="file"
                 accept=".txt,.md,.pdf"
+                {% if not admin_auth.is_authenticated %}disabled{% endif %}
                 required
             />
             <p class="meta">
@@ -28,12 +40,19 @@
                 <code>.pdf</code>
             </p>
             <div class="actions">
-                <button type="submit" id="upload-button">
+                <button
+                    type="submit"
+                    id="upload-button"
+                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                >
                     Завантажити документ
                 </button>
                 <a class="button-link" href="/">Повернутися до асистента</a>
             </div>
         </form>
+        {% if not admin_auth.is_authenticated %}
+        <p class="meta">Upload стане доступним після admin auth.</p>
+        {% endif %}
         <div id="upload-result" class="upload-result meta">
             {% if upload_feedback and upload_feedback.status == "ok" %}
             <div class="upload-result upload-result-card success-text">
@@ -99,6 +118,7 @@
                 name="web_question"
                 value="{{ web_question }}"
                 placeholder="Знайти свіжі приклади архітектур RAG"
+                {% if not admin_auth.is_authenticated %}disabled{% endif %}
             />
 
             <label for="web_top_k">Ліміт результатів</label>
@@ -109,12 +129,18 @@
                 min="1"
                 max="10"
                 value="{{ web_top_k }}"
+                {% if not admin_auth.is_authenticated %}disabled{% endif %}
             />
 
             <div class="actions">
-                <button type="submit">Шукати в інтернеті</button>
+                <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
+                    Шукати в інтернеті
+                </button>
             </div>
         </form>
+        {% if not admin_auth.is_authenticated %}
+        <p class="meta">Зовнішній вебпошук теж захищений admin auth.</p>
+        {% endif %}
     </article>
 </section>
 
@@ -125,7 +151,7 @@
         <p class="meta">
             У корпусі зараз {{ document_count }} документів.
         </p>
-        {% if document_entries %}
+        {% if admin_auth.is_authenticated and document_entries %}
         <ul class="list-reset document-list document-list-scroll">
             {% for item in document_entries %}
             <li class="document-list-item">
@@ -147,6 +173,10 @@
         <p class="meta">
             Поки що корпус порожній. Для портфоліо варто тримати хоча б невеликий
             demo corpus.
+        </p>
+        {% elif not admin_auth.is_authenticated %}
+        <p class="meta">
+            Список файлів і майбутнє видалення документів доступні тільки адміну.
         </p>
         {% endif %}
     </article>
@@ -195,7 +225,11 @@
         <form id="chunking-preset-form" class="inline-form">
             <label for="chunking_preset">Оберіть пресет</label>
             <div class="inline-form-row">
-                <select id="chunking_preset" name="chunking_preset">
+                <select
+                    id="chunking_preset"
+                    name="chunking_preset"
+                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                >
                     {% for preset in system_config.preset_display_options %}
                     <option
                         value="{{ preset.value }}"
@@ -205,7 +239,9 @@
                     </option>
                     {% endfor %}
                 </select>
-                <button type="submit">Застосувати пресет</button>
+                <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
+                    Застосувати пресет
+                </button>
             </div>
         </form>
         <div id="chunking-result" class="upload-result meta">
@@ -257,7 +293,13 @@
         </div>
         <div class="reindex-status-actions">
             <button type="button" id="refresh-reindex-status-button">Refresh</button>
-            <button type="button" id="start-reindex-button">Start Reindex</button>
+            <button
+                type="button"
+                id="start-reindex-button"
+                {% if not admin_auth.is_authenticated %}disabled{% endif %}
+            >
+                Start Reindex
+            </button>
         </div>
         <p
             id="reindex-status-message"

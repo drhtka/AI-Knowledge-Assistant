@@ -17,26 +17,71 @@
                     <h1>{{ page_heading }}</h1>
                     <p class="intro">{{ page_intro }}</p>
                 </div>
-                <nav class="page-nav" aria-label="Primary">
-                    <a
-                        href="/"
-                        class="page-nav-link {% if active_page == 'assistant' %}is-active{% endif %}"
-                    >
-                        Асистент
-                    </a>
-                    <a
-                        href="/documents"
-                        class="page-nav-link {% if active_page == 'documents' %}is-active{% endif %}"
-                    >
-                        Документи та джерела
-                    </a>
-                    <a
-                        href="/system"
-                        class="page-nav-link {% if active_page == 'system' %}is-active{% endif %}"
-                    >
-                        Система
-                    </a>
-                </nav>
+                <div class="page-header-tools">
+                    <nav class="page-nav" aria-label="Primary">
+                        <a
+                            href="/"
+                            class="page-nav-link {% if active_page == 'assistant' %}is-active{% endif %}"
+                        >
+                            Асистент
+                        </a>
+                        <a
+                            href="/documents"
+                            class="page-nav-link {% if active_page == 'documents' %}is-active{% endif %}"
+                        >
+                            Документи та джерела
+                        </a>
+                        <a
+                            href="/system"
+                            class="page-nav-link {% if active_page == 'system' %}is-active{% endif %}"
+                        >
+                            Система
+                        </a>
+                    </nav>
+                    <section class="admin-auth-card">
+                        <p class="stat-label">Admin Access</p>
+                        {% if admin_auth.flash_message %}
+                        <p class="admin-auth-message admin-auth-message-{{ admin_auth.flash_tone }}">
+                            {{ admin_auth.flash_message }}
+                        </p>
+                        {% endif %}
+                        {% if admin_auth.using_fallback_session_secret %}
+                        <p class="meta">
+                            Для production обов'язково задайте
+                            <code>ADMIN_SESSION_SECRET</code>.
+                        </p>
+                        {% endif %}
+                        {% if admin_auth.is_authenticated %}
+                        <p class="meta">
+                            Активна admin-сесія для <code>{{ admin_auth.username }}</code>.
+                        </p>
+                        <form method="post" action="/admin/logout" class="admin-auth-form">
+                            <input type="hidden" name="next" value="{{ admin_auth.current_path }}" />
+                            <button type="submit">Вийти з admin</button>
+                        </form>
+                        {% elif admin_auth.enabled %}
+                        <p class="meta">
+                            Документи та система доступні після admin auth.
+                        </p>
+                        <form method="post" action="/admin/login" class="admin-auth-form">
+                            <input
+                                type="password"
+                                name="password"
+                                placeholder="Admin password"
+                                autocomplete="current-password"
+                                required
+                            />
+                            <input type="hidden" name="next" value="{{ admin_auth.current_path }}" />
+                            <button type="submit">Увійти</button>
+                        </form>
+                        {% else %}
+                        <p class="meta">
+                            Задайте <code>ADMIN_PASSWORD</code> у <code>.env</code>,
+                            щоб увімкнути admin-доступ.
+                        </p>
+                        {% endif %}
+                    </section>
+                </div>
             </header>
 
             {% block content %}{% endblock %}

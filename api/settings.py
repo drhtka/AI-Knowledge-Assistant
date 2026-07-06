@@ -89,3 +89,12 @@ SERPAPI_API_KEY = _env_str("SERPAPI_API_KEY", "")
 SERPAPI_ENGINE = _env_str("SERPAPI_ENGINE", "google")
 SERPAPI_NUM_RESULTS = int(_env_str("SERPAPI_NUM_RESULTS", "5"))
 SERPAPI_TIMEOUT_SEC = float(_env_str("SERPAPI_TIMEOUT_SEC", "15"))
+
+ADMIN_USERNAME = _env_str("ADMIN_USERNAME", "owner")
+ADMIN_PASSWORD = _env_str("ADMIN_PASSWORD", "")
+ADMIN_AUTH_ENABLED = bool(ADMIN_PASSWORD)
+ADMIN_SESSION_SECRET = _env_str(
+    "ADMIN_SESSION_SECRET",
+    "dev-session-secret-change-me-before-production",
+)
+ADMIN_SESSION_SECRET_CONFIGURED = bool(_env_value("ADMIN_SESSION_SECRET"))

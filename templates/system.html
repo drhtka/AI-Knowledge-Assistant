@@ -75,6 +75,17 @@
     </article>
 </section>
 
+{% if not admin_auth.is_authenticated %}
+<article class="content-card admin-guard-card">
+    <p class="section-kicker">Admin Preview</p>
+    <h2>Системні інструменти захищені</h2>
+    <p class="meta">
+        Storage backend, reindex, diagnostics і JSON залишаються видимими як
+        demo-елементи, але керування і детальні дані доступні тільки адміну.
+    </p>
+</article>
+{% endif %}
+
 <section class="feature-grid">
     <article class="content-card dashboard-card">
         <p class="section-kicker">Infrastructure</p>
@@ -86,7 +97,11 @@
         <form id="storage-backend-form" class="inline-form">
             <label for="storage_backend">Активний backend</label>
             <div class="inline-form-row">
-                <select id="storage_backend" name="storage_backend">
+                <select
+                    id="storage_backend"
+                    name="storage_backend"
+                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                >
                     {% for backend in system_config.available_storage_backends %}
                     <option
                         value="{{ backend }}"
@@ -96,7 +111,9 @@
                     </option>
                     {% endfor %}
                 </select>
-                <button type="submit">Apply backend</button>
+                <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
+                    Apply backend
+                </button>
             </div>
         </form>
         <div id="storage-backend-result" class="upload-result meta">
@@ -153,7 +170,13 @@
         </div>
         <div class="reindex-status-actions">
             <button type="button" id="refresh-reindex-status-button">Refresh</button>
-            <button type="button" id="start-reindex-button">Start Reindex</button>
+            <button
+                type="button"
+                id="start-reindex-button"
+                {% if not admin_auth.is_authenticated %}disabled{% endif %}
+            >
+                Start Reindex
+            </button>
         </div>
         <p
             id="reindex-status-message"
@@ -169,6 +192,7 @@
         </p>
     </article>
 
+    {% if admin_auth.is_authenticated %}
     <article class="content-card dashboard-card">
         <div class="reindex-status-header">
             <div>
@@ -239,8 +263,18 @@
             {% endif %}
         </div>
     </article>
+    {% else %}
+    <article class="content-card dashboard-card">
+        <p class="section-kicker">Diagnostics</p>
+        <h2>Storage diagnostics</h2>
+        <p class="meta">
+            Детальна runtime-діагностика доступна тільки адміну після входу.
+        </p>
+    </article>
+    {% endif %}
 </section>
 
+{% if admin_auth.is_authenticated %}
 <section class="feature-grid">
     <article class="content-card">
         <h2>Runtime observability</h2>
@@ -285,4 +319,5 @@
         <pre>{{ ask_result_json | tojson(indent=2) }}</pre>
     </article>
 </section>
+{% endif %}
 {% endblock %}

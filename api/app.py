@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+import hmac
 from urllib.parse import urlencode
 
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 
 from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunking_preset
 from api.indexing_service import (
@@ -50,6 +52,11 @@ from api.schemas import (
 )
 from api.storage import get_active_storage_backend, get_storage_backend_config, set_active_storage_backend
 from api.settings import (
+    ADMIN_AUTH_ENABLED,
+    ADMIN_PASSWORD,
+    ADMIN_SESSION_SECRET,
+    ADMIN_SESSION_SECRET_CONFIGURED,
+    ADMIN_USERNAME,
     RAW_DATA_DIR,
     STATIC_DIR,
     TEMPLATES_DIR,
@@ -69,6 +76,14 @@ app = FastAPI(
     version="0.1.0",
     description="Compact scaffold for a production-like RAG portfolio project.",
     lifespan=lifespan,
+)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=ADMIN_SESSION_SECRET,
+    same_site="lax",
+    https_only=False,
+    session_cookie="ai_knowledge_admin_session",
+    max_age=60 * 60 * 12,
 )
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -91,6 +106,70 @@ DEMO_PROMPTS = [
 
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 TOP_K_OPTIONS = tuple(range(1, 11))
+ADMIN_REDIRECT_PATHS = {"/", "/documents", "/system"}
+
+
+def _normalize_admin_next_path(next_path: str | None) -> str:
+    if not next_path:
+        return "/"
+    return next_path if next_path in ADMIN_REDIRECT_PATHS else "/"
+
+
+def _redirect_with_status(path: str, *, admin_status: str, admin_required: str | None = None) -> RedirectResponse:
+    params = {"admin_status": admin_status}
+    if admin_required:
+        params["admin_required"] = admin_required
+    return RedirectResponse(url=f"{path}?{urlencode(params)}", status_code=303)
+
+
+def _is_admin_authenticated(request: Request) -> bool:
+    return bool(ADMIN_AUTH_ENABLED and request.session.get("is_admin") is True)
+
+
+def _require_admin(request: Request, *, action_label: str) -> None:
+    if not ADMIN_AUTH_ENABLED:
+        raise HTTPException(
+            status_code=503,
+            detail="Admin auth is not configured. Set ADMIN_PASSWORD in the environment.",
+        )
+    if not _is_admin_authenticated(request):
+        raise HTTPException(status_code=403, detail=f"Admin authorization required for {action_label}.")
+
+
+def _build_admin_auth_context(request: Request) -> dict[str, object]:
+    status = request.query_params.get("admin_status", "")
+    required = request.query_params.get("admin_required", "")
+    flash_message = ""
+    flash_tone = "info"
+
+    if status == "granted":
+        flash_message = "Admin access enabled."
+        flash_tone = "success"
+    elif status == "signed_out":
+        flash_message = "Admin session closed."
+    elif status == "invalid":
+        flash_message = "Невірний admin пароль."
+        flash_tone = "error"
+    elif status == "not_configured":
+        flash_message = "Admin auth ще не налаштований. Додайте ADMIN_PASSWORD у .env."
+        flash_tone = "error"
+    elif status == "required":
+        if required == "documents":
+            flash_message = "Сторінка документів доступна тільки після admin auth."
+        elif required == "system":
+            flash_message = "Системні інструменти доступні тільки після admin auth."
+        else:
+            flash_message = "Для цієї дії потрібен admin доступ."
+
+    return {
+        "enabled": ADMIN_AUTH_ENABLED,
+        "is_authenticated": _is_admin_authenticated(request),
+        "username": ADMIN_USERNAME,
+        "current_path": request.url.path,
+        "flash_message": flash_message,
+        "flash_tone": flash_tone,
+        "using_fallback_session_secret": ADMIN_AUTH_ENABLED and not ADMIN_SESSION_SECRET_CONFIGURED,
+    }
 
 
 def _preset_label(preset: str) -> str:
@@ -469,6 +548,8 @@ def _build_page_context(
     include_question_results: bool,
     include_web_results: bool,
 ) -> dict[str, object]:
+    is_admin = _is_admin_authenticated(request)
+    admin_auth = _build_admin_auth_context(request)
     chunk_size_options = sorted(
         {config["chunk_size_words"] for config in CHUNKING_PRESETS.values()},
         reverse=True,
@@ -489,7 +570,8 @@ def _build_page_context(
     retrieval_mode = request.query_params.get("retrieval_mode", "auto") or "auto"
     if retrieval_mode not in RETRIEVAL_MODE_OPTIONS:
         retrieval_mode = "auto"
-    web_question = request.query_params.get("web_question", "") if include_web_results else ""
+    raw_web_question = request.query_params.get("web_question", "") if include_web_results else ""
+    web_question = raw_web_question if include_web_results and is_admin else ""
     web_top_k_raw = request.query_params.get("web_top_k", "5") or "5"
     web_top_k = max(1, min(10, int(web_top_k_raw)))
 
@@ -503,7 +585,9 @@ def _build_page_context(
 
     web_search_result = None
     web_search_error = ""
-    if web_question:
+    if include_web_results and raw_web_question and not is_admin:
+        web_search_error = "Зовнішній вебпошук доступний тільки після admin auth."
+    elif web_question:
         try:
             web_search_result = web_search(question=web_question, top_k=web_top_k)
         except ValueError as exc:
@@ -547,6 +631,8 @@ def _build_page_context(
         "document_entries": document_entries,
         "document_count": len(document_entries),
         "has_documents": bool(document_entries),
+        "admin_auth": admin_auth,
+        "is_admin": is_admin,
     }
 
 
@@ -573,6 +659,32 @@ def index(request: Request) -> HTMLResponse:
     )
 
 
+@app.post("/admin/login")
+async def admin_login(request: Request) -> RedirectResponse:
+    form = await request.form()
+    password = str(form.get("password", ""))
+    next_path = _normalize_admin_next_path(str(form.get("next", "/")))
+
+    if not ADMIN_AUTH_ENABLED:
+        return _redirect_with_status(next_path, admin_status="not_configured")
+
+    if hmac.compare_digest(password, ADMIN_PASSWORD):
+        request.session.clear()
+        request.session["is_admin"] = True
+        request.session["admin_username"] = ADMIN_USERNAME
+        return _redirect_with_status(next_path, admin_status="granted")
+
+    return _redirect_with_status(next_path, admin_status="invalid")
+
+
+@app.post("/admin/logout")
+async def admin_logout(request: Request) -> RedirectResponse:
+    form = await request.form()
+    next_path = _normalize_admin_next_path(str(form.get("next", "/")))
+    request.session.clear()
+    return _redirect_with_status(next_path, admin_status="signed_out")
+
+
 @app.get("/documents", response_class=HTMLResponse)
 def documents_page(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
@@ -592,6 +704,7 @@ def documents_page(request: Request) -> HTMLResponse:
             ),
             "page_kicker": "Sources",
             "active_page": "documents",
+            "admin_required_area": "documents",
         },
     )
 
@@ -615,6 +728,7 @@ def system_page(request: Request) -> HTMLResponse:
             ),
             "page_kicker": "System",
             "active_page": "system",
+            "admin_required_area": "system",
         },
     )
 
@@ -649,7 +763,8 @@ def health() -> HealthResponse:
 
 
 @app.get("/chunking-config", response_model=ChunkingConfigResponse)
-def chunking_config_endpoint() -> ChunkingConfigResponse:
+def chunking_config_endpoint(request: Request) -> ChunkingConfigResponse:
+    _require_admin(request, action_label="chunking config access")
     chunking_config = get_chunking_config()
     return ChunkingConfigResponse(
         current_preset=chunking_config["current_preset"],
@@ -667,16 +782,19 @@ def chunking_config_endpoint() -> ChunkingConfigResponse:
 
 @app.post("/chunking-config", response_model=ChunkingConfigResponse)
 def update_chunking_config_endpoint(
-    request: ChunkingConfigUpdateRequest,
+    request: Request,
+    payload: ChunkingConfigUpdateRequest,
     background_tasks: BackgroundTasks,
 ) -> ChunkingConfigResponse:
-    updated_config = set_chunking_preset(request.preset)
+    _require_admin(request, action_label="chunking config update")
+    updated_config = set_chunking_preset(payload.preset)
     reindex_start = _start_reindex_background_job(background_tasks, trigger="chunking_config")
     return _build_chunking_config_response(updated_config, reindex_start)
 
 
 @app.get("/storage-config", response_model=StorageConfigResponse)
-def storage_config_endpoint() -> StorageConfigResponse:
+def storage_config_endpoint(request: Request) -> StorageConfigResponse:
+    _require_admin(request, action_label="storage config access")
     storage_config = get_storage_backend_config()
     reindex_status = get_reindex_status()
     return _build_storage_config_response(
@@ -754,27 +872,32 @@ def _build_runtime_observability_response() -> RuntimeObservabilityResponse:
 
 
 @app.get("/runtime-observability", response_model=RuntimeObservabilityResponse)
-def runtime_observability_endpoint() -> RuntimeObservabilityResponse:
+def runtime_observability_endpoint(request: Request) -> RuntimeObservabilityResponse:
+    _require_admin(request, action_label="runtime observability access")
     return _build_runtime_observability_response()
 
 
 @app.get("/runtime-status", response_model=RuntimeObservabilityResponse)
-def runtime_status_endpoint() -> RuntimeObservabilityResponse:
+def runtime_status_endpoint(request: Request) -> RuntimeObservabilityResponse:
+    _require_admin(request, action_label="runtime status access")
     return _build_runtime_observability_response()
 
 
 @app.post("/storage-config", response_model=StorageConfigResponse)
 def update_storage_config_endpoint(
-    request: StorageConfigUpdateRequest,
+    request: Request,
+    payload: StorageConfigUpdateRequest,
     background_tasks: BackgroundTasks,
 ) -> StorageConfigResponse:
-    updated_config = set_active_storage_backend(request.backend)
+    _require_admin(request, action_label="storage backend update")
+    updated_config = set_active_storage_backend(payload.backend)
     reindex_start = _start_reindex_background_job(background_tasks, trigger="storage_backend")
     return _build_storage_config_response(updated_config, reindex_start)
 
 
 @app.post("/reindex", response_model=ReindexStartResponse)
-def reindex_endpoint(background_tasks: BackgroundTasks) -> ReindexStartResponse:
+def reindex_endpoint(request: Request, background_tasks: BackgroundTasks) -> ReindexStartResponse:
+    _require_admin(request, action_label="reindex start")
     return _start_reindex_background_job(background_tasks, trigger="manual")
 
 
@@ -784,17 +907,29 @@ def reindex_status_endpoint() -> ReindexStatusResponse:
 
 
 @app.get("/reindex-history", response_model=ReindexHistoryResponse)
-def reindex_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> ReindexHistoryResponse:
+def reindex_history_endpoint(
+    request: Request,
+    limit: int = Query(default=20, ge=1, le=100),
+) -> ReindexHistoryResponse:
+    _require_admin(request, action_label="reindex history access")
     return _build_reindex_history_response(limit=limit)
 
 
 @app.get("/retrieval-history", response_model=RetrievalHistoryResponse)
-def retrieval_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> RetrievalHistoryResponse:
+def retrieval_history_endpoint(
+    request: Request,
+    limit: int = Query(default=20, ge=1, le=100),
+) -> RetrievalHistoryResponse:
+    _require_admin(request, action_label="retrieval history access")
     return _build_retrieval_history_response(limit=limit)
 
 
 @app.get("/web-search-history", response_model=WebSearchHistoryResponse)
-def web_search_history_endpoint(limit: int = Query(default=20, ge=1, le=100)) -> WebSearchHistoryResponse:
+def web_search_history_endpoint(
+    request: Request,
+    limit: int = Query(default=20, ge=1, le=100),
+) -> WebSearchHistoryResponse:
+    _require_admin(request, action_label="web search history access")
     return _build_web_search_history_response(limit=limit)
 
 
@@ -808,20 +943,34 @@ def search_endpoint(request: SearchRequest) -> SearchResponse:
 
 
 @app.post("/web-search", response_model=WebSearchResponse)
-def web_search_endpoint(request: WebSearchRequest) -> WebSearchResponse:
+def web_search_endpoint(request: Request, payload: WebSearchRequest) -> WebSearchResponse:
+    _require_admin(request, action_label="external web search")
     try:
-        return web_search(question=request.question, top_k=request.top_k)
+        return web_search(question=payload.question, top_k=payload.top_k)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/ingest", response_model=IngestResponse)
-async def ingest_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...)) -> IngestResponse:
+async def ingest_endpoint(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+) -> IngestResponse:
+    _require_admin(request, action_label="document upload")
     return await _ingest_uploaded_file(file, background_tasks)
 
 
 @app.post("/upload")
-async def upload_page_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...)) -> RedirectResponse:
+async def upload_page_endpoint(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+) -> RedirectResponse:
+    if not _is_admin_authenticated(request):
+        if not ADMIN_AUTH_ENABLED:
+            return _redirect_with_status("/documents", admin_status="not_configured")
+        return _redirect_with_status("/documents", admin_status="required", admin_required="documents")
     try:
         result = await _ingest_uploaded_file(file, background_tasks)
     except HTTPException as exc:

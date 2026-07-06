@@ -83,6 +83,16 @@ set +a
 
 If optional services are not configured, the app keeps working with the local baseline.
 
+For protected admin actions in the UI, also set:
+
+```bash
+ADMIN_USERNAME=owner
+ADMIN_PASSWORD=change_me_admin_password
+ADMIN_SESSION_SECRET=change_me_session_secret
+```
+
+Without `ADMIN_PASSWORD`, the assistant stays public, but `Documents` and `System` remain read-only preview areas and protected actions stay disabled.
+
 ## Docker Swarm Run
 
 This repository now includes a more production-like swarm-compatible stack for the `FastAPI` app and `PostgreSQL + pgvector`.
