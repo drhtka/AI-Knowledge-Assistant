@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 import hmac
 from urllib.parse import urlencode
 
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -76,6 +77,9 @@ app = FastAPI(
     version="0.1.0",
     description="Compact scaffold for a production-like RAG portfolio project.",
     lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 app.add_middleware(
     SessionMiddleware,
@@ -106,7 +110,7 @@ DEMO_PROMPTS = [
 
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 TOP_K_OPTIONS = tuple(range(1, 11))
-ADMIN_REDIRECT_PATHS = {"/", "/documents", "/system"}
+ADMIN_REDIRECT_PATHS = {"/", "/documents", "/system", "/docs"}
 
 
 def _normalize_admin_next_path(next_path: str | None) -> str:
@@ -158,6 +162,8 @@ def _build_admin_auth_context(request: Request) -> dict[str, object]:
             flash_message = "Сторінка документів доступна тільки після admin auth."
         elif required == "system":
             flash_message = "Системні інструменти доступні тільки після admin auth."
+        elif required == "api_docs":
+            flash_message = "API docs доступні тільки після admin auth."
         else:
             flash_message = "Для цієї дії потрібен admin доступ."
 
@@ -683,6 +689,24 @@ async def admin_logout(request: Request) -> RedirectResponse:
     next_path = _normalize_admin_next_path(str(form.get("next", "/")))
     request.session.clear()
     return _redirect_with_status(next_path, admin_status="signed_out")
+
+
+@app.get("/docs", include_in_schema=False)
+def protected_swagger_ui(request: Request) -> HTMLResponse | RedirectResponse:
+    if not ADMIN_AUTH_ENABLED:
+        return _redirect_with_status("/", admin_status="not_configured")
+    if not _is_admin_authenticated(request):
+        return _redirect_with_status("/", admin_status="required", admin_required="api_docs")
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title=f"{app.title} - API Docs",
+    )
+
+
+@app.get("/openapi.json", include_in_schema=False)
+def protected_openapi_schema(request: Request) -> JSONResponse:
+    _require_admin(request, action_label="api docs access")
+    return JSONResponse(app.openapi())
 
 
 @app.get("/documents", response_class=HTMLResponse)
