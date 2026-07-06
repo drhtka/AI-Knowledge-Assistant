@@ -321,13 +321,27 @@ select:disabled {
 .stat-item {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 10px;
     min-height: 148px;
     padding: 16px;
     border: 1px solid #2563eb;
     border-radius: 14px;
     background: linear-gradient(180deg, rgba(37, 99, 235, 0.12), rgba(15, 23, 42, 0.85));
+}
+
+.stat-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stat-item-offset .stat-item-body {
+    margin-top: 28px;
+}
+
+.stat-item-top-k .stat-item-body {
+    margin-top: 14px;
 }
 
 .stat-label {
@@ -519,6 +533,10 @@ select:disabled {
 
 .inline-form {
     margin-top: 16px;
+}
+
+#storage-backend-form {
+    margin-top: 28px;
 }
 
 .dashboard-panel.inline-form {

@@ -13,62 +13,74 @@
             </span>
         </div>
         <div class="dashboard-stats dashboard-stats-five">
-            <div class="stat-item">
+            <div class="stat-item stat-item-offset">
                 <span class="stat-label">Режим пошуку</span>
-                <div class="pill-row stat-pill-row">
-                    {% for mode in system_config.available_retrieval_modes %}
-                    <code
-                        class="mode-pill {% if retrieval_mode == mode %}is-active{% endif %}"
-                    >
-                        {{ mode }}
-                    </code>
-                    {% endfor %}
+                <div class="stat-item-body">
+                    <div class="pill-row stat-pill-row">
+                        {% for mode in system_config.available_retrieval_modes %}
+                        <code
+                            class="mode-pill {% if retrieval_mode == mode %}is-active{% endif %}"
+                        >
+                            {{ mode }}
+                        </code>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-            <div class="stat-item">
+            <div class="stat-item stat-item-offset">
                 <span class="stat-label">Storage backend</span>
-                <div class="pill-row stat-pill-row">
-                    {% for backend in system_config.available_storage_backends %}
-                    <code
-                        class="mode-pill {% if system_config.current_storage_backend == backend %}is-active{% endif %}"
-                    >
-                        {{ backend }}
-                    </code>
-                    {% endfor %}
+                <div class="stat-item-body">
+                    <div class="pill-row stat-pill-row">
+                        {% for backend in system_config.available_storage_backends %}
+                        <code
+                            class="mode-pill {% if system_config.current_storage_backend == backend %}is-active{% endif %}"
+                        >
+                            {{ backend }}
+                        </code>
+                        {% endfor %}
+                    </div>
+                    <p class="meta control-help">
+                        Default backend: <code>{{ system_config.default_storage_backend }}</code>
+                    </p>
                 </div>
-                <p class="meta control-help">
-                    Default backend: <code>{{ system_config.default_storage_backend }}</code>
-                </p>
             </div>
-            <div class="stat-item">
+            <div class="stat-item stat-item-offset">
                 <span class="stat-label">Пресет</span>
-                <div class="pill-row stat-pill-row">
-                    {% for preset in system_config.preset_display_options %}
-                    <code
-                        class="mode-pill {% if system_config.current_preset == preset.value %}is-active{% endif %}"
-                    >
-                        {{ preset.label }}
-                    </code>
-                    {% endfor %}
+                <div class="stat-item-body">
+                    <div class="pill-row stat-pill-row">
+                        {% for preset in system_config.preset_display_options %}
+                        <code
+                            class="mode-pill {% if system_config.current_preset == preset.value %}is-active{% endif %}"
+                        >
+                            {{ preset.label }}
+                        </code>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-            <div class="stat-item">
+            <div class="stat-item stat-item-offset">
                 <span class="stat-label">Chunking</span>
-                <p class="stat-value">
-                    {{ system_config.chunk_size_words }}/{{ system_config.chunk_overlap_words }}
-                </p>
-                <p class="meta control-help">
-                    size / overlap words
-                </p>
+                <div class="stat-item-body">
+                    <div class="pill-row stat-pill-row">
+                        <code class="mode-pill is-active">
+                            {{ system_config.chunk_size_words }}/{{ system_config.chunk_overlap_words }}
+                        </code>
+                    </div>
+                    <p class="meta control-help">
+                        size / overlap words
+                    </p>
+                </div>
             </div>
-            <div class="stat-item">
+            <div class="stat-item stat-item-top-k">
                 <span class="stat-label">Top K</span>
-                <div class="pill-row stat-pill-row">
-                    {% for value in system_config.available_top_k %}
-                    <code class="mode-pill {% if top_k == value %}is-active{% endif %}">
-                        {{ value }}
-                    </code>
-                    {% endfor %}
+                <div class="stat-item-body">
+                    <div class="pill-row stat-pill-row">
+                        {% for value in system_config.available_top_k %}
+                        <code class="mode-pill {% if top_k == value %}is-active{% endif %}">
+                            {{ value }}
+                        </code>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
