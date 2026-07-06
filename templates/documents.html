@@ -126,7 +126,7 @@
             У корпусі зараз {{ document_count }} документів.
         </p>
         {% if document_entries %}
-        <ul class="list-reset document-list">
+        <ul class="list-reset document-list document-list-scroll">
             {% for item in document_entries %}
             <li class="document-list-item">
                 <strong>{{ item.name }}</strong>
@@ -137,6 +137,12 @@
             </li>
             {% endfor %}
         </ul>
+        {% if document_count > 5 %}
+        <p class="meta">
+            Показано прокручуваний список корпусу, щоб блок не розтягував
+            сторінку.
+        </p>
+        {% endif %}
         {% else %}
         <p class="meta">
             Поки що корпус порожній. Для портфоліо варто тримати хоча б невеликий
