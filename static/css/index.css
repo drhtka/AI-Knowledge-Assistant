@@ -269,6 +269,10 @@ a {
     align-items: stretch;
 }
 
+.control-grid-four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .control-field-tile {
     display: flex;
     flex-direction: column;
@@ -341,6 +345,29 @@ a {
 
 .dashboard-panel.inline-form {
     margin-top: 0;
+}
+
+.settings-tiles-grid {
+    margin-top: 16px;
+}
+
+.settings-form-card {
+    margin-top: 0;
+}
+
+.settings-form-row {
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.settings-form-row .upload-result {
+    margin: 0;
+}
+
+.settings-form-row button {
+    width: 100%;
+    margin-top: auto;
 }
 
 .inline-form-row {

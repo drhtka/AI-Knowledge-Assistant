@@ -134,7 +134,7 @@
                     </div>
                     <div class="dashboard-panel retrieval-controls-panel">
                         <span class="stat-label">Параметри пошуку</span>
-                        <div class="control-grid control-grid-tiles">
+                        <div class="control-grid control-grid-tiles control-grid-four">
                             <div class="control-field control-field-tile">
                                 <label for="retrieval_mode">Режим пошуку</label>
                                 <select
@@ -166,6 +166,50 @@
                                     запитання.
                                 </p>
                             </div>
+                            <form id="storage-backend-form" class="inline-form control-field-tile settings-form-card">
+                                <label for="storage_backend">Storage backend</label>
+                                <div class="inline-form-row settings-form-row">
+                                    <select id="storage_backend" name="storage_backend">
+                                        {% for backend in system_config.available_storage_backends %}
+                                        <option
+                                            value="{{ backend }}"
+                                            {% if system_config.current_storage_backend == backend %}selected{% endif %}
+                                        >
+                                            {{ backend }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div id="storage-backend-result" class="upload-result meta">
+                                        Переключите backend, чтобы проверить runtime path для
+                                        `file` и `pgvector` без правки env.
+                                    </div>
+                                    <button type="submit">
+                                        Apply backend
+                                    </button>
+                                </div>
+                            </form>
+                            <form id="chunking-preset-form" class="inline-form control-field-tile settings-form-card">
+                                <label for="chunking_preset">Пресет розбиття</label>
+                                <div class="inline-form-row settings-form-row">
+                                    <select id="chunking_preset" name="chunking_preset">
+                                        {% for preset in system_config.preset_display_options %}
+                                        <option
+                                            value="{{ preset.value }}"
+                                            {% if system_config.current_preset == preset.value %}selected{% endif %}
+                                        >
+                                            {{ preset.label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div id="chunking-result" class="upload-result meta">
+                                        Застосуйте пресет, щоб перебудувати індекс фрагментів з
+                                        іншою базовою конфігурацією.
+                                    </div>
+                                    <button type="submit">
+                                        Застосувати пресет розбиття
+                                    </button>
+                                </div>
+                            </form>
                             <div class="control-field control-field-tile">
                                 <label for="top_k">Топ K</label>
                                 <select
@@ -198,50 +242,6 @@
                                 </p>
                             </div>
                         </div>
-                    </div>
-                    <form id="chunking-preset-form" class="inline-form dashboard-panel">
-                        <label for="chunking_preset">Пресет розбиття</label>
-                        <div class="inline-form-row">
-                            <select id="chunking_preset" name="chunking_preset">
-                                {% for preset in system_config.preset_display_options %}
-                                <option
-                                    value="{{ preset.value }}"
-                                    {% if system_config.current_preset == preset.value %}selected{% endif %}
-                                >
-                                    {{ preset.label }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <button type="submit">
-                                Застосувати пресет розбиття
-                            </button>
-                        </div>
-                    </form>
-                    <div id="chunking-result" class="upload-result meta">
-                        Застосуйте пресет, щоб перебудувати індекс фрагментів з
-                        іншою базовою конфігурацією.
-                    </div>
-                    <form id="storage-backend-form" class="inline-form dashboard-panel">
-                        <label for="storage_backend">Storage backend</label>
-                        <div class="inline-form-row">
-                            <select id="storage_backend" name="storage_backend">
-                                {% for backend in system_config.available_storage_backends %}
-                                <option
-                                    value="{{ backend }}"
-                                    {% if system_config.current_storage_backend == backend %}selected{% endif %}
-                                >
-                                    {{ backend }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <button type="submit">
-                                Apply backend
-                            </button>
-                        </div>
-                    </form>
-                    <div id="storage-backend-result" class="upload-result meta">
-                        Переключите backend, чтобы проверить runtime path для
-                        `file` и `pgvector` без правки env.
                     </div>
                     <div class="dashboard-panel reindex-status-panel">
                         <div class="reindex-status-header">
