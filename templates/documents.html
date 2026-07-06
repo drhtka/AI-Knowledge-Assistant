@@ -175,12 +175,16 @@
 
 <section class="feature-grid">
     <article class="content-card dashboard-card">
-        <p class="section-kicker">Chunking</p>
-        <h2>Пресет розбиття</h2>
+        <p class="section-kicker">Indexing Setup</p>
+        <h2>Розбиття документів (chunking)</h2>
         <p class="meta">
             Поточний пресет: <code>{{ system_config.current_preset }}</code> |
             chunk size={{ system_config.chunk_size_words }} |
             overlap={{ system_config.chunk_overlap_words }}
+        </p>
+        <p class="meta">
+            Це налаштування впливає на те, як документи ріжуться на фрагменти
+            перед індексацією та пошуком.
         </p>
         <form id="chunking-preset-form" class="inline-form">
             <label for="chunking_preset">Оберіть пресет</label>
