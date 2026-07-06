@@ -60,6 +60,8 @@ main {
 .admin-auth-card {
     width: 100%;
     max-width: 320px;
+    min-height: 190px;
+    box-sizing: border-box;
     padding: 14px;
     border: 1px solid rgba(148, 163, 184, 0.18);
     border-radius: 12px;
