@@ -13,22 +13,20 @@ main {
 
 .page-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
+    flex-direction: column;
+    gap: 16px;
     margin-bottom: 24px;
 }
 
-.page-header-copy {
-    flex: 1;
+.page-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
 }
 
-.page-header-tools {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 12px;
-    min-width: min(100%, 320px);
+.page-header-copy {
+    width: 100%;
 }
 
 .page-nav {
@@ -36,6 +34,7 @@ main {
     gap: 10px;
     flex-wrap: wrap;
     justify-content: flex-end;
+    align-self: flex-start;
 }
 
 .page-nav-link,
@@ -721,14 +720,8 @@ pre {
 }
 
 @media (max-width: 860px) {
-    .page-header {
+    .page-header-top {
         flex-direction: column;
-    }
-
-    .page-header-tools {
-        width: 100%;
-        min-width: 0;
-        align-items: stretch;
     }
 
     .page-nav {
