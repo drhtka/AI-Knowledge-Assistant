@@ -21,6 +21,9 @@ const startReindexButton = document.getElementById("start-reindex-button");
 
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
+        const nextUrl = new URL(window.location.origin + "/");
+        nextUrl.searchParams.set("question", questionText);
+        window.location.assign(nextUrl.toString());
         return;
     }
 
@@ -29,7 +32,12 @@ function fillQuestionInput(questionText) {
         questionInput.value = questionText;
         questionInput.focus();
         questionInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
     }
+
+    const nextUrl = new URL(window.location.origin + "/");
+    nextUrl.searchParams.set("question", questionText);
+    window.location.assign(nextUrl.toString());
 }
 
 function renderUploadStatus(message, className = "upload-result meta") {
@@ -224,14 +232,7 @@ function renderUploadSuccess(payload) {
 
 demoButtons.forEach((button) => {
     button.addEventListener("click", () => {
-        if (!questionForm) {
-            return;
-        }
-
-        const questionInput = questionForm.elements.namedItem("question");
-        if (questionInput instanceof HTMLInputElement) {
-            questionInput.value = button.dataset.demoQuestion ?? "";
-        }
+        fillQuestionInput(button.dataset.demoQuestion ?? "");
     });
 });
 

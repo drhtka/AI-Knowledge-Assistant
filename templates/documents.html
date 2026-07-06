@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="feature-grid">
+    <article class="feature-block feature-panel">
+        <p class="section-kicker">Ingestion</p>
+        <h2>Завантаження документів</h2>
+        <p class="feature-intro">
+            Додавайте нові джерела в локальний корпус і одразу запускайте фоновий
+            reindex.
+        </p>
+        <form
+            id="upload-form"
+            method="post"
+            action="/upload"
+            enctype="multipart/form-data"
+        >
+            <label for="upload_file">Документ</label>
+            <input
+                id="upload_file"
+                name="file"
+                type="file"
+                accept=".txt,.md,.pdf"
+                required
+            />
+            <p class="meta">
+                Підтримувані формати: <code>.txt</code>, <code>.md</code> та
+                <code>.pdf</code>
+            </p>
+            <div class="actions">
+                <button type="submit" id="upload-button">
+                    Завантажити документ
+                </button>
+                <a class="button-link" href="/">Повернутися до асистента</a>
+            </div>
+        </form>
+        <div id="upload-result" class="upload-result meta">
+            {% if upload_feedback and upload_feedback.status == "ok" %}
+            <div class="upload-result upload-result-card success-text">
+                <strong>Документ успішно завантажено</strong>
+                <p class="meta">
+                    файл={{ upload_feedback.source_name }} |
+                    тип={{ upload_feedback.file_type }} |
+                    очікуваних_фрагментів={{ upload_feedback.estimated_chunks }}
+                </p>
+                <p class="meta">
+                    {{ upload_feedback.reindex_message or "Фоновий reindex для документа вже запущено." }}
+                </p>
+                {% if upload_feedback.preview_text %}
+                <div class="upload-preview">
+                    <p class="meta"><strong>Попередній перегляд документа</strong></p>
+                    <p class="upload-preview-text">
+                        {{ upload_feedback.preview_text }}
+                    </p>
+                </div>
+                {% endif %}
+                <div class="actions">
+                    <button
+                        type="button"
+                        data-demo-question="Про що документ {{ upload_feedback.source_name }}?"
+                    >
+                        Про що цей документ?
+                    </button>
+                    <button
+                        type="button"
+                        data-demo-question="Які ключові моменти в {{ upload_feedback.source_name }}?"
+                    >
+                        Ключові моменти
+                    </button>
+                    <button
+                        type="button"
+                        data-demo-question="Поясни простими словами зміст {{ upload_feedback.source_name }}."
+                    >
+                        Простий підсумок
+                    </button>
+                </div>
+            </div>
+            {% elif upload_feedback and upload_feedback.status == "error" %}
+            <div class="upload-result error-text">
+                {{ upload_feedback.error }}
+            </div>
+            {% else %}
+            Завантажте документ, щоб оновити локальну базу знань.
+            {% endif %}
+        </div>
+    </article>
+
+    <article class="content-card overview-card">
+        <p class="section-kicker">Corpus</p>
+        <h2>Поточний корпус</h2>
+        <p class="meta">
+            У корпусі зараз {{ document_count }} документів.
+        </p>
+        {% if document_entries %}
+        <ul class="list-reset document-list">
+            {% for item in document_entries %}
+            <li class="document-list-item">
+                <strong>{{ item.name }}</strong>
+                <span class="meta">
+                    тип={{ item.extension }} | розмір={{ item.size_kb }} KB |
+                    оновлено={{ item.modified_at }}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="meta">
+            Поки що корпус порожній. Для портфоліо варто тримати хоча б невеликий
+            demo corpus.
+        </p>
+        {% endif %}
+    </article>
+</section>
+
+<section class="feature-grid">
+    <article class="content-card dashboard-card">
+        <p class="section-kicker">Chunking</p>
+        <h2>Пресет розбиття</h2>
+        <p class="meta">
+            Поточний пресет: <code>{{ system_config.current_preset }}</code> |
+            chunk size={{ system_config.chunk_size_words }} |
+            overlap={{ system_config.chunk_overlap_words }}
+        </p>
+        <form id="chunking-preset-form" class="inline-form">
+            <label for="chunking_preset">Оберіть пресет</label>
+            <div class="inline-form-row">
+                <select id="chunking_preset" name="chunking_preset">
+                    {% for preset in system_config.preset_display_options %}
+                    <option
+                        value="{{ preset.value }}"
+                        {% if system_config.current_preset == preset.value %}selected{% endif %}
+                    >
+                        {{ preset.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Застосувати пресет</button>
+            </div>
+        </form>
+        <div id="chunking-result" class="upload-result meta">
+            Застосуйте пресет, щоб перебудувати індекс фрагментів з іншою
+            базовою конфігурацією.
+        </div>
+    </article>
+
+    <article class="content-card dashboard-card">
+        <div class="reindex-status-header">
+            <div>
+                <p class="section-kicker">Index Lifecycle</p>
+                <h2>Статус reindex</h2>
+            </div>
+            <span
+                id="reindex-status-badge"
+                class="dashboard-badge reindex-badge reindex-badge-{{ reindex_status.state }}"
+            >
+                {{ reindex_status.state }}
+            </span>
+        </div>
+        <div class="reindex-status-grid">
+            <div class="reindex-status-item">
+                <span class="meta">trigger</span>
+                <strong id="reindex-trigger">{{ reindex_status.trigger }}</strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">documents</span>
+                <strong id="reindex-document-count">{{ reindex_status.document_count }}</strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">chunks</span>
+                <strong id="reindex-chunk-count">{{ reindex_status.chunk_count }}</strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">latency ms</span>
+                <strong id="reindex-elapsed-ms">{{ reindex_status.elapsed_ms }}</strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">started at</span>
+                <strong id="reindex-started-at">{{ reindex_status.started_at or "not started yet" }}</strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">last update</span>
+                <strong id="reindex-finished-at">{{ reindex_status.finished_at or "not finished yet" }}</strong>
+            </div>
+        </div>
+        <div class="reindex-status-actions">
+            <button type="button" id="refresh-reindex-status-button">Refresh</button>
+            <button type="button" id="start-reindex-button">Start Reindex</button>
+        </div>
+        <p
+            id="reindex-status-message"
+            class="meta reindex-status-message {% if reindex_status.last_error %}reindex-status-error{% endif %}"
+        >
+            {% if reindex_status.last_error %}
+            last_error={{ reindex_status.last_error }}
+            {% elif reindex_status.started_at %}
+            started_at={{ reindex_status.started_at }}
+            {% else %}
+            Waiting for the next reindex trigger.
+            {% endif %}
+        </p>
+    </article>
+</section>
+{% endblock %}

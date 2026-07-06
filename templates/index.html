@@ -1,654 +1,170 @@
-<!doctype html>
-<html lang="uk">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{{ page_title }}</title>
-        <link
-            rel="stylesheet"
-            href="{{ request.url_for('static', path='css/index.css') }}"
-        />
-    </head>
-    <body>
-        <main>
-            <h1>AI Асистент Знань</h1>
-            <p class="intro">
-                Демонстрація портфоліо для локального завантаження документів,
-                налаштовуваного пошуку, обґрунтованих відповідей і сценаріїв
-                пошуку з урахуванням оцінювання.
-            </p>
+{% extends "base.html" %}
 
-            <section class="overview-grid">
-                <article class="content-card overview-card">
-                    <p class="section-kicker">Workspace</p>
-                    <h2>Огляд проєкту</h2>
-                    <ul class="list-reset compact-list">
-                        <li>
-                            <code>api/</code> застосунок, схеми, базова логіка
-                            пошуку
-                        </li>
-                        <li>
-                            <code>data/</code> локальні корпуси та набори для
-                            оцінювання
-                        </li>
-                        <li><code>notebooks/</code> експерименти</li>
-                        <li>
-                            <code>src/</code> майбутні модулі завантаження та
-                            індексації
-                        </li>
-                    </ul>
-                </article>
-
-                <article class="content-card overview-card dashboard-card">
-                    <div class="dashboard-header">
-                        <div>
-                            <p class="section-kicker">Local Retrieval</p>
-                            <h2>Поточна конфігурація системи</h2>
-                        </div>
-                        <span class="dashboard-badge">Active</span>
-                    </div>
-                    <div class="dashboard-stats dashboard-stats-five">
-                        <div class="stat-item">
-                            <span class="stat-label">Поточний режим</span>
-                            <div class="pill-row stat-pill-row">
-                                {% for mode in
-                                system_config.available_retrieval_modes %}
-                                <code
-                                    class="mode-pill {% if retrieval_mode == mode %}is-active{% endif %}"
-                                    >{{ mode }}</code
-                                >
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Storage backend</span>
-                            <div class="pill-row stat-pill-row">
-                                {% for backend in system_config.available_storage_backends %}
-                                <code
-                                    class="mode-pill {% if system_config.current_storage_backend == backend %}is-active{% endif %}"
-                                    >{{ backend }}</code
-                                >
-                                {% endfor %}
-                            </div>
-                            <p class="meta control-help">
-                                {% if system_config.storage_runtime_override_active %}
-                                Runtime override active. Default backend:
-                                <code>{{ system_config.default_storage_backend }}</code>
-                                {% else %}
-                                Current backend matches the env default:
-                                <code>{{ system_config.default_storage_backend }}</code>
-                                {% endif %}
-                            </p>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Розмір фрагмента</span>
-                            <div class="pill-row stat-pill-row">
-                                {% for preset in system_config.preset_display_options %}
-                                <code
-                                    class="mode-pill {% if system_config.current_preset == preset.value %}is-active{% endif %}"
-                                    >{{ preset.label }}</code
-                                >
-                                {% endfor %}
-                            </div>
-                            <div class="pill-row stat-pill-row">
-                                {% for size in system_config.available_chunk_sizes %}
-                                <code
-                                    class="mode-pill {% if system_config.chunk_size_words == size %}is-active{% endif %}"
-                                    >{{ size }}</code
-                                >
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Перекриття фрагментів</span>
-                            <div class="pill-row stat-pill-row">
-                                {% for preset in
-                                system_config.preset_display_options %}
-                                <code
-                                    class="mode-pill {% if system_config.current_preset == preset.value %}is-active{% endif %}"
-                                    >{{ preset.label }}</code
-                                >
-                                {% endfor %}
-                            </div>
-                            <div class="pill-row stat-pill-row">
-                                {% for overlap in
-                                system_config.available_chunk_overlaps %}
-                                <code
-                                    class="mode-pill {% if system_config.chunk_overlap_words == overlap %}is-active{% endif %}"
-                                    >{{ overlap }}</code
-                                >
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Топ K</span>
-                            <div class="pill-row stat-pill-row">
-                                {% for value in system_config.available_top_k %}
-                                <code
-                                    class="mode-pill {% if top_k == value %}is-active{% endif %}"
-                                    >{{ value }}</code
-                                >
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dashboard-panel retrieval-controls-panel">
-                        <span class="stat-label">Параметри пошуку</span>
-                        <div class="control-grid control-grid-tiles control-grid-four">
-                            <div class="control-field control-field-tile">
-                                <label for="retrieval_mode">Режим пошуку</label>
-                                <select
-                                    id="retrieval_mode"
-                                    name="retrieval_mode"
-                                    form="question-form"
-                                >
-                                    <option
-                                        value=""
-                                        disabled
-                                        hidden
-                                        {% if not has_retrieval_mode_query %}selected{% endif %}
-                                    >
-                                        Обрати режим
-                                    </option>
-                                    {% for mode in retrieval_mode_options %}
-                                    <option
-                                        value="{{ mode }}"
-                                        {% if has_retrieval_mode_query and retrieval_mode == mode %}selected{% endif %}
-                                    >
-                                        {{ mode }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                                <p class="meta control-help">
-                                    Перемикайтеся між `auto`, `tfidf` та
-                                    `embeddings`, щоб порівняти, як шар пошуку
-                                    поводиться для одного й того самого
-                                    запитання.
-                                </p>
-                            </div>
-                            <form id="storage-backend-form" class="inline-form control-field-tile settings-form-card">
-                                <label for="storage_backend">Storage backend</label>
-                                <div class="inline-form-row settings-form-row">
-                                    <select id="storage_backend" name="storage_backend">
-                                        {% for backend in system_config.available_storage_backends %}
-                                        <option
-                                            value="{{ backend }}"
-                                            {% if system_config.current_storage_backend == backend %}selected{% endif %}
-                                        >
-                                            {{ backend }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <div id="storage-backend-result" class="upload-result meta">
-                                        Переключите backend, чтобы проверить runtime path для
-                                        `file` и `pgvector` без правки env.
-                                    </div>
-                                    <button type="submit">
-                                        Apply backend
-                                    </button>
-                                </div>
-                            </form>
-                            <form id="chunking-preset-form" class="inline-form control-field-tile settings-form-card">
-                                <label for="chunking_preset">Пресет розбиття</label>
-                                <div class="inline-form-row settings-form-row">
-                                    <select id="chunking_preset" name="chunking_preset">
-                                        {% for preset in system_config.preset_display_options %}
-                                        <option
-                                            value="{{ preset.value }}"
-                                            {% if system_config.current_preset == preset.value %}selected{% endif %}
-                                        >
-                                            {{ preset.label }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <div id="chunking-result" class="upload-result meta">
-                                        Застосуйте пресет, щоб перебудувати індекс фрагментів з
-                                        іншою базовою конфігурацією.
-                                    </div>
-                                    <button type="submit">
-                                        Застосувати пресет розбиття
-                                    </button>
-                                </div>
-                            </form>
-                            <div class="control-field control-field-tile">
-                                <label for="top_k">Топ K</label>
-                                <select
-                                    id="top_k"
-                                    name="top_k"
-                                    form="question-form"
-                                >
-                                    <option
-                                        value=""
-                                        disabled
-                                        hidden
-                                        {% if not has_top_k_query %}selected{% endif %}
-                                    >
-                                        Обрати кількість
-                                    </option>
-                                    <option value="1" {% if has_top_k_query and top_k == 1 %}selected{% endif %}>1</option>
-                                    <option value="2" {% if has_top_k_query and top_k == 2 %}selected{% endif %}>2</option>
-                                    <option value="3" {% if has_top_k_query and top_k == 3 %}selected{% endif %}>3</option>
-                                    <option value="4" {% if has_top_k_query and top_k == 4 %}selected{% endif %}>4</option>
-                                    <option value="5" {% if has_top_k_query and top_k == 5 %}selected{% endif %}>5</option>
-                                    <option value="6" {% if has_top_k_query and top_k == 6 %}selected{% endif %}>6</option>
-                                    <option value="7" {% if has_top_k_query and top_k == 7 %}selected{% endif %}>7</option>
-                                    <option value="8" {% if has_top_k_query and top_k == 8 %}selected{% endif %}>8</option>
-                                    <option value="9" {% if has_top_k_query and top_k == 9 %}selected{% endif %}>9</option>
-                                    <option value="10" {% if has_top_k_query and top_k == 10 %}selected{% endif %}>10</option>
-                                </select>
-                                <p class="meta control-help">
-                                    Визначає, скільки найкращих фрагментів
-                                    локальний пошук передасть у відповідь.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dashboard-panel reindex-status-panel">
-                        <div class="reindex-status-header">
-                            <span class="stat-label">Reindex Status</span>
-                            <div class="reindex-status-actions">
-                                <button type="button" id="refresh-reindex-status-button">
-                                    Refresh
-                                </button>
-                                <button type="button" id="start-reindex-button">
-                                    Start Reindex
-                                </button>
-                                <span
-                                    id="reindex-status-badge"
-                                    class="dashboard-badge reindex-badge reindex-badge-{{ reindex_status.state }}"
-                                >
-                                    {{ reindex_status.state }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="reindex-status-grid">
-                            <div class="reindex-status-item">
-                                <span class="meta">trigger</span>
-                                <strong id="reindex-trigger">{{ reindex_status.trigger }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">rerun requested</span>
-                                <strong id="reindex-rerun-requested">
-                                    {% if reindex_status.rerun_requested %}yes{% else %}no{% endif %}
-                                </strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">documents</span>
-                                <strong id="reindex-document-count">{{ reindex_status.document_count }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">chunks</span>
-                                <strong id="reindex-chunk-count">{{ reindex_status.chunk_count }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">latency ms</span>
-                                <strong id="reindex-elapsed-ms">{{ reindex_status.elapsed_ms }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">started at</span>
-                                <strong id="reindex-started-at">{{ reindex_status.started_at or "not started yet" }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">last update</span>
-                                <strong id="reindex-finished-at">{{ reindex_status.finished_at or "not finished yet" }}</strong>
-                            </div>
-                        </div>
-                        <p
-                            id="reindex-status-message"
-                            class="meta reindex-status-message {% if reindex_status.last_error %}reindex-status-error{% endif %}"
+{% block content %}
+<section class="layout-grid hero-layout">
+    <article class="content-card ask-card hero-primary">
+        <p class="section-kicker">Main Flow</p>
+        <h2>Запит до асистента</h2>
+        <p class="feature-intro">
+            Це головний сценарій демо: поставити запитання, отримати відповідь і
+            одразу побачити, на яких фрагментах документів вона побудована.
+        </p>
+        <div class="actions">
+            {% for item in demo_prompts %}
+            <button type="button" data-demo-question="{{ item.question }}">
+                {{ item.label }}
+            </button>
+            {% endfor %}
+        </div>
+        <form id="question-form" method="get" action="/">
+            <label for="question">Поставте запитання</label>
+            <input
+                id="question"
+                name="question"
+                value="{{ question }}"
+                placeholder="Як мені оцінювати якість пошуку?"
+                required
+            />
+            <div class="summary-grid compact-control-grid">
+                <div class="dashboard-panel compact-control-panel">
+                    <label for="retrieval_mode">Режим пошуку</label>
+                    <select id="retrieval_mode" name="retrieval_mode">
+                        {% for mode in retrieval_mode_options %}
+                        <option
+                            value="{{ mode }}"
+                            {% if retrieval_mode == mode %}selected{% endif %}
                         >
-                            {% if reindex_status.last_error %}
-                            last_error={{ reindex_status.last_error }}
-                            {% elif reindex_status.started_at %}
-                            started_at={{ reindex_status.started_at }}
-                            {% else %}
-                            Waiting for the next reindex trigger.
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="dashboard-panel reindex-status-panel">
-                        <div class="reindex-status-header">
-                            <span class="stat-label">Storage Diagnostics</span>
-                            <span class="dashboard-badge">
-                                {{ system_config.active_backend_state }}
-                            </span>
-                        </div>
-                        <div class="reindex-status-grid">
-                            <div class="reindex-status-item">
-                                <span class="meta">summary</span>
-                                <strong>{{ system_config.active_backend_summary_message }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">issue</span>
-                                <strong>{{ system_config.active_backend_issue }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">retrieval ready</span>
-                                <strong>
-                                    {% if system_config.active_backend_retrieval_ready %}yes{% else %}no{% endif %}
-                                </strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">indexing ready</span>
-                                <strong>
-                                    {% if system_config.active_backend_indexing_ready %}yes{% else %}no{% endif %}
-                                </strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">preflight</span>
-                                <strong>{{ system_config.active_backend_indexing_preflight }}</strong>
-                            </div>
-                            {% if system_config.pgvector_metadata_snapshot %}
-                            <div class="reindex-status-item">
-                                <span class="meta">db chunks</span>
-                                <strong>{{ system_config.pgvector_metadata_snapshot.chunk_count }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">source files</span>
-                                <strong>{{ system_config.pgvector_metadata_snapshot.source_file_count }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">embeddings</span>
-                                <strong>{{ system_config.pgvector_metadata_snapshot.embedding_document_count }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">lexical docs</span>
-                                <strong>{{ system_config.pgvector_metadata_snapshot.lexical_document_count }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">indexed at</span>
-                                <strong>{{ system_config.pgvector_metadata_snapshot.indexed_at }}</strong>
-                            </div>
-                            <div class="reindex-status-item">
-                                <span class="meta">chunking snapshot</span>
-                                <strong>
-                                    {{ system_config.pgvector_metadata_snapshot.chunk_size_words }}/{{ system_config.pgvector_metadata_snapshot.chunk_overlap_words }}
-                                </strong>
-                            </div>
-                            {% else %}
-                            <div class="reindex-status-item">
-                                <span class="meta">db snapshot</span>
-                                <strong>n/a for {{ system_config.current_storage_backend }}</strong>
-                            </div>
-                            {% endif %}
-                        </div>
-                        <p class="meta reindex-status-message">
-                            Runtime page now shows the persisted DB snapshot for
-                            `pgvector`, not just in-memory readiness flags.
-                        </p>
-                    </div>
-                </article>
-            </section>
-
-            <section class="feature-grid">
-                <article class="feature-block feature-panel">
-                    <h2>Завантаження документів</h2>
-                    <p class="feature-intro">
-                        Додайте локальні матеріали перед тим, як ставити
-                        запитання.
-                    </p>
-                    <form
-                        id="upload-form"
-                        method="post"
-                        action="/upload"
-                        enctype="multipart/form-data"
-                    >
-                        <label for="upload_file">Документ</label>
-                        <input
-                            id="upload_file"
-                            name="file"
-                            type="file"
-                            accept=".txt,.md,.pdf"
-                            required
-                        />
-                        <p class="meta">
-                            Підтримувані формати: <code>.txt</code>,
-                            <code>.md</code>, and <code>.pdf</code>
-                        </p>
-                        <div class="actions">
-                            <button type="submit" id="upload-button">
-                                Завантажити документ
-                            </button>
-                        </div>
-                    </form>
-                    <div id="upload-result" class="upload-result meta">
-                        {% if upload_feedback and upload_feedback.status == "ok"
-                        %}
-                        <div class="upload-result upload-result-card success-text">
-                            <strong>Документ успішно завантажено</strong>
-                            <p class="meta">
-                                файл={{ upload_feedback.source_name }} |
-                                тип={{ upload_feedback.file_type }} |
-                                очікуваних_фрагментів={{ upload_feedback.estimated_chunks }}
-                            </p>
-                            <p class="meta">
-                                {{ upload_feedback.reindex_message or "Фоновий reindex для документа вже запущено." }}
-                            </p>
-                            {% if upload_feedback.preview_text %}
-                            <div class="upload-preview">
-                                <p class="meta"><strong>Попередній перегляд документа</strong></p>
-                                <p class="upload-preview-text">
-                                    {{ upload_feedback.preview_text }}
-                                </p>
-                            </div>
-                            {% endif %}
-                            <div class="actions">
-                                <button
-                                    type="button"
-                                    data-demo-question="Про що документ {{ upload_feedback.source_name }}?"
-                                >
-                                    Про що цей документ?
-                                </button>
-                                <button
-                                    type="button"
-                                    data-demo-question="Які ключові моменти в {{ upload_feedback.source_name }}?"
-                                >
-                                    Ключові моменти
-                                </button>
-                                <button
-                                    type="button"
-                                    data-demo-question="Поясни простими словами зміст {{ upload_feedback.source_name }}."
-                                >
-                                    Простий підсумок
-                                </button>
-                            </div>
-                        </div>
-                        {% elif upload_feedback and upload_feedback.status ==
-                        "error" %}
-                        <div class="upload-result error-text">
-                            {{ upload_feedback.error }}
-                        </div>
-                        {% else %} Завантажте документ, щоб оновити локальну базу
-                        знань. {% endif %}
-                    </div>
-                </article>
-
-                <article class="feature-block feature-panel web-search-panel">
-                    <h2>Зовнішній вебпошук</h2>
-                    <p class="feature-intro">
-                        Шукайте зовнішні джерела та порівнюйте їх із локальним
-                        пошуком.
-                    </p>
-                    <form method="get" action="/">
-                        <label for="web_question">Запит для зовнішнього пошуку</label>
-                        <input
-                            id="web_question"
-                            name="web_question"
-                            value="{{ web_question }}"
-                            placeholder="Знайти свіжі приклади архітектур RAG"
-                        />
-
-                        <label for="web_top_k">Ліміт результатів</label>
-                        <input
-                            id="web_top_k"
-                            name="web_top_k"
-                            type="number"
-                            min="1"
-                            max="10"
-                            value="{{ web_top_k }}"
-                        />
-
-                        <div class="actions">
-                            <button type="submit">Шукати в інтернеті</button>
-                        </div>
-                    </form>
-                </article>
-            </section>
-
-            <article class="content-card ask-card">
-                <h2>Запит</h2>
-                <h3>Спробуйте демонстраційний запит</h3>
-                <div class="actions">
-                    {% for item in demo_prompts %}
-                    <button
-                        type="button"
-                        data-demo-question="{{ item.question }}"
-                    >
-                        {{ item.label }}
-                    </button>
-                    {% endfor %}
+                            {{ mode }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <form id="question-form" method="get" action="/">
-                    <label for="question">Поставте запитання</label>
-                    <input
-                        id="question"
-                        name="question"
-                        value="{{ question }}"
-                        placeholder="Як мені оцінювати якість пошуку?"
-                        required
-                    />
-
-                    <div class="actions">
-                        <button type="submit">Запитати асистента</button>
-                        <button type="button" id="clear-form">Очистити</button>
-                    </div>
-                </form>
-            </article>
-
-            <article class="content-card">
-                <h2>Відповідь</h2>
-                {% if ask_result %}
-                <p>{{ ask_result.answer }}</p>
-                <p class="meta">
-                    впевненість={{ ask_result.confidence }} | затримка_мс={{
-                    ask_result.latency_ms }} | режим={{ ask_result.answer_mode }}
-                    | пошук={{ ask_result.retrieval_mode }}
-                </p>
-                <h3>Джерела</h3>
-                <ul class="list-reset">
-                    {% for source in ask_result.sources %}
-                    <li>{{ source }}</li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="meta">
-                    Поставте запитання, щоб переглянути обґрунтовану відповідь із
-                    посиланнями на контекст.
-                </p>
-                {% endif %}
-            </article>
-
-            <article class="content-card">
-                <h2>Порівняння режимів пошуку</h2>
-                {% if mode_comparison %}
-                <div class="mode-compare-grid">
-                    {% for item in mode_comparison %}
-                    <div class="mode-compare-card">
-                        <h3>{{ item.mode }}</h3>
-                        <p class="meta">топ_джерело={{ item.top_source }}</p>
-                        <p class="meta">топ_оцінка={{ item.top_score }}</p>
-                        <p class="meta">збігів={{ item.hit_count }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="meta">
-                    Поставте запитання, щоб порівняти `auto`, `tfidf` та
-                    `embeddings` поруч.
-                </p>
-                {% endif %}
-            </article>
-
-            <article class="content-card">
-                <h2>Знайдений контекст</h2>
-                {% if search_result %}
-                <p class="meta">
-                    режим_пошуку={{ search_result.retrieval_mode }}
-                </p>
-                {% endif %} {% if search_result and search_result.hits %}
-                <ul class="list-reset">
-                    {% for hit in search_result.hits %}
-                    <li>
-                        <strong>{{ hit.title }}</strong><br />
-                        <span class="meta"
-                            >файл={{ hit.source_name }} | фрагмент={{ hit.chunk_index
-                            }} | тип={{ hit.file_type }} | оцінка={{ hit.score }}</span
-                        ><br />
-                        {{ hit.snippet }}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="meta">Поставте запитання, щоб переглянути знайдений контекст.</p>
-                {% endif %}
-            </article>
-
-            <article class="content-card">
-                <h2>Результати з вебу</h2>
-                {% if web_search_error %}
-                <p class="error-text">{{ web_search_error }}</p>
-                {% elif web_search_result and web_search_result.hits %}
-                <ul class="list-reset">
-                    {% for hit in web_search_result.hits %}
-                    <li>
-                        <strong>{{ hit.title }}</strong><br />
-                        <a
-                            href="{{ hit.link }}"
-                            target="_blank"
-                            rel="noreferrer"
+                <div class="dashboard-panel compact-control-panel">
+                    <label for="top_k">Top K</label>
+                    <select id="top_k" name="top_k">
+                        {% for value in system_config.available_top_k %}
+                        <option
+                            value="{{ value }}"
+                            {% if top_k == value %}selected{% endif %}
                         >
-                            {{ hit.link }} </a
-                        ><br />
-                        <span class="meta">позиція={{ hit.position }}</span
-                        ><br />
-                        {{ hit.snippet }}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="meta">
-                    Запустіть зовнішній вебпошук, щоб переглянути тут результати
-                    `SerpAPI`.
-                </p>
-                {% endif %}
-            </article>
+                            {{ value }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="actions">
+                <button type="submit">Запитати асистента</button>
+                <button type="button" id="clear-form">Очистити</button>
+            </div>
+        </form>
+    </article>
 
-            <section class="json-stack">
-                <article class="content-card json-card">
-                    <h2>JSON відповіді пошуку</h2>
-                    <pre>{{ search_result_json | tojson(indent=2) }}</pre>
-                </article>
-                <article class="content-card json-card">
-                    <h2>JSON відповіді на запит</h2>
-                    <pre>{{ ask_result_json | tojson(indent=2) }}</pre>
-                </article>
-                <article class="content-card json-card">
-                    <h2>JSON відповіді вебпошуку</h2>
-                    <pre>{{ web_search_result_json | tojson(indent=2) }}</pre>
-                </article>
-                <article class="content-card json-card">
-                    <h2>JSON storage diagnostics</h2>
-                    <pre>{{ storage_config_json | tojson(indent=2) }}</pre>
-                </article>
-                <article class="content-card json-card">
-                    <h2>JSON runtime observability</h2>
-                    <pre>{{ runtime_observability_json | tojson(indent=2) }}</pre>
-                </article>
-            </section>
-        </main>
-        <script
-            src="{{ request.url_for('static', path='js/index.js') }}"
-            defer
-        ></script>
-    </body>
-</html>
+    <article class="content-card overview-card hero-side">
+        <p class="section-kicker">Runtime Summary</p>
+        <h2>Поточний стан системи</h2>
+        <p class="meta">
+            {% if has_documents %}
+            Корпус готовий до запитів: {{ document_count }} документів уже
+            доступно для локального пошуку.
+            {% else %}
+            Корпус порожній. Для сильного демо краще підтримувати demo corpus або
+            швидко завантажити власні документи.
+            {% endif %}
+        </p>
+        <div class="summary-grid">
+            <div class="mini-summary-card">
+                <span class="stat-label">Mode</span>
+                <strong>{{ retrieval_mode }}</strong>
+            </div>
+            <div class="mini-summary-card">
+                <span class="stat-label">Backend</span>
+                <strong>{{ system_config.current_storage_backend }}</strong>
+            </div>
+            <div class="mini-summary-card">
+                <span class="stat-label">Preset</span>
+                <strong>{{ system_config.current_preset }}</strong>
+            </div>
+            <div class="mini-summary-card">
+                <span class="stat-label">Top K</span>
+                <strong>{{ top_k }}</strong>
+            </div>
+        </div>
+        <div class="actions">
+            <a class="button-link" href="/documents">Керувати документами</a>
+            <a class="button-link" href="/system">Системні деталі</a>
+        </div>
+    </article>
+</section>
+
+<article class="content-card">
+    <h2>Відповідь</h2>
+    {% if ask_result %}
+    <p>{{ ask_result.answer }}</p>
+    <p class="meta">
+        впевненість={{ ask_result.confidence }} | затримка_мс={{
+        ask_result.latency_ms }} | режим={{ ask_result.answer_mode }} |
+        пошук={{ ask_result.retrieval_mode }}
+    </p>
+    <h3>Джерела</h3>
+    <ul class="list-reset">
+        {% for source in ask_result.sources %}
+        <li>{{ source }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="meta">
+        Поставте запитання, щоб переглянути обґрунтовану відповідь із посиланнями
+        на контекст.
+    </p>
+    {% endif %}
+</article>
+
+<section class="feature-grid">
+    <article class="content-card">
+        <h2>Знайдений контекст</h2>
+        {% if search_result %}
+        <p class="meta">режим_пошуку={{ search_result.retrieval_mode }}</p>
+        {% endif %} {% if search_result and search_result.hits %}
+        <ul class="list-reset">
+            {% for hit in search_result.hits %}
+            <li>
+                <strong>{{ hit.title }}</strong><br />
+                <span class="meta">
+                    файл={{ hit.source_name }} | фрагмент={{ hit.chunk_index }} |
+                    тип={{ hit.file_type }} | оцінка={{ hit.score }}
+                </span>
+                <br />
+                {{ hit.snippet }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="meta">
+            Поставте запитання, щоб переглянути знайдений контекст.
+        </p>
+        {% endif %}
+    </article>
+
+    <article class="content-card">
+        <h2>Порівняння режимів пошуку</h2>
+        {% if mode_comparison %}
+        <div class="mode-compare-grid">
+            {% for item in mode_comparison %}
+            <div class="mode-compare-card">
+                <h3>{{ item.mode }}</h3>
+                <p class="meta">топ_джерело={{ item.top_source }}</p>
+                <p class="meta">топ_оцінка={{ item.top_score }}</p>
+                <p class="meta">збігів={{ item.hit_count }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="meta">
+            Поставте запитання, щоб порівняти `auto`, `tfidf` та `embeddings`
+            поруч.
+        </p>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

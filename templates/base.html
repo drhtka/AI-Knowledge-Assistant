@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="uk">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ page_title }}</title>
+        <link
+            rel="stylesheet"
+            href="{{ request.url_for('static', path='css/index.css') }}"
+        />
+    </head>
+    <body>
+        <main>
+            <header class="page-header">
+                <div class="page-header-copy">
+                    <p class="section-kicker">{{ page_kicker }}</p>
+                    <h1>{{ page_heading }}</h1>
+                    <p class="intro">{{ page_intro }}</p>
+                </div>
+                <nav class="page-nav" aria-label="Primary">
+                    <a
+                        href="/"
+                        class="page-nav-link {% if active_page == 'assistant' %}is-active{% endif %}"
+                    >
+                        Асистент
+                    </a>
+                    <a
+                        href="/documents"
+                        class="page-nav-link {% if active_page == 'documents' %}is-active{% endif %}"
+                    >
+                        Документи
+                    </a>
+                    <a
+                        href="/system"
+                        class="page-nav-link {% if active_page == 'system' %}is-active{% endif %}"
+                    >
+                        Система
+                    </a>
+                </nav>
+            </header>
+
+            {% block content %}{% endblock %}
+        </main>
+        <script
+            src="{{ request.url_for('static', path='js/index.js') }}"
+            defer
+        ></script>
+    </body>
+</html>

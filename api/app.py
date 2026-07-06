@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, Request, UploadFile
@@ -405,8 +406,69 @@ def _build_upload_feedback(request: Request) -> dict[str, object] | None:
     }
 
 
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request) -> HTMLResponse:
+def _build_document_entries() -> list[dict[str, object]]:
+    entries: list[dict[str, object]] = []
+    if not RAW_DATA_DIR.exists():
+        return entries
+
+    for path in sorted(
+        (candidate for candidate in RAW_DATA_DIR.iterdir() if candidate.is_file()),
+        key=lambda candidate: candidate.stat().st_mtime,
+        reverse=True,
+    ):
+        stats = path.stat()
+        entries.append(
+            {
+                "name": path.name,
+                "extension": path.suffix.lstrip(".") or "file",
+                "size_kb": max(1, (stats.st_size + 1023) // 1024),
+                "modified_at": datetime.fromtimestamp(stats.st_mtime, tz=timezone.utc).strftime(
+                    "%Y-%m-%d %H:%M UTC"
+                ),
+            }
+        )
+    return entries
+
+
+def _build_system_config(
+    *,
+    chunk_size_options: list[int],
+    chunk_overlap_options: list[int],
+    preset_display_options: list[dict[str, str]],
+    top_k: int,
+    retrieval_mode: str,
+    storage_config: dict[str, object],
+) -> dict[str, object]:
+    return {
+        "default_retrieval_mode": "auto",
+        "available_retrieval_modes": RETRIEVAL_MODE_OPTIONS,
+        "available_chunk_sizes": chunk_size_options,
+        "available_chunk_overlaps": chunk_overlap_options,
+        "preset_display_options": preset_display_options,
+        "available_top_k": TOP_K_OPTIONS,
+        "current_storage_backend": storage_config["current_backend"],
+        "default_storage_backend": storage_config["default_backend"],
+        "available_storage_backends": storage_config["available_backends"],
+        "storage_runtime_override_active": storage_config["runtime_override_active"],
+        "active_backend_state": storage_config["active_backend_state"],
+        "active_backend_issue": storage_config["active_backend_issue"],
+        "active_backend_summary_message": storage_config["active_backend_summary_message"],
+        "active_backend_retrieval_ready": storage_config["active_backend_retrieval_ready"],
+        "active_backend_indexing_ready": storage_config["active_backend_indexing_ready"],
+        "active_backend_indexing_preflight": storage_config["active_backend_indexing_preflight"],
+        "pgvector_metadata_snapshot": storage_config.get("pgvector_metadata_snapshot"),
+        "selected_top_k": top_k,
+        "selected_retrieval_mode": retrieval_mode,
+        **get_chunking_config(),
+    }
+
+
+def _build_page_context(
+    request: Request,
+    *,
+    include_question_results: bool,
+    include_web_results: bool,
+) -> dict[str, object]:
     chunk_size_options = sorted(
         {config["chunk_size_words"] for config in CHUNKING_PRESETS.values()},
         reverse=True,
@@ -427,12 +489,18 @@ def index(request: Request) -> HTMLResponse:
     retrieval_mode = request.query_params.get("retrieval_mode", "auto") or "auto"
     if retrieval_mode not in RETRIEVAL_MODE_OPTIONS:
         retrieval_mode = "auto"
-    web_question = request.query_params.get("web_question", "")
+    web_question = request.query_params.get("web_question", "") if include_web_results else ""
     web_top_k_raw = request.query_params.get("web_top_k", "5") or "5"
     web_top_k = max(1, min(10, int(web_top_k_raw)))
 
-    search_result = search(question, top_k, retrieval_mode=retrieval_mode) if question else None
-    ask_result = ask(question, top_k, retrieval_mode=retrieval_mode) if question else None
+    search_result = None
+    ask_result = None
+    mode_comparison: list[dict[str, object]] = []
+    if include_question_results and question:
+        search_result = search(question, top_k, retrieval_mode=retrieval_mode)
+        ask_result = ask(question, top_k, retrieval_mode=retrieval_mode)
+        mode_comparison = _build_mode_comparison(question, top_k)
+
     web_search_result = None
     web_search_error = ""
     if web_question:
@@ -440,58 +508,113 @@ def index(request: Request) -> HTMLResponse:
             web_search_result = web_search(question=web_question, top_k=web_top_k)
         except ValueError as exc:
             web_search_error = str(exc)
-    mode_comparison = _build_mode_comparison(question, top_k) if question else []
     upload_feedback = _build_upload_feedback(request)
     storage_config = get_storage_backend_config()
     runtime_observability = _build_runtime_observability_response()
+    document_entries = _build_document_entries()
 
+    return {
+        "question": question,
+        "top_k": top_k,
+        "has_top_k_query": has_top_k_query,
+        "retrieval_mode": retrieval_mode,
+        "has_retrieval_mode_query": has_retrieval_mode_query,
+        "retrieval_mode_options": RETRIEVAL_MODE_OPTIONS,
+        "system_config": _build_system_config(
+            chunk_size_options=chunk_size_options,
+            chunk_overlap_options=chunk_overlap_options,
+            preset_display_options=preset_display_options,
+            top_k=top_k,
+            retrieval_mode=retrieval_mode,
+            storage_config=storage_config,
+        ),
+        "web_question": web_question,
+        "web_top_k": web_top_k,
+        "demo_prompts": DEMO_PROMPTS,
+        "search_result": search_result,
+        "ask_result": ask_result,
+        "mode_comparison": mode_comparison,
+        "upload_feedback": upload_feedback,
+        "reindex_status": _build_reindex_status_response(),
+        "runtime_observability": runtime_observability,
+        "web_search_result": web_search_result,
+        "web_search_error": web_search_error,
+        "storage_config_json": storage_config,
+        "runtime_observability_json": runtime_observability.model_dump(mode="json"),
+        "search_result_json": search_result.model_dump(mode="json") if search_result else {},
+        "ask_result_json": ask_result.model_dump(mode="json") if ask_result else {},
+        "web_search_result_json": web_search_result.model_dump(mode="json") if web_search_result else {},
+        "document_entries": document_entries,
+        "document_count": len(document_entries),
+        "has_documents": bool(document_entries),
+    }
+
+
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
+            **_build_page_context(
+                request,
+                include_question_results=True,
+                include_web_results=False,
+            ),
             "page_title": "AI Knowledge Assistant",
-            "question": question,
-            "top_k": top_k,
-            "has_top_k_query": has_top_k_query,
-            "retrieval_mode": retrieval_mode,
-            "has_retrieval_mode_query": has_retrieval_mode_query,
-            "retrieval_mode_options": RETRIEVAL_MODE_OPTIONS,
-            "system_config": {
-                "default_retrieval_mode": "auto",
-                "available_retrieval_modes": RETRIEVAL_MODE_OPTIONS,
-                "available_chunk_sizes": chunk_size_options,
-                "available_chunk_overlaps": chunk_overlap_options,
-                "preset_display_options": preset_display_options,
-                "available_top_k": TOP_K_OPTIONS,
-                "current_storage_backend": storage_config["current_backend"],
-                "default_storage_backend": storage_config["default_backend"],
-                "available_storage_backends": storage_config["available_backends"],
-                "storage_runtime_override_active": storage_config["runtime_override_active"],
-                "active_backend_state": storage_config["active_backend_state"],
-                "active_backend_issue": storage_config["active_backend_issue"],
-                "active_backend_summary_message": storage_config["active_backend_summary_message"],
-                "active_backend_retrieval_ready": storage_config["active_backend_retrieval_ready"],
-                "active_backend_indexing_ready": storage_config["active_backend_indexing_ready"],
-                "active_backend_indexing_preflight": storage_config["active_backend_indexing_preflight"],
-                "pgvector_metadata_snapshot": storage_config.get("pgvector_metadata_snapshot"),
-                **get_chunking_config(),
-            },
-            "web_question": web_question,
-            "web_top_k": web_top_k,
-            "demo_prompts": DEMO_PROMPTS,
-            "search_result": search_result,
-            "ask_result": ask_result,
-            "mode_comparison": mode_comparison,
-            "upload_feedback": upload_feedback,
-            "reindex_status": _build_reindex_status_response(),
-            "runtime_observability": runtime_observability,
-            "web_search_result": web_search_result,
-            "web_search_error": web_search_error,
-            "storage_config_json": storage_config,
-            "runtime_observability_json": runtime_observability.model_dump(mode="json"),
-            "search_result_json": search_result.model_dump(mode="json") if search_result else {},
-            "ask_result_json": ask_result.model_dump(mode="json") if ask_result else {},
-            "web_search_result_json": web_search_result.model_dump(mode="json") if web_search_result else {},
+            "page_heading": "AI Асистент Знань",
+            "page_intro": (
+                "Ставте запитання до локальної бази знань і одразу "
+                "перевіряйте, на яких фрагментах документів побудована відповідь."
+            ),
+            "page_kicker": "Assistant",
+            "active_page": "assistant",
+        },
+    )
+
+
+@app.get("/documents", response_class=HTMLResponse)
+def documents_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="documents.html",
+        context={
+            **_build_page_context(
+                request,
+                include_question_results=False,
+                include_web_results=False,
+            ),
+            "page_title": "Documents | AI Knowledge Assistant",
+            "page_heading": "Документи та корпус",
+            "page_intro": (
+                "Тут живе база знань: завантаження файлів, контроль chunking "
+                "та перевірка, що корпус готовий до нових запитів."
+            ),
+            "page_kicker": "Documents",
+            "active_page": "documents",
+        },
+    )
+
+
+@app.get("/system", response_class=HTMLResponse)
+def system_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="system.html",
+        context={
+            **_build_page_context(
+                request,
+                include_question_results=False,
+                include_web_results=True,
+            ),
+            "page_title": "System | AI Knowledge Assistant",
+            "page_heading": "Система та діагностика",
+            "page_intro": (
+                "Технічний контур проєкту: активний backend, reindex, "
+                "runtime observability та JSON для демонстрації інженерної глибини."
+            ),
+            "page_kicker": "System",
+            "active_page": "system",
         },
     )
 
@@ -708,7 +831,7 @@ async def upload_page_endpoint(background_tasks: BackgroundTasks, file: UploadFi
                 "upload_error": str(exc.detail),
             },
         )
-        return RedirectResponse(url=f"/?{query}", status_code=303)
+        return RedirectResponse(url=f"/documents?{query}", status_code=303)
 
     query = urlencode(
         {
@@ -721,7 +844,7 @@ async def upload_page_endpoint(background_tasks: BackgroundTasks, file: UploadFi
             "uploaded_reindex_state": result.reindex_state,
         },
     )
-    return RedirectResponse(url=f"/?{query}", status_code=303)
+    return RedirectResponse(url=f"/documents?{query}", status_code=303)
 
 
 @app.post("/ask", response_model=AskResponse)
