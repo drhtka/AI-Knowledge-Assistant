@@ -582,15 +582,15 @@ def documents_page(request: Request) -> HTMLResponse:
             **_build_page_context(
                 request,
                 include_question_results=False,
-                include_web_results=False,
+                include_web_results=True,
             ),
-            "page_title": "Documents | AI Knowledge Assistant",
-            "page_heading": "Документи та корпус",
+            "page_title": "Documents And Sources | AI Knowledge Assistant",
+            "page_heading": "Документи та джерела",
             "page_intro": (
-                "Тут живе база знань: завантаження файлів, контроль chunking "
-                "та перевірка, що корпус готовий до нових запитів."
+                "Тут зібрані всі джерела знань для асистента: локальні файли, "
+                "зовнішній веб-пошук, chunking і контроль готовності корпусу."
             ),
-            "page_kicker": "Documents",
+            "page_kicker": "Sources",
             "active_page": "documents",
         },
     )
@@ -605,7 +605,7 @@ def system_page(request: Request) -> HTMLResponse:
             **_build_page_context(
                 request,
                 include_question_results=False,
-                include_web_results=True,
+                include_web_results=False,
             ),
             "page_title": "System | AI Knowledge Assistant",
             "page_heading": "Система та діагностика",
