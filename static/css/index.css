@@ -382,6 +382,10 @@ a {
     margin-bottom: 0;
 }
 
+.inline-form-row.settings-form-row select {
+    flex: 0 0 auto;
+}
+
 .inline-form-row button {
     flex: 0 0 auto;
 }
