@@ -85,14 +85,30 @@ If optional services are not configured, the app keeps working with the local ba
 
 ## Docker Swarm Run
 
-This repository now includes a swarm-compatible stack for the `FastAPI` app and `PostgreSQL + pgvector`.
+This repository now includes a more production-like swarm-compatible stack for the `FastAPI` app and `PostgreSQL + pgvector`.
 
 Files:
 
 - `Dockerfile`
 - `docker-stack.yml`
+- `.env.swarm.example`
 - `docker/app/entrypoint.sh`
 - `docker/postgres/init/01-init.sql`
+
+Prepare the swarm environment file:
+
+```bash
+cp .env.swarm.example .env.swarm
+set -a
+source .env.swarm
+set +a
+```
+
+Create the required Docker secret for the database password:
+
+```bash
+printf 'change_me_super_secret_password' | docker secret create "${POSTGRES_PASSWORD_SECRET}" -
+```
 
 Build the application image first:
 
@@ -119,6 +135,13 @@ docker stack services ai-knowledge-assistant
 docker stack ps ai-knowledge-assistant
 ```
 
+Inspect logs:
+
+```bash
+docker service logs -f ai-knowledge-assistant_app
+docker service logs -f ai-knowledge-assistant_db
+```
+
 Open the app:
 
 ```text
@@ -135,8 +158,44 @@ Notes:
 
 - the stack runs the app with `CHUNK_STORAGE_BACKEND=pgvector`;
 - the database service uses a `pgvector`-enabled Postgres image and creates `EXTENSION vector` on first initialization;
+- the app reads database credentials through `POSTGRES_PASSWORD_FILE` and supports `*_FILE` secrets for app settings as well;
 - the app waits for the database before starting `uvicorn`;
+- `deploy.resources` and `deploy.restart_policy` are already set with conservative defaults;
+- `APP_REPLICAS=1` is the safe default because uploads currently write to local app data volume; raise replicas only if you move uploads/raw corpus to shared storage;
+- `DB_REPLICAS=1` should stay as-is unless you introduce a real HA/replication strategy for PostgreSQL;
 - Docker daemon must be running before `docker build` or `docker stack deploy`.
+
+Recommended production-like knobs in `.env.swarm`:
+
+```bash
+APP_IMAGE=ai-knowledge-assistant:local
+APP_PORT=8000
+APP_REPLICAS=1
+APP_CPU_RESERVATION=0.25
+APP_CPU_LIMIT=1.00
+APP_MEMORY_RESERVATION=256M
+APP_MEMORY_LIMIT=1G
+UVICORN_WORKERS=1
+
+DB_IMAGE=pgvector/pgvector:pg16
+DB_REPLICAS=1
+DB_CPU_RESERVATION=0.25
+DB_CPU_LIMIT=1.00
+DB_MEMORY_RESERVATION=256M
+DB_MEMORY_LIMIT=1G
+
+POSTGRES_DB=ai_knowledge_assistant
+POSTGRES_USER=postgres
+POSTGRES_SSL_MODE=disable
+POSTGRES_PASSWORD_SECRET=ai_knowledge_assistant_postgres_password
+```
+
+Optional application secrets:
+
+- `LLM_API_KEY_FILE`
+- `SERPAPI_API_KEY_FILE`
+
+The app now supports the `*_FILE` pattern in settings, so these values can come from Docker secrets if you later extend the stack with provider-specific secrets.
 
 ## Optional LLM Mode
 

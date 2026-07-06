@@ -16,15 +16,25 @@ CHUNKING_VERSION = "word-overlap-v1"
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 
+def _env_value(name: str) -> str | None:
+    file_path = os.getenv(f"{name}_FILE")
+    if file_path:
+        try:
+            return Path(file_path).read_text(encoding="utf-8").strip()
+        except OSError:
+            return None
+    return os.getenv(name)
+
+
 def _env_flag(name: str, default: bool = False) -> bool:
-    value = os.getenv(name)
+    value = _env_value(name)
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _env_int(name: str, default: int) -> int:
-    value = os.getenv(name)
+    value = _env_value(name)
     if value is None:
         return default
     try:
@@ -34,7 +44,7 @@ def _env_int(name: str, default: int) -> int:
 
 
 def _env_str(name: str, default: str = "") -> str:
-    value = os.getenv(name)
+    value = _env_value(name)
     if value is None:
         return default
     return value.strip()
@@ -68,14 +78,14 @@ PGVECTOR_DATABASE_URL = _env_str(
 
 
 LLM_ENABLED = _env_flag("LLM_ENABLED", default=False)
-LLM_API_KEY = os.getenv("LLM_API_KEY", "")
-LLM_API_BASE = os.getenv("LLM_API_BASE", "https://api.openai.com/v1").rstrip("/")
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
-LLM_TIMEOUT_SEC = float(os.getenv("LLM_TIMEOUT_SEC", "20"))
-LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "220"))
+LLM_API_KEY = _env_str("LLM_API_KEY", "")
+LLM_API_BASE = _env_str("LLM_API_BASE", "https://api.openai.com/v1").rstrip("/")
+LLM_MODEL = _env_str("LLM_MODEL", "gpt-4o-mini")
+LLM_TIMEOUT_SEC = float(_env_str("LLM_TIMEOUT_SEC", "20"))
+LLM_MAX_TOKENS = int(_env_str("LLM_MAX_TOKENS", "220"))
 
 SERPAPI_ENABLED = _env_flag("SERPAPI_ENABLED", default=False)
-SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", "")
-SERPAPI_ENGINE = os.getenv("SERPAPI_ENGINE", "google")
-SERPAPI_NUM_RESULTS = int(os.getenv("SERPAPI_NUM_RESULTS", "5"))
-SERPAPI_TIMEOUT_SEC = float(os.getenv("SERPAPI_TIMEOUT_SEC", "15"))
+SERPAPI_API_KEY = _env_str("SERPAPI_API_KEY", "")
+SERPAPI_ENGINE = _env_str("SERPAPI_ENGINE", "google")
+SERPAPI_NUM_RESULTS = int(_env_str("SERPAPI_NUM_RESULTS", "5"))
+SERPAPI_TIMEOUT_SEC = float(_env_str("SERPAPI_TIMEOUT_SEC", "15"))
