@@ -265,6 +265,22 @@ a {
     margin-top: 10px;
 }
 
+.control-grid-tiles {
+    align-items: stretch;
+}
+
+.control-field-tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 148px;
+    padding: 16px;
+    border: 1px solid #2563eb;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.12), rgba(15, 23, 42, 0.85));
+}
+
 .control-field label {
     margin-bottom: 8px;
 }
