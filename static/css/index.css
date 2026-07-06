@@ -85,15 +85,29 @@ main {
 
 .admin-auth-message {
     margin: 0 0 8px;
+    padding: 8px 10px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.7);
     font-size: 13px;
+}
+
+.admin-auth-message-info {
+    color: #c4b5fd;
+    border-color: rgba(196, 181, 253, 0.35);
+    background: linear-gradient(180deg, rgba(124, 58, 237, 0.18), rgba(15, 23, 42, 0.88));
 }
 
 .admin-auth-message-success {
     color: #86efac;
+    border-color: rgba(134, 239, 172, 0.35);
+    background: linear-gradient(180deg, rgba(22, 163, 74, 0.16), rgba(15, 23, 42, 0.88));
 }
 
 .admin-auth-message-error {
     color: #fca5a5;
+    border-color: rgba(248, 113, 113, 0.35);
+    background: linear-gradient(180deg, rgba(185, 28, 28, 0.18), rgba(15, 23, 42, 0.88));
 }
 
 .admin-guard-card {

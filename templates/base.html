@@ -68,16 +68,9 @@
                         </form>
                         {% elif admin_auth.enabled %}
                         <p class="meta">
-                            Документи та система доступні після admin auth.
-                        </p>
-                        <p class="meta">
-                            Введіть пароль у поле нижче праворуч у шапці, потім
-                            натисніть `Увійти`.
+                            Документи та система доступні для Admin.
                         </p>
                         <form method="post" action="/admin/login" class="admin-auth-form">
-                            <label class="meta admin-auth-label" for="admin_password_input">
-                                Пароль адміністратора
-                            </label>
                             <input
                                 id="admin_password_input"
                                 type="password"
