@@ -691,8 +691,8 @@ async def admin_logout(request: Request) -> RedirectResponse:
     return _redirect_with_status(next_path, admin_status="signed_out")
 
 
-@app.get("/docs", include_in_schema=False)
-def protected_swagger_ui(request: Request) -> HTMLResponse | RedirectResponse:
+@app.get("/docs", include_in_schema=False, response_model=None)
+def protected_swagger_ui(request: Request):
     if not ADMIN_AUTH_ENABLED:
         return _redirect_with_status("/", admin_status="not_configured")
     if not _is_admin_authenticated(request):
