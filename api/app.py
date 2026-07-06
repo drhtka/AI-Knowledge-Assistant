@@ -530,6 +530,7 @@ def _build_system_config(
         "available_chunk_sizes": chunk_size_options,
         "available_chunk_overlaps": chunk_overlap_options,
         "preset_display_options": preset_display_options,
+        "current_preset_label": _preset_label(get_chunking_config()["current_preset"]),
         "available_top_k": TOP_K_OPTIONS,
         "current_storage_backend": storage_config["current_backend"],
         "default_storage_backend": storage_config["default_backend"],
