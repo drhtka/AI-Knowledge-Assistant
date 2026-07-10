@@ -243,6 +243,10 @@ select:disabled {
     min-width: 0;
 }
 
+.feature-grid > *:only-child {
+    grid-column: 1 / -1;
+}
+
 .overview-grid {
     display: grid;
     grid-template-columns: 1fr;
