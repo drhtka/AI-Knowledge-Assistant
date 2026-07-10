@@ -194,7 +194,7 @@
     <article class="content-card dashboard-card">
         <div class="reindex-status-header">
             <div>
-                <p class="section-kicker">Життєвий цикл індексу</p>
+                <p class="section-kicker">Index Lifecycle</p>
                 <h2>Статус reindex</h2>
             </div>
             <span
@@ -206,38 +206,38 @@
         </div>
         <div class="reindex-status-grid">
             <div class="reindex-status-item">
-                <span class="meta">тригер</span>
+                <span class="meta">trigger</span>
                 <strong id="reindex-trigger">{{ reindex_status.trigger }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">документи</span>
+                <span class="meta">documents</span>
                 <strong id="reindex-document-count">{{ reindex_status.document_count }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">фрагменти</span>
+                <span class="meta">chunks</span>
                 <strong id="reindex-chunk-count">{{ reindex_status.chunk_count }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">затримка, мс</span>
+                <span class="meta">latency ms</span>
                 <strong id="reindex-elapsed-ms">{{ reindex_status.elapsed_ms }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">запущено</span>
-                <strong id="reindex-started-at">{{ reindex_status.started_at or "ще не запущено" }}</strong>
+                <span class="meta">started at</span>
+                <strong id="reindex-started-at">{{ reindex_status.started_at or "not started yet" }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">останнє оновлення</span>
-                <strong id="reindex-finished-at">{{ reindex_status.finished_at or "ще не завершено" }}</strong>
+                <span class="meta">last update</span>
+                <strong id="reindex-finished-at">{{ reindex_status.finished_at or "not finished yet" }}</strong>
             </div>
         </div>
         <div class="reindex-status-actions">
-            <button type="button" id="refresh-reindex-status-button">Оновити</button>
+            <button type="button" id="refresh-reindex-status-button">Refresh</button>
             <button
                 type="button"
                 id="start-reindex-button"
                 {% if not admin_auth.is_authenticated %}disabled{% endif %}
             >
-                Запустити reindex
+                Start Reindex
             </button>
         </div>
         <p
@@ -249,7 +249,7 @@
             {% elif reindex_status.started_at %}
             started_at={{ reindex_status.started_at }}
             {% else %}
-            Очікування наступного запуску reindex.
+            Waiting for the next reindex trigger.
             {% endif %}
         </p>
     </article>
