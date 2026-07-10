@@ -99,11 +99,51 @@
             Завантажте документ, щоб оновити локальну базу знань.
             {% endif %}
         </div>
+        <div class="section-divider"></div>
+        <div class="feature-subsection">
+            <p class="section-kicker">Indexing Setup</p>
+            <h3 class="feature-subsection-title">Розбиття документів (chunking)</h3>
+            <p class="meta">
+                Поточний пресет: <code>{{ system_config.current_preset }}</code> |
+                chunk size={{ system_config.chunk_size_words }} |
+                overlap={{ system_config.chunk_overlap_words }}
+            </p>
+            <p class="meta">
+                Це налаштування впливає на те, як документи ріжуться на фрагменти
+                перед індексацією та пошуком.
+            </p>
+            <form id="chunking-preset-form" class="inline-form">
+                <label for="chunking_preset">Оберіть пресет</label>
+                <div class="inline-form-row">
+                    <select
+                        id="chunking_preset"
+                        name="chunking_preset"
+                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                    >
+                        {% for preset in system_config.preset_display_options %}
+                        <option
+                            value="{{ preset.value }}"
+                            {% if system_config.current_preset == preset.value %}selected{% endif %}
+                        >
+                            {{ preset.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
+                        Застосувати пресет
+                    </button>
+                </div>
+            </form>
+            <div id="chunking-result" class="upload-result meta">
+                Застосуйте пресет, щоб перебудувати індекс фрагментів з іншою
+                базовою конфігурацією.
+            </div>
+        </div>
         {% if not admin_auth.is_authenticated %}
         <div class="admin-access-note">
             <span class="admin-access-note-label">Admin Access</span>
             <p class="admin-access-note-text">
-                Upload стане доступним після admin auth.
+                Upload і зміна chunking preset стануть доступними після admin auth.
             </p>
         </div>
         {% endif %}
@@ -145,48 +185,6 @@
             demo corpus.
         </p>
         {% endif %}
-    </article>
-</section>
-
-<section class="overview-grid">
-    <article class="content-card dashboard-card">
-        <p class="section-kicker">Indexing Setup</p>
-        <h2>Розбиття документів (chunking)</h2>
-        <p class="meta">
-            Поточний пресет: <code>{{ system_config.current_preset }}</code> |
-            chunk size={{ system_config.chunk_size_words }} |
-            overlap={{ system_config.chunk_overlap_words }}
-        </p>
-        <p class="meta">
-            Це налаштування впливає на те, як документи ріжуться на фрагменти
-            перед індексацією та пошуком.
-        </p>
-        <form id="chunking-preset-form" class="inline-form">
-            <label for="chunking_preset">Оберіть пресет</label>
-            <div class="inline-form-row">
-                <select
-                    id="chunking_preset"
-                    name="chunking_preset"
-                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
-                >
-                    {% for preset in system_config.preset_display_options %}
-                    <option
-                        value="{{ preset.value }}"
-                        {% if system_config.current_preset == preset.value %}selected{% endif %}
-                    >
-                        {{ preset.label }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
-                    Застосувати пресет
-                </button>
-            </div>
-        </form>
-        <div id="chunking-result" class="upload-result meta">
-            Застосуйте пресет, щоб перебудувати індекс фрагментів з іншою
-            базовою конфігурацією.
-        </div>
     </article>
 </section>
 
