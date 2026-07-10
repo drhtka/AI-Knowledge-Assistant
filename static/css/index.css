@@ -66,9 +66,10 @@ main {
     flex-direction: column;
     box-sizing: border-box;
     padding: 14px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    border: 1px solid rgba(248, 113, 113, 0.34);
     border-radius: 12px;
-    background: rgba(15, 23, 42, 0.72);
+    background: linear-gradient(180deg, rgba(127, 29, 29, 0.26), rgba(15, 23, 42, 0.92));
+    box-shadow: 0 16px 34px rgba(127, 29, 29, 0.18);
     position: relative;
     z-index: 2;
 }
@@ -81,6 +82,18 @@ main {
 .admin-auth-card .stat-label {
     display: block;
     margin-bottom: 8px;
+    color: #fca5a5;
+}
+
+.admin-auth-card .meta {
+    color: #fee2e2;
+}
+
+.admin-auth-card code {
+    color: #fff1f2;
+    background: rgba(127, 29, 29, 0.28);
+    border-radius: 8px;
+    padding: 2px 6px;
 }
 
 .admin-auth-form {
@@ -95,10 +108,20 @@ main {
 .admin-auth-form input[type="password"] {
     width: 100%;
     box-sizing: border-box;
+    border-color: rgba(248, 113, 113, 0.34);
+    background: rgba(17, 24, 39, 0.92);
+}
+
+.admin-auth-form input[type="password"]:focus {
+    outline: 2px solid rgba(248, 113, 113, 0.32);
+    outline-offset: 1px;
 }
 
 .admin-auth-form button {
     align-self: flex-start;
+    border-color: rgba(248, 113, 113, 0.38);
+    background: linear-gradient(180deg, rgba(185, 28, 28, 0.34), rgba(31, 41, 55, 0.94));
+    color: #fff1f2;
 }
 
 .admin-auth-message {
@@ -595,15 +618,16 @@ select:disabled {
 .admin-access-note {
     margin-top: 14px;
     padding: 12px 14px;
-    border: 1px solid rgba(96, 165, 250, 0.28);
+    border: 1px solid rgba(248, 113, 113, 0.3);
     border-radius: 12px;
-    background: linear-gradient(180deg, rgba(37, 99, 235, 0.14), rgba(15, 23, 42, 0.82));
+    background: linear-gradient(180deg, rgba(185, 28, 28, 0.18), rgba(15, 23, 42, 0.84));
+    box-shadow: 0 14px 28px rgba(127, 29, 29, 0.12);
 }
 
 .admin-access-note-label {
     display: inline-block;
     margin-bottom: 8px;
-    color: #93c5fd;
+    color: #fca5a5;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -612,13 +636,13 @@ select:disabled {
 
 .admin-access-note-text {
     margin: 0;
-    color: #dbeafe;
+    color: #fee2e2;
     line-height: 1.5;
 }
 
 .admin-access-note-text code {
-    color: #eff6ff;
-    background: rgba(15, 23, 42, 0.65);
+    color: #fff1f2;
+    background: rgba(127, 29, 29, 0.3);
 }
 
 .section-divider {
