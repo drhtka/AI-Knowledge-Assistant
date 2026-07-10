@@ -156,16 +156,6 @@ main {
     background: linear-gradient(180deg, rgba(161, 98, 7, 0.16), rgba(15, 23, 42, 0.88));
 }
 
-.hero-layout {
-    align-items: stretch;
-    margin-bottom: 20px;
-}
-
-.hero-primary,
-.hero-side {
-    margin-bottom: 0;
-}
-
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -240,12 +230,6 @@ select:disabled {
     opacity: 0.55;
 }
 
-.layout-grid {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 20px;
-}
-
 .feature-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -253,7 +237,6 @@ select:disabled {
     margin-bottom: 18px;
 }
 
-.layout-grid > *,
 .overview-grid > *,
 .mode-compare-grid > *,
 .feature-grid > * {
@@ -817,7 +800,6 @@ pre {
     }
 
     .overview-grid,
-    .layout-grid,
     .feature-grid {
         grid-template-columns: 1fr;
     }

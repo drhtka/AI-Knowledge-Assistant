@@ -1,8 +1,50 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="layout-grid hero-layout">
-    <article class="content-card ask-card hero-primary">
+<article class="content-card overview-card dashboard-card">
+    <p class="section-kicker">Runtime Summary</p>
+    <h2>Поточний стан системи</h2>
+    <p class="meta">
+        {% if has_documents %}
+        Корпус готовий до запитів: {{ document_count }} документів уже
+        доступно для локального пошуку.
+        {% else %}
+        Корпус порожній. Для сильного демо краще підтримувати demo corpus або
+        швидко завантажити власні документи.
+        {% endif %}
+    </p>
+    <div class="summary-grid">
+        <div class="mini-summary-card">
+            <span class="stat-label">Mode</span>
+            <strong>{{ retrieval_mode }}</strong>
+        </div>
+        <div class="mini-summary-card">
+            <span class="stat-label">Backend</span>
+            <strong>{{ system_config.current_storage_backend }}</strong>
+        </div>
+        <div class="mini-summary-card">
+            <span class="stat-label">Preset</span>
+            <strong>{{ system_config.current_preset_label }}</strong>
+        </div>
+        <div class="mini-summary-card">
+            <span class="stat-label">Top K</span>
+            <strong>{{ top_k }}</strong>
+        </div>
+    </div>
+    <div class="actions">
+        <a class="button-link" href="/documents">Керувати документами</a>
+        <a class="button-link" href="/system">Системні деталі</a>
+    </div>
+    <div class="admin-access-note">
+        <span class="admin-access-note-label">Admin Access</span>
+        <p class="admin-access-note-text">
+            <code>Документи та джерела</code> і <code>Система</code> доступні за
+            admin-запитом. Небезпечні дії дозволені тільки після авторизації.
+        </p>
+    </div>
+</article>
+
+<article class="content-card ask-card">
         <p class="section-kicker">Main Flow</p>
         <h2>Запит до асистента</h2>
         <p class="feature-intro">
@@ -59,50 +101,6 @@
             </div>
         </form>
     </article>
-
-    <article class="content-card overview-card hero-side">
-        <p class="section-kicker">Runtime Summary</p>
-        <h2>Поточний стан системи</h2>
-        <p class="meta">
-            {% if has_documents %}
-            Корпус готовий до запитів: {{ document_count }} документів уже
-            доступно для локального пошуку.
-            {% else %}
-            Корпус порожній. Для сильного демо краще підтримувати demo corpus або
-            швидко завантажити власні документи.
-            {% endif %}
-        </p>
-        <div class="summary-grid">
-            <div class="mini-summary-card">
-                <span class="stat-label">Mode</span>
-                <strong>{{ retrieval_mode }}</strong>
-            </div>
-            <div class="mini-summary-card">
-                <span class="stat-label">Backend</span>
-                <strong>{{ system_config.current_storage_backend }}</strong>
-            </div>
-            <div class="mini-summary-card">
-                <span class="stat-label">Preset</span>
-                <strong>{{ system_config.current_preset_label }}</strong>
-            </div>
-            <div class="mini-summary-card">
-                <span class="stat-label">Top K</span>
-                <strong>{{ top_k }}</strong>
-            </div>
-        </div>
-        <div class="actions">
-            <a class="button-link" href="/documents">Керувати документами</a>
-            <a class="button-link" href="/system">Системні деталі</a>
-        </div>
-        <div class="admin-access-note">
-            <span class="admin-access-note-label">Admin Access</span>
-            <p class="admin-access-note-text">
-                <code>Документи та джерела</code> і <code>Система</code> доступні за
-                admin-запитом. Небезпечні дії дозволені тільки після авторизації.
-            </p>
-        </div>
-    </article>
-</section>
 
 <article class="content-card">
     <h2>Відповідь</h2>
