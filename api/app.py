@@ -3,6 +3,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import hmac
+import logging
+from threading import Thread
 from urllib.parse import urlencode
 
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -64,11 +66,24 @@ from api.settings import (
 )
 from api.web_search import get_web_search_history, web_search
 
+logger = logging.getLogger("ai_knowledge_assistant.app")
+
+
+def _warmup_index_in_background() -> None:
+    try:
+        ensure_index_loaded()
+    except Exception:
+        logger.exception("Background index warmup failed.")
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     configure_logging()
-    ensure_index_loaded()
+    Thread(
+        target=_warmup_index_in_background,
+        name="index-warmup",
+        daemon=True,
+    ).start()
     yield
 
 

@@ -36,7 +36,7 @@
                         </form>
                         {% elif admin_auth.enabled %}
                         <p class="meta">
-                            Документи та система доступні для Admin.
+                            Документи та система доступні для Admin. Або по запиту.
                         </p>
                         <form method="post" action="/admin/login" class="admin-auth-form">
                             <input
@@ -77,7 +77,9 @@
                         >
                             Система
                         </a>
+                        {% if admin_auth.is_authenticated %}
                         <a href="/docs" class="page-nav-link">API Docs</a>
+                        {% endif %}
                     </nav>
                 </div>
                 <div class="page-header-copy">

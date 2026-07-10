@@ -50,14 +50,6 @@
                 <a class="button-link" href="/">Повернутися до асистента</a>
             </div>
         </form>
-        {% if not admin_auth.is_authenticated %}
-        <div class="admin-access-note">
-            <span class="admin-access-note-label">Admin Access</span>
-            <p class="admin-access-note-text">
-                Upload стане доступним після admin auth.
-            </p>
-        </div>
-        {% endif %}
         <div id="upload-result" class="upload-result meta">
             {% if upload_feedback and upload_feedback.status == "ok" %}
             <div class="upload-result upload-result-card success-text">
@@ -107,6 +99,14 @@
             Завантажте документ, щоб оновити локальну базу знань.
             {% endif %}
         </div>
+        {% if not admin_auth.is_authenticated %}
+        <div class="admin-access-note">
+            <span class="admin-access-note-label">Admin Access</span>
+            <p class="admin-access-note-text">
+                Upload стане доступним після admin auth.
+            </p>
+        </div>
+        {% endif %}
     </article>
 
     <article class="feature-block feature-panel web-search-panel">
