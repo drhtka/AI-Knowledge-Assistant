@@ -12,7 +12,7 @@
 </article>
 {% endif %}
 
-<section class="feature-grid">
+<section class="overview-grid">
     <article class="feature-block feature-panel">
         <p class="section-kicker">Ingestion</p>
         <h2>Завантаження документів</h2>
@@ -108,53 +108,9 @@
         </div>
         {% endif %}
     </article>
-
-    <article class="feature-block feature-panel web-search-panel">
-        <p class="section-kicker">External Search</p>
-        <h2>Зовнішній вебпошук</h2>
-        <p class="feature-intro">
-            Використовуйте зовнішні джерела як окремий канал знань для
-            порівняння з локальним корпусом або швидкого демо без нових файлів.
-        </p>
-        <form method="get" action="/documents">
-            <label for="web_question">Запит для зовнішнього пошуку</label>
-            <input
-                id="web_question"
-                name="web_question"
-                value="{{ web_question }}"
-                placeholder="Знайти свіжі приклади архітектур RAG"
-                {% if not admin_auth.is_authenticated %}disabled{% endif %}
-            />
-
-            <label for="web_top_k">Ліміт результатів</label>
-            <input
-                id="web_top_k"
-                name="web_top_k"
-                type="number"
-                min="1"
-                max="10"
-                value="{{ web_top_k }}"
-                {% if not admin_auth.is_authenticated %}disabled{% endif %}
-            />
-
-            <div class="actions">
-                <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
-                    Шукати в інтернеті
-                </button>
-            </div>
-        </form>
-        {% if not admin_auth.is_authenticated %}
-        <div class="admin-access-note">
-            <span class="admin-access-note-label">Admin Access</span>
-            <p class="admin-access-note-text">
-                Зовнішній вебпошук теж захищений admin auth.
-            </p>
-        </div>
-        {% endif %}
-    </article>
 </section>
 
-<section class="feature-grid">
+<section class="overview-grid">
     <article class="content-card overview-card">
         <p class="section-kicker">Corpus</p>
         <h2>Поточний корпус</h2>
@@ -190,36 +146,9 @@
         </p>
         {% endif %}
     </article>
-
-    <article class="content-card overview-card">
-        <p class="section-kicker">Web Results</p>
-        <h2>Результати з вебу</h2>
-        {% if web_search_error %}
-        <p class="error-text">{{ web_search_error }}</p>
-        {% elif web_search_result and web_search_result.hits %}
-        <ul class="list-reset">
-            {% for hit in web_search_result.hits %}
-            <li>
-                <strong>{{ hit.title }}</strong><br />
-                <a href="{{ hit.link }}" target="_blank" rel="noreferrer">
-                    {{ hit.link }}
-                </a>
-                <br />
-                <span class="meta">позиція={{ hit.position }}</span><br />
-                {{ hit.snippet }}
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="meta">
-            Запустіть зовнішній вебпошук, щоб переглянути тут результати
-            `SerpAPI`.
-        </p>
-        {% endif %}
-    </article>
 </section>
 
-<section class="feature-grid">
+<section class="overview-grid">
     <article class="content-card dashboard-card">
         <p class="section-kicker">Indexing Setup</p>
         <h2>Розбиття документів (chunking)</h2>

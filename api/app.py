@@ -125,7 +125,7 @@ DEMO_PROMPTS = [
 
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 TOP_K_OPTIONS = tuple(range(1, 11))
-ADMIN_REDIRECT_PATHS = {"/", "/documents", "/system", "/docs"}
+ADMIN_REDIRECT_PATHS = {"/", "/documents", "/external-search", "/system", "/docs"}
 
 
 def _normalize_admin_next_path(next_path: str | None) -> str:
@@ -175,6 +175,8 @@ def _build_admin_auth_context(request: Request) -> dict[str, object]:
     elif status == "required":
         if required == "documents":
             flash_message = "Сторінка документів доступна тільки після admin auth."
+        elif required == "external_search":
+            flash_message = "Сторінка зовнішнього вебпошуку доступна тільки після admin auth."
         elif required == "system":
             flash_message = "Системні інструменти доступні тільки після admin auth."
         elif required == "api_docs":
@@ -734,17 +736,41 @@ def documents_page(request: Request) -> HTMLResponse:
             **_build_page_context(
                 request,
                 include_question_results=False,
-                include_web_results=True,
+                include_web_results=False,
             ),
-            "page_title": "Documents And Sources | AI Knowledge Assistant",
-            "page_heading": "Документи та джерела",
+            "page_title": "Add Document | AI Knowledge Assistant",
+            "page_heading": "Додати документ",
             "page_intro": (
-                "Тут зібрані всі джерела знань для асистента: локальні файли, "
-                "зовнішній веб-пошук, chunking і контроль готовності корпусу."
+                "Тут можна завантажити нові файли в локальний корпус, "
+                "перевірити наявні документи та керувати chunking для індексації."
             ),
-            "page_kicker": "Sources",
+            "page_kicker": "Documents",
             "active_page": "documents",
             "admin_required_area": "documents",
+        },
+    )
+
+
+@app.get("/external-search", response_class=HTMLResponse)
+def external_search_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request=request,
+        name="external_search.html",
+        context={
+            **_build_page_context(
+                request,
+                include_question_results=False,
+                include_web_results=True,
+            ),
+            "page_title": "External Search | AI Knowledge Assistant",
+            "page_heading": "Зовнішній вебпошук",
+            "page_intro": (
+                "Окремий екран для пошуку по зовнішніх джерелах: запускайте "
+                "web search і переглядайте результати без змішування з локальним корпусом."
+            ),
+            "page_kicker": "External Search",
+            "active_page": "external_search",
+            "admin_required_area": "external_search",
         },
     )
 
