@@ -48,11 +48,11 @@
         <form id="question-form" method="get" action="/">
             <div class="dashboard-panel compact-control-panel ask-settings-strip">
                 <div class="section-kicker-row ask-settings-kicker-row">
-                    <p class="section-kicker">Демо налаштування</p>
+                    <p class="section-kicker">Налаштування</p>
                     <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення по налаштуваннях">
                         ?
                         <span class="info-tooltip-bubble">
-                            Це demo-режими та допоміжні параметри. Основний фокус
+                            Це допоміжні параметри для демо. Основний фокус
                             сторінки - запит, відповідь і знайдений контекст.
                         </span>
                     </span>
@@ -145,6 +145,7 @@
                 ></div>
             </div>
             <div class="ask-main-column">
+                <p class="section-kicker">Демо запити</p>
                 <div class="actions">
                     {% for item in demo_prompts %}
                     <button type="button" data-demo-question="{{ item.question }}">
