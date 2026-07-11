@@ -636,6 +636,7 @@ select:disabled {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-bottom: 8px;
 }
 
 .section-kicker-row .section-kicker {
@@ -645,6 +646,7 @@ select:disabled {
 .feature-panel-header {
     display: flex;
     align-items: flex-start;
+    margin-bottom: 14px;
 }
 
 .feature-panel-header h2 {
