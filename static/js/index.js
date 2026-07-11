@@ -32,6 +32,38 @@ const presetStatusResetDelayMs = 3500;
 let uploadStatusResetTimerId = null;
 let presetStatusResetTimerId = null;
 
+function getQuestionInput() {
+    if (!(questionForm instanceof HTMLFormElement)) {
+        return null;
+    }
+
+    const questionInput = questionForm.elements.namedItem("question");
+    return questionInput instanceof HTMLInputElement ? questionInput : null;
+}
+
+function getQuestionSubmitButton() {
+    if (!(questionForm instanceof HTMLFormElement)) {
+        return null;
+    }
+
+    const submitButton = questionForm.querySelector('button[type="submit"]');
+    return submitButton instanceof HTMLButtonElement ? submitButton : null;
+}
+
+function getNormalizedQuestionValue() {
+    const questionInput = getQuestionInput();
+    return questionInput instanceof HTMLInputElement ? questionInput.value.trim() : "";
+}
+
+function syncQuestionSubmitState() {
+    const submitButton = getQuestionSubmitButton();
+    if (!(submitButton instanceof HTMLButtonElement)) {
+        return;
+    }
+
+    submitButton.disabled = !getNormalizedQuestionValue();
+}
+
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
         const nextUrl = new URL(window.location.origin + "/");
@@ -40,9 +72,10 @@ function fillQuestionInput(questionText) {
         return;
     }
 
-    const questionInput = questionForm.elements.namedItem("question");
+    const questionInput = getQuestionInput();
     if (questionInput instanceof HTMLInputElement) {
         questionInput.value = questionText;
+        syncQuestionSubmitState();
         questionInput.focus();
         questionInput.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
@@ -418,8 +451,47 @@ demoButtons.forEach((button) => {
     });
 });
 
+if (questionForm instanceof HTMLFormElement) {
+    const questionInput = getQuestionInput();
+
+    syncQuestionSubmitState();
+
+    if (questionInput instanceof HTMLInputElement && !questionInput.readOnly) {
+        questionInput.addEventListener("input", () => {
+            syncQuestionSubmitState();
+        });
+    }
+
+    questionForm.addEventListener("submit", (event) => {
+        const questionValue = getNormalizedQuestionValue();
+
+        if (!questionValue) {
+            event.preventDefault();
+
+            const nextUrl = new URL(window.location.href);
+            nextUrl.searchParams.delete("question");
+            nextUrl.searchParams.delete("top_k");
+            nextUrl.searchParams.delete("retrieval_mode");
+            nextUrl.searchParams.delete("web_question");
+            nextUrl.searchParams.delete("web_top_k");
+            window.location.assign(nextUrl.pathname + nextUrl.search);
+            return;
+        }
+
+        if (questionInput instanceof HTMLInputElement) {
+            questionInput.value = questionValue;
+        }
+    });
+}
+
 if (clearFormButton && questionForm) {
     clearFormButton.addEventListener("click", () => {
+        const questionInput = getQuestionInput();
+        if (questionInput instanceof HTMLInputElement) {
+            questionInput.value = "";
+        }
+        syncQuestionSubmitState();
+
         const nextUrl = new URL(window.location.href);
         nextUrl.searchParams.delete("question");
         nextUrl.searchParams.delete("top_k");

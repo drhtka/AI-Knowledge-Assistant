@@ -591,7 +591,7 @@ def _build_page_context(
         }
         for preset, config in CHUNKING_PRESETS.items()
     ]
-    question = request.query_params.get("question", "")
+    question = (request.query_params.get("question", "") or "").strip()
     has_top_k_query = "top_k" in request.query_params
     top_k_raw = request.query_params.get("top_k", str(TOP_K_OPTIONS[0])) or str(TOP_K_OPTIONS[0])
     try:
