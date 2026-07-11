@@ -6,7 +6,9 @@ const uploadResult = document.getElementById("upload-result");
 const clearUploadFileButton = document.getElementById("clear-upload-file-button");
 const mainFlowChunkingPreset = document.getElementById("main_flow_chunking_preset");
 const mainFlowPresetResult = document.getElementById("main-flow-preset-result");
+const runtimeSummaryMode = document.getElementById("runtime-summary-mode");
 const runtimeSummaryPreset = document.getElementById("runtime-summary-preset");
+const runtimeSummaryTopK = document.getElementById("runtime-summary-top-k");
 const chunkingPresetForm = document.getElementById("chunking-preset-form");
 const chunkingResult = document.getElementById("chunking-result");
 const storageBackendForm = document.getElementById("storage-backend-form");
@@ -208,6 +210,19 @@ function syncClearUploadButton(fileInput) {
         fileInput instanceof HTMLInputElement && Boolean(fileInput.files) && fileInput.files.length > 0;
 
     clearUploadFileButton.hidden = !hasFile;
+}
+
+function syncMainFlowRuntimeSummary() {
+    const retrievalModeInput = document.getElementById("retrieval_mode");
+    const topKInput = document.getElementById("top_k");
+
+    if (runtimeSummaryMode instanceof HTMLElement && retrievalModeInput instanceof HTMLSelectElement) {
+        runtimeSummaryMode.textContent = retrievalModeInput.value;
+    }
+
+    if (runtimeSummaryTopK instanceof HTMLElement && topKInput instanceof HTMLSelectElement) {
+        runtimeSummaryTopK.textContent = topKInput.value;
+    }
 }
 
 if (uploadResult instanceof HTMLElement && uploadResult.classList.contains("error-text")) {
@@ -530,6 +545,22 @@ if (mainFlowChunkingPreset instanceof HTMLSelectElement && mainFlowPresetResult 
         void applyChunkingPresetSelection(mainFlowChunkingPreset, mainFlowPresetResult);
     });
 }
+
+const retrievalModeInput = document.getElementById("retrieval_mode");
+if (retrievalModeInput instanceof HTMLSelectElement) {
+    retrievalModeInput.addEventListener("change", () => {
+        syncMainFlowRuntimeSummary();
+    });
+}
+
+const topKInput = document.getElementById("top_k");
+if (topKInput instanceof HTMLSelectElement) {
+    topKInput.addEventListener("change", () => {
+        syncMainFlowRuntimeSummary();
+    });
+}
+
+syncMainFlowRuntimeSummary();
 
 if (storageBackendForm instanceof HTMLFormElement && storageBackendResult instanceof HTMLElement) {
     storageBackendForm.addEventListener("submit", async (event) => {
