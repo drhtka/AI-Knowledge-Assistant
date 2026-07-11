@@ -50,18 +50,27 @@ function getQuestionSubmitButton() {
     return submitButton instanceof HTMLButtonElement ? submitButton : null;
 }
 
+function getQuestionClearButton() {
+    return clearFormButton instanceof HTMLButtonElement ? clearFormButton : null;
+}
+
 function getNormalizedQuestionValue() {
     const questionInput = getQuestionInput();
     return questionInput instanceof HTMLInputElement ? questionInput.value.trim() : "";
 }
 
-function syncQuestionSubmitState() {
+function syncQuestionActionState() {
+    const hasQuestionValue = Boolean(getNormalizedQuestionValue());
     const submitButton = getQuestionSubmitButton();
-    if (!(submitButton instanceof HTMLButtonElement)) {
-        return;
+    const clearButton = getQuestionClearButton();
+
+    if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = !hasQuestionValue;
     }
 
-    submitButton.disabled = !getNormalizedQuestionValue();
+    if (clearButton instanceof HTMLButtonElement) {
+        clearButton.disabled = !hasQuestionValue;
+    }
 }
 
 function fillQuestionInput(questionText) {
@@ -75,7 +84,7 @@ function fillQuestionInput(questionText) {
     const questionInput = getQuestionInput();
     if (questionInput instanceof HTMLInputElement) {
         questionInput.value = questionText;
-        syncQuestionSubmitState();
+        syncQuestionActionState();
         questionInput.focus();
         questionInput.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
@@ -454,11 +463,11 @@ demoButtons.forEach((button) => {
 if (questionForm instanceof HTMLFormElement) {
     const questionInput = getQuestionInput();
 
-    syncQuestionSubmitState();
+    syncQuestionActionState();
 
     if (questionInput instanceof HTMLInputElement && !questionInput.readOnly) {
         questionInput.addEventListener("input", () => {
-            syncQuestionSubmitState();
+            syncQuestionActionState();
         });
     }
 
@@ -490,7 +499,7 @@ if (clearFormButton && questionForm) {
         if (questionInput instanceof HTMLInputElement) {
             questionInput.value = "";
         }
-        syncQuestionSubmitState();
+        syncQuestionActionState();
 
         const nextUrl = new URL(window.location.href);
         nextUrl.searchParams.delete("question");
