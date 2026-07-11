@@ -63,7 +63,17 @@
             />
             <div class="summary-grid compact-control-grid compact-control-grid-three">
                 <div class="dashboard-panel compact-control-panel">
-                    <label for="retrieval_mode">Режим пошуку</label>
+                    <div class="label-with-tooltip">
+                        <label for="retrieval_mode">Режим пошуку</label>
+                        <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по режиму пошуку">
+                            ?
+                            <span class="info-tooltip-bubble">
+                                auto | автоматично обирає стратегію<br />
+                                tfidf | лексичний пошук по словах<br />
+                                embeddings | семантичний пошук по змісту
+                            </span>
+                        </span>
+                    </div>
                     <div class="select-with-status">
                         <select id="retrieval_mode" name="retrieval_mode">
                             {% for mode in retrieval_mode_options %}
@@ -79,7 +89,16 @@
                     </div>
                 </div>
                 <div class="dashboard-panel compact-control-panel">
-                    <label for="top_k">Top K</label>
+                    <div class="label-with-tooltip">
+                        <label for="top_k">Top K</label>
+                        <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по Top K">
+                            ?
+                            <span class="info-tooltip-bubble">
+                                Визначає, скільки фрагментів система візьме в
+                                контекст перед побудовою відповіді.
+                            </span>
+                        </span>
+                    </div>
                     <div class="select-with-status">
                         <select id="top_k" name="top_k">
                             {% for value in system_config.available_top_k %}
@@ -95,7 +114,17 @@
                     </div>
                 </div>
                 <div class="dashboard-panel compact-control-panel">
-                    <label for="main_flow_chunking_preset">Preset</label>
+                    <div class="label-with-tooltip">
+                        <label for="main_flow_chunking_preset">Preset</label>
+                        <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по preset">
+                            ?
+                            <span class="info-tooltip-bubble">
+                                {% for preset in system_config.preset_display_options %}
+                                {{ preset.label }} | size={{ preset.chunk_size_words }} | overlap={{ preset.chunk_overlap_words }}{% if not loop.last %}<br />{% endif %}
+                                {% endfor %}
+                            </span>
+                        </span>
+                    </div>
                     <div class="select-with-status">
                         <select
                             id="main_flow_chunking_preset"
