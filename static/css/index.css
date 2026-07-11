@@ -252,7 +252,15 @@ select:disabled {
     margin-bottom: 18px;
 }
 
+.documents-workflow-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
 .overview-grid > *,
+.documents-workflow-grid > *,
 .mode-compare-grid > *,
 .feature-grid > * {
     min-width: 0;
@@ -833,6 +841,7 @@ pre {
     }
 
     .overview-grid,
+    .documents-workflow-grid,
     .feature-grid {
         grid-template-columns: 1fr;
     }

@@ -11,7 +11,7 @@
 </div>
 {% endif %}
 
-<section class="overview-grid">
+<section class="documents-workflow-grid">
     <article class="feature-block feature-panel">
         <p class="section-kicker">Ingestion</p>
         <h2>Завантаження документів</h2>
@@ -96,44 +96,44 @@
             {% else %}
             {% endif %}
         </div>
-        <div class="section-divider"></div>
-        <div class="feature-subsection">
-            <p class="section-kicker">Indexing Setup</p>
-            <h3 class="feature-subsection-title">Розбиття документів (chunking)</h3>
-            <p class="meta">
-                Поточний пресет: <code>{{ system_config.current_preset }}</code> |
-                chunk size={{ system_config.chunk_size_words }} |
-                overlap={{ system_config.chunk_overlap_words }}
-            </p>
-            <p class="meta">
-                Це налаштування визначає, як документи діляться на фрагменти для
-                індексації та пошуку. Зміна пресету перебудує індекс з новою
-                конфігурацією.
-            </p>
-            <form id="chunking-preset-form" class="inline-form">
-                <label for="chunking_preset">Оберіть пресет</label>
-                <div class="inline-form-row">
-                    <select
-                        id="chunking_preset"
-                        name="chunking_preset"
-                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
+    </article>
+
+    <article class="content-card dashboard-card feature-subsection">
+        <p class="section-kicker">Indexing Setup</p>
+        <h3 class="feature-subsection-title">Розбиття документів (chunking)</h3>
+        <p class="meta">
+            Поточний пресет: <code>{{ system_config.current_preset }}</code> |
+            chunk size={{ system_config.chunk_size_words }} |
+            overlap={{ system_config.chunk_overlap_words }}
+        </p>
+        <p class="meta">
+            Це налаштування визначає, як документи діляться на фрагменти для
+            індексації та пошуку. Зміна пресету перебудує індекс з новою
+            конфігурацією.
+        </p>
+        <form id="chunking-preset-form" class="inline-form">
+            <label for="chunking_preset">Оберіть пресет</label>
+            <div class="inline-form-row">
+                <select
+                    id="chunking_preset"
+                    name="chunking_preset"
+                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                >
+                    {% for preset in system_config.preset_display_options %}
+                    <option
+                        value="{{ preset.value }}"
+                        {% if system_config.current_preset == preset.value %}selected{% endif %}
                     >
-                        {% for preset in system_config.preset_display_options %}
-                        <option
-                            value="{{ preset.value }}"
-                            {% if system_config.current_preset == preset.value %}selected{% endif %}
-                        >
-                            {{ preset.label }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
-                        Застосувати пресет
-                    </button>
-                </div>
-            </form>
-            <div id="chunking-result" class="upload-result meta">
+                        {{ preset.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
+                    Застосувати пресет
+                </button>
             </div>
+        </form>
+        <div id="chunking-result" class="upload-result meta">
         </div>
     </article>
 </section>
