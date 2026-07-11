@@ -720,8 +720,10 @@ select:disabled {
 #upload-form {
     display: flex;
     flex-direction: column;
+    flex: 1;
     margin-top: 24px;
-    gap: 14px;
+    justify-content: space-evenly;
+    gap: 20px;
 }
 
 #upload-form input[type="file"] {
