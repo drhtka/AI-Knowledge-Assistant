@@ -2,13 +2,13 @@
 
 {% block content %}
 {% if not admin_auth.is_authenticated %}
-<article class="content-card admin-guard-card">
-    <p class="section-kicker">Admin Access</p>
-    <h2>Керування документами доступне тільки адміну</h2>
-    <p class="meta">
-        Upload, chunking і reindex стануть доступними після admin auth.
+<div class="admin-access-note">
+    <span class="admin-access-note-label">Admin Access</span>
+    <p class="admin-access-note-text">
+        Керування документами, upload, chunking і reindex доступні тільки після
+        admin auth.
     </p>
-</article>
+</div>
 {% endif %}
 
 <section class="overview-grid">
