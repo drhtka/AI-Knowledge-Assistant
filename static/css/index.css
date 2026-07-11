@@ -792,6 +792,16 @@ label {
     margin-bottom: 6px;
 }
 
+.label-with-tooltip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.label-with-tooltip label {
+    margin-bottom: 0;
+}
+
 input,
 select {
     width: 100%;

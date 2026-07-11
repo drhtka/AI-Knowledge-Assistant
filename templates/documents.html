@@ -126,7 +126,15 @@
             overlap={{ system_config.chunk_overlap_words }}
         </p>
         <form id="chunking-preset-form" class="inline-form">
-            <label for="chunking_preset">Оберіть пресет</label>
+            <div class="label-with-tooltip">
+                <label for="chunking_preset">Оберіть пресет</label>
+                <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по preset">
+                    ?
+                    <span class="info-tooltip-bubble">
+                        small 50/10, legacy 80/20, baseline 120/30
+                    </span>
+                </span>
+            </div>
             <div class="inline-form-row">
                 <div class="select-with-status">
                     <select
