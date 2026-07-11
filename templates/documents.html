@@ -3,19 +3,12 @@
 {% block content %}
 {% if not admin_auth.is_authenticated %}
 <article class="content-card admin-guard-card">
-    <p class="section-kicker">Admin Preview</p>
-    <h2>Керування джерелами доступне тільки адміну</h2>
+    <p class="section-kicker">Admin Access</p>
+    <h2>Керування документами доступне тільки адміну</h2>
     <p class="meta">
-        Кнопки залишаються видимими для демо, але upload, зовнішній вебпошук,
-        chunking і reindex виконуються тільки після admin auth.
+        Upload, chunking і reindex стануть доступними після admin auth.
     </p>
 </article>
-<div class="admin-access-note">
-    <span class="admin-access-note-label">Admin Access</span>
-    <p class="admin-access-note-text">
-        Upload і зміна chunking preset стануть доступними після admin auth.
-    </p>
-</div>
 {% endif %}
 
 <section class="overview-grid">
@@ -23,7 +16,7 @@
         <p class="section-kicker">Ingestion</p>
         <h2>Завантаження документів</h2>
         <p class="feature-intro">
-            Додавайте нові джерела в локальний корпус, щоб оновити локальну базу
+            Додавайте нові документи в локальний корпус, щоб оновити локальну базу
             знань і одразу запустити фоновий reindex.
         </p>
         <form
