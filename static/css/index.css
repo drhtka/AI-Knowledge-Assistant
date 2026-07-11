@@ -756,6 +756,12 @@ select:disabled {
     margin-bottom: 0;
 }
 
+.system-runtime-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .system-runtime-summary {
     margin-top: 10px;
     display: flex;
@@ -802,10 +808,24 @@ select:disabled {
 
 .system-runtime-result {
     margin-top: 10px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
 }
 
 .system-observability-grid {
     margin-top: 18px;
+    grid-auto-rows: 1fr;
+}
+
+.system-observability-summary-item strong {
+    display: -webkit-box;
+    overflow: hidden;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-height: 1.4;
+    min-height: calc(1.4em * 3);
 }
 
 .dashboard-panel.inline-form {

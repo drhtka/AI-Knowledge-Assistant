@@ -175,9 +175,11 @@
                 <span class="meta">reindex state</span>
                 <strong>{{ runtime_observability.reindex_state }}</strong>
             </div>
-            <div class="reindex-status-item">
+            <div class="reindex-status-item system-observability-summary-item">
                 <span class="meta">summary</span>
-                <strong>{{ runtime_observability.active_backend_summary_message }}</strong>
+                <strong title="{{ runtime_observability.active_backend_summary_message }}">
+                    {{ runtime_observability.active_backend_summary_message }}
+                </strong>
             </div>
         </div>
     </article>
