@@ -144,7 +144,7 @@
                     ?
                     <span class="info-tooltip-bubble">
                         {% for preset in system_config.preset_display_options %}
-                        {{ preset.label }} {{ preset.chunk_size_words }}/{{ preset.chunk_overlap_words }}{% if not loop.last %}<br />{% endif %}
+                        {{ preset.label }} | size={{ preset.chunk_size_words }} | overlap={{ preset.chunk_overlap_words }}{% if not loop.last %}<br />{% endif %}
                         {% endfor %}
                     </span>
                 </span>
