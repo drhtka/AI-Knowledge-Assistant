@@ -34,12 +34,16 @@
 </article>
 
 <article class="content-card ask-card">
-        <p class="section-kicker">Main Flow</p>
+        <div class="section-kicker-row">
+            <p class="section-kicker">Main Flow</p>
+            <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення основного сценарію">
+                ?
+                <span class="info-tooltip-bubble">
+                    Це головний сценарій демо: поставити запитання, отримати відповідь і одразу побачити, на яких фрагментах документів вона побудована.
+                </span>
+            </span>
+        </div>
         <h2>Запит до асистента</h2>
-        <p class="feature-intro">
-            Це головний сценарій демо: поставити запитання, отримати відповідь і
-            одразу побачити, на яких фрагментах документів вона побудована.
-        </p>
         <div class="actions">
             {% for item in demo_prompts %}
             <button type="button" data-demo-question="{{ item.question }}">

@@ -678,7 +678,8 @@ def index(request: Request) -> HTMLResponse:
             ),
             "page_title": "AI Knowledge Assistant",
             "page_heading": "AI Асистент Знань",
-            "page_intro": (
+            "page_intro": "",
+            "page_intro_tooltip": (
                 "Ставте запитання до локальної бази знань і одразу "
                 "перевіряйте, на яких фрагментах документів побудована відповідь."
             ),
