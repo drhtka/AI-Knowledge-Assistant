@@ -275,7 +275,7 @@ select:disabled {
 }
 
 .system-runtime-grid {
-    align-items: start;
+    align-items: stretch;
     margin-bottom: 28px;
 }
 
@@ -768,6 +768,7 @@ select:disabled {
 .system-runtime-card {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 .system-runtime-summary {
