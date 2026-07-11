@@ -13,7 +13,7 @@
 <section class="overview-grid">
     <article class="feature-block feature-panel web-search-panel">
         <p class="section-kicker">External Search</p>
-        <h2>Зовнішній вебпошук</h2>
+        <h2 class="hero-card-title">Зовнішній вебпошук</h2>
         <p class="feature-intro">
             Використовуйте зовнішні джерела як окремий канал знань для
             порівняння з локальним корпусом або швидкого демо без нових файлів.
@@ -52,7 +52,7 @@
 <section class="overview-grid">
     <article class="content-card overview-card">
         <p class="section-kicker">Web Results</p>
-        <h2>Результати з вебу</h2>
+        <h2 class="hero-card-title">Результати з вебу</h2>
         {% if web_search_error %}
         <p class="error-text">{{ web_search_error }}</p>
         {% elif web_search_result and web_search_result.hits %}
