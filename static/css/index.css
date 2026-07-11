@@ -769,14 +769,14 @@ select:disabled {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 12px;
+    padding: 10px;
 }
 
 .system-runtime-summary {
-    margin-top: 6px;
+    margin-top: 4px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .system-runtime-summary-row {
@@ -805,7 +805,7 @@ select:disabled {
 }
 
 .system-backend-form {
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .system-runtime-form-row {
@@ -817,14 +817,15 @@ select:disabled {
 }
 
 .system-runtime-result {
-    margin-top: 8px;
+    margin-top: 6px;
     min-height: 26px;
     display: flex;
     align-items: center;
 }
 
 .system-observability-grid {
-    margin-top: 10px;
+    margin-top: 8px;
+    gap: 10px;
     grid-auto-rows: 1fr;
 }
 
