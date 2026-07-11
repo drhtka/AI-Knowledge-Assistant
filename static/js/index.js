@@ -327,7 +327,7 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
             void refreshReindexStatus();
             window.setTimeout(() => {
                 window.location.reload();
-            }, 300);
+            }, 2200);
         } catch {
             chunkingResult.className = "upload-result error-text";
             chunkingResult.textContent = "Preset update failed because the server did not respond.";
