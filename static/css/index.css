@@ -276,11 +276,11 @@ select:disabled {
 
 .system-runtime-grid {
     align-items: stretch;
-    margin-bottom: 28px;
+    margin-bottom: 40px;
 }
 
 .system-lifecycle-grid {
-    margin-top: 6px;
+    margin-top: 12px;
 }
 
 .documents-workflow-grid {
