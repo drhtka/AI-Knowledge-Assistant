@@ -717,6 +717,21 @@ select:disabled {
     margin-bottom: 0;
 }
 
+#upload-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 24px;
+}
+
+#upload-form .meta {
+    margin: 0 0 16px;
+    text-align: center;
+}
+
+#upload-form .actions {
+    justify-content: center;
+}
+
 .feature-subsection {
     display: flex;
     flex-direction: column;
