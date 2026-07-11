@@ -2,18 +2,10 @@
 
 {% block content %}
 {% if not admin_auth.is_authenticated %}
-<article class="content-card admin-guard-card">
-    <p class="section-kicker">Admin Preview</p>
-    <h2>Зовнішній вебпошук доступний тільки адміну</h2>
-    <p class="meta">
-        Форма та результати залишаються видимими для демо, але запуск
-        зовнішнього пошуку доступний тільки після admin auth.
-    </p>
-</article>
 <div class="admin-access-note">
     <span class="admin-access-note-label">Admin Access</span>
     <p class="admin-access-note-text">
-        Зовнішній вебпошук захищений admin auth.
+        Зовнішній вебпошук доступний тільки після admin auth.
     </p>
 </div>
 {% endif %}
