@@ -359,6 +359,11 @@ select:disabled {
     margin-top: 6px;
 }
 
+.ask-demo-kicker-row {
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
 .ask-settings-strip {
     display: flex;
     flex-direction: column;
