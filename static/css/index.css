@@ -882,6 +882,10 @@ button {
     min-height: 56px;
 }
 
+.chunking-result-slot {
+    min-height: 88px;
+}
+
 .upload-result-card {
     display: flex;
     flex-direction: column;

@@ -323,7 +323,7 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
 
             chunkingResult.className = "upload-result success-text";
             chunkingResult.textContent =
-                `Applied ${payload.current_preset}: chunk_size=${payload.chunk_size_words}, overlap=${payload.chunk_overlap_words}. ${payload.reindex_message}`;
+                `Preset updated: ${payload.chunk_size_words}/${payload.chunk_overlap_words}. ${payload.reindex_message}`;
             void refreshReindexStatus();
             window.setTimeout(() => {
                 window.location.reload();
