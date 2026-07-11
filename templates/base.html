@@ -101,6 +101,15 @@
                         {% endif %}
                     </div>
                     <h1>{{ page_heading }}</h1>
+                    {% if active_page == 'assistant' and not admin_auth.is_authenticated %}
+                    <div class="admin-access-note">
+                        <span class="admin-access-note-label">Admin Access</span>
+                        <p class="admin-access-note-text">
+                            Документи, система і вебпошук доступні тільки після
+                            admin auth. Тут без авторизації доступні demo-запити.
+                        </p>
+                    </div>
+                    {% endif %}
                     {% if page_intro %}
                     <p class="intro">{{ page_intro }}</p>
                     {% endif %}
