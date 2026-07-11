@@ -685,6 +685,10 @@ def index(request: Request) -> HTMLResponse:
             ),
             "page_kicker": "Assistant",
             "active_page": "assistant",
+            "admin_access_note_text": (
+                "Документи, система і вебпошук доступні тільки після "
+                "admin auth. Тут без авторизації доступні demo-запити."
+            ),
         },
     )
 
@@ -754,6 +758,10 @@ def documents_page(request: Request) -> HTMLResponse:
             "page_kicker": "Documents",
             "active_page": "documents",
             "admin_required_area": "documents",
+            "admin_access_note_text": (
+                "Керування документами, upload, chunking і reindex доступні "
+                "тільки після admin auth."
+            ),
         },
     )
 
@@ -778,6 +786,9 @@ def external_search_page(request: Request) -> HTMLResponse:
             "page_kicker": "External Search",
             "active_page": "external_search",
             "admin_required_area": "external_search",
+            "admin_access_note_text": (
+                "Зовнішній вебпошук доступний тільки після admin auth."
+            ),
         },
     )
 
@@ -802,6 +813,10 @@ def system_page(request: Request) -> HTMLResponse:
             "page_kicker": "System",
             "active_page": "system",
             "admin_required_area": "system",
+            "admin_access_note_text": (
+                "Storage backend, reindex, diagnostics і JSON доступні "
+                "тільки після admin auth."
+            ),
         },
     )
 

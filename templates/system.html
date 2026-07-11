@@ -1,16 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% if not admin_auth.is_authenticated %}
-<div class="admin-access-note">
-    <span class="admin-access-note-label">Admin Access</span>
-    <p class="admin-access-note-text">
-        Storage backend, reindex, diagnostics і JSON доступні тільки після
-        admin auth.
-    </p>
-</div>
-{% endif %}
-
 <section class="overview-grid">
     <article class="content-card overview-card dashboard-card">
         <div class="dashboard-header">

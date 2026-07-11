@@ -1,16 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% if not admin_auth.is_authenticated %}
-<div class="admin-access-note">
-    <span class="admin-access-note-label">Admin Access</span>
-    <p class="admin-access-note-text">
-        Керування документами, upload, chunking і reindex доступні тільки після
-        admin auth.
-    </p>
-</div>
-{% endif %}
-
 <section class="documents-workflow-grid">
     <article class="feature-block feature-panel">
         <div class="section-kicker-row">
