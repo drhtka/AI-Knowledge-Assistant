@@ -353,9 +353,14 @@ select:disabled {
     justify-content: center;
 }
 
-.ask-main-column label[for="question"] {
+.ask-question-label {
     width: min(100%, 760px);
     align-self: center;
+    margin-bottom: 2px;
+    color: #bfdbfe;
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: -0.01em;
 }
 
 .ask-main-column input {
