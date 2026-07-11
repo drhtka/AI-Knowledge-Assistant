@@ -349,8 +349,19 @@ select:disabled {
     margin-top: 18px;
 }
 
+.ask-main-column > .actions {
+    justify-content: center;
+}
+
+.ask-main-column label[for="question"] {
+    width: min(100%, 760px);
+    align-self: center;
+}
+
 .ask-main-column input {
+    width: min(100%, 760px);
     min-height: 52px;
+    align-self: center;
     margin-bottom: 0;
     font-size: 15px;
 }
