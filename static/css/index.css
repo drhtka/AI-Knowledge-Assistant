@@ -632,10 +632,19 @@ select:disabled {
     color: #dbeafe;
 }
 
+.section-kicker-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-kicker-row .section-kicker {
+    margin-bottom: 0;
+}
+
 .feature-panel-header {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
 }
 
 .feature-panel-header h2 {
@@ -651,7 +660,6 @@ select:disabled {
 .feature-subsection-header {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
 }
 
 .feature-subsection-title {
@@ -669,7 +677,6 @@ select:disabled {
     flex-shrink: 0;
     width: 22px;
     height: 22px;
-    margin-top: 2px;
     border: 1px solid rgba(148, 163, 184, 0.4);
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.9);
