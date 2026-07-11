@@ -124,7 +124,7 @@ DEMO_PROMPTS = [
 ]
 
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
-TOP_K_OPTIONS = tuple(range(1, 11))
+TOP_K_OPTIONS = (1, 2, 3)
 ADMIN_REDIRECT_PATHS = {"/", "/documents", "/external-search", "/system", "/docs"}
 
 
@@ -593,8 +593,12 @@ def _build_page_context(
     ]
     question = request.query_params.get("question", "")
     has_top_k_query = "top_k" in request.query_params
-    top_k_raw = request.query_params.get("top_k", "3") or "3"
-    top_k = max(1, min(10, int(top_k_raw)))
+    top_k_raw = request.query_params.get("top_k", str(TOP_K_OPTIONS[0])) or str(TOP_K_OPTIONS[0])
+    try:
+        parsed_top_k = int(top_k_raw)
+    except ValueError:
+        parsed_top_k = TOP_K_OPTIONS[0]
+    top_k = parsed_top_k if parsed_top_k in TOP_K_OPTIONS else TOP_K_OPTIONS[0]
     has_retrieval_mode_query = "retrieval_mode" in request.query_params
     retrieval_mode = request.query_params.get("retrieval_mode", "auto") or "auto"
     if retrieval_mode not in RETRIEVAL_MODE_OPTIONS:
