@@ -627,7 +627,7 @@ def _build_page_context(
     document_entries = _build_document_entries()
 
     return {
-        "question": question,
+        "question": "",
         "top_k": top_k,
         "has_top_k_query": has_top_k_query,
         "retrieval_mode": retrieval_mode,
