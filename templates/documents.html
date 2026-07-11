@@ -17,8 +17,8 @@
         <p class="section-kicker">Ingestion</p>
         <h2>Завантаження документів</h2>
         <p class="feature-intro">
-            Додавайте нові джерела в локальний корпус і одразу запускайте фоновий
-            reindex.
+            Додавайте нові джерела в локальний корпус, щоб оновити локальну базу
+            знань і одразу запустити фоновий reindex.
         </p>
         <form
             id="upload-form"
@@ -96,7 +96,6 @@
                 {{ upload_feedback.error }}
             </div>
             {% else %}
-            Завантажте документ, щоб оновити локальну базу знань.
             {% endif %}
         </div>
         <div class="section-divider"></div>
@@ -109,8 +108,9 @@
                 overlap={{ system_config.chunk_overlap_words }}
             </p>
             <p class="meta">
-                Це налаштування впливає на те, як документи ріжуться на фрагменти
-                перед індексацією та пошуком.
+                Це налаштування визначає, як документи діляться на фрагменти для
+                індексації та пошуку. Зміна пресету перебудує індекс з новою
+                конфігурацією.
             </p>
             <form id="chunking-preset-form" class="inline-form">
                 <label for="chunking_preset">Оберіть пресет</label>
@@ -135,8 +135,6 @@
                 </div>
             </form>
             <div id="chunking-result" class="upload-result meta">
-                Застосуйте пресет, щоб перебудувати індекс фрагментів з іншою
-                базовою конфігурацією.
             </div>
         </div>
         {% if not admin_auth.is_authenticated %}
