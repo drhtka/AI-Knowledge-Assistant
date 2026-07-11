@@ -796,6 +796,8 @@ label {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    margin-top: 2px;
+    margin-bottom: 10px;
 }
 
 .label-with-tooltip label {
