@@ -769,7 +769,7 @@ select:disabled {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 14px;
+    padding: 12px;
 }
 
 .system-runtime-summary {
@@ -784,7 +784,7 @@ select:disabled {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 8px 10px;
+    padding: 7px 10px;
     border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 12px;
     background: rgba(15, 23, 42, 0.48);
@@ -818,7 +818,7 @@ select:disabled {
 
 .system-runtime-result {
     margin-top: 8px;
-    min-height: 32px;
+    min-height: 26px;
     display: flex;
     align-items: center;
 }
@@ -829,8 +829,8 @@ select:disabled {
 }
 
 .system-observability-grid .reindex-status-item {
-    padding: 10px;
-    gap: 5px;
+    padding: 9px;
+    gap: 4px;
 }
 
 .system-observability-summary-item strong {
