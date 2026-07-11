@@ -10,6 +10,12 @@
         chunking і reindex виконуються тільки після admin auth.
     </p>
 </article>
+<div class="admin-access-note">
+    <span class="admin-access-note-label">Admin Access</span>
+    <p class="admin-access-note-text">
+        Upload і зміна chunking preset стануть доступними після admin auth.
+    </p>
+</div>
 {% endif %}
 
 <section class="overview-grid">
@@ -136,14 +142,6 @@
             <div id="chunking-result" class="upload-result meta">
             </div>
         </div>
-        {% if not admin_auth.is_authenticated %}
-        <div class="admin-access-note">
-            <span class="admin-access-note-label">Admin Access</span>
-            <p class="admin-access-note-text">
-                Upload і зміна chunking preset стануть доступними після admin auth.
-            </p>
-        </div>
-        {% endif %}
     </article>
 </section>
 

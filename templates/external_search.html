@@ -10,6 +10,12 @@
         зовнішнього пошуку доступний тільки після admin auth.
     </p>
 </article>
+<div class="admin-access-note">
+    <span class="admin-access-note-label">Admin Access</span>
+    <p class="admin-access-note-text">
+        Зовнішній вебпошук теж захищений admin auth.
+    </p>
+</div>
 {% endif %}
 
 <section class="overview-grid">
@@ -48,14 +54,6 @@
                 <a class="button-link" href="/documents">Перейти до документів</a>
             </div>
         </form>
-        {% if not admin_auth.is_authenticated %}
-        <div class="admin-access-note">
-            <span class="admin-access-note-label">Admin Access</span>
-            <p class="admin-access-note-text">
-                Зовнішній вебпошук теж захищений admin auth.
-            </p>
-        </div>
-        {% endif %}
     </article>
 </section>
 
