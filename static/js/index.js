@@ -18,6 +18,7 @@ const reindexFinishedAt = document.getElementById("reindex-finished-at");
 const reindexStatusMessage = document.getElementById("reindex-status-message");
 const refreshReindexStatusButton = document.getElementById("refresh-reindex-status-button");
 const startReindexButton = document.getElementById("start-reindex-button");
+const chunkingResultBaseClass = "upload-result workflow-result-slot chunking-result-slot";
 
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -301,7 +302,7 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
 
         presetInput.disabled = true;
 
-        chunkingResult.className = "upload-result meta";
+        chunkingResult.className = `${chunkingResultBaseClass} meta`;
         chunkingResult.textContent = "Applying chunking preset and scheduling background reindex...";
 
         try {
@@ -316,12 +317,12 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
 
             if (!response.ok) {
                 const errorMessage = payload.detail ?? "Chunking preset update failed.";
-                chunkingResult.className = "upload-result error-text";
+                chunkingResult.className = `${chunkingResultBaseClass} error-text`;
                 chunkingResult.textContent = errorMessage;
                 return;
             }
 
-            chunkingResult.className = "upload-result success-text";
+            chunkingResult.className = `${chunkingResultBaseClass} success-text`;
             chunkingResult.textContent =
                 `Preset updated: ${payload.chunk_size_words}/${payload.chunk_overlap_words}. ${payload.reindex_message}`;
             void refreshReindexStatus();
@@ -329,7 +330,7 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
                 window.location.reload();
             }, 2200);
         } catch {
-            chunkingResult.className = "upload-result error-text";
+            chunkingResult.className = `${chunkingResultBaseClass} error-text`;
             chunkingResult.textContent = "Preset update failed because the server did not respond.";
         } finally {
             if (presetInput instanceof HTMLSelectElement) {
