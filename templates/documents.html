@@ -33,14 +33,27 @@
             enctype="multipart/form-data"
         >
             <!-- <label for="upload_file">Документ</label>s -->
-            <input
-                id="upload_file"
-                name="file"
-                type="file"
-                accept=".txt,.md,.pdf"
-                {% if not admin_auth.is_authenticated %}disabled{% endif %}
-                required
-            />
+            <div class="upload-file-row">
+                <input
+                    id="upload_file"
+                    name="file"
+                    type="file"
+                    accept=".txt,.md,.pdf"
+                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                    required
+                />
+                <button
+                    type="button"
+                    id="clear-upload-file-button"
+                    class="upload-clear-button"
+                    aria-label="Очистити вибраний файл"
+                    title="Очистити вибраний файл"
+                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                    hidden
+                >
+                    ×
+                </button>
+            </div>
             <p class="meta">
                 Підтримувані формати: <code>.txt</code>, <code>.md</code> та
                 <code>.pdf</code>

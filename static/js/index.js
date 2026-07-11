@@ -3,6 +3,7 @@ const clearFormButton = document.getElementById("clear-form");
 const demoButtons = document.querySelectorAll("[data-demo-question]");
 const uploadForm = document.getElementById("upload-form");
 const uploadResult = document.getElementById("upload-result");
+const clearUploadFileButton = document.getElementById("clear-upload-file-button");
 const chunkingPresetForm = document.getElementById("chunking-preset-form");
 const chunkingResult = document.getElementById("chunking-result");
 const storageBackendForm = document.getElementById("storage-backend-form");
@@ -91,6 +92,17 @@ function getSelectedUploadExtension(fileInput) {
 
 function isSupportedUploadFile(fileInput) {
     return supportedUploadExtensions.includes(getSelectedUploadExtension(fileInput));
+}
+
+function syncClearUploadButton(fileInput) {
+    if (!(clearUploadFileButton instanceof HTMLButtonElement)) {
+        return;
+    }
+
+    const hasFile =
+        fileInput instanceof HTMLInputElement && Boolean(fileInput.files) && fileInput.files.length > 0;
+
+    clearUploadFileButton.hidden = !hasFile;
 }
 
 if (uploadResult instanceof HTMLElement && uploadResult.classList.contains("error-text")) {
@@ -302,7 +314,11 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
     const fileInput = uploadForm.elements.namedItem("file");
 
     if (fileInput instanceof HTMLInputElement) {
+        syncClearUploadButton(fileInput);
+
         fileInput.addEventListener("change", () => {
+            syncClearUploadButton(fileInput);
+
             if (!fileInput.files || fileInput.files.length === 0) {
                 resetUploadStatus();
                 return;
@@ -317,6 +333,15 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
             }
 
             resetUploadStatus();
+        });
+    }
+
+    if (clearUploadFileButton instanceof HTMLButtonElement && fileInput instanceof HTMLInputElement) {
+        clearUploadFileButton.addEventListener("click", () => {
+            uploadForm.reset();
+            syncClearUploadButton(fileInput);
+            resetUploadStatus();
+            fileInput.focus();
         });
     }
 
@@ -363,6 +388,7 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
             renderUploadSuccess(payload);
             void refreshReindexStatus();
             uploadForm.reset();
+            syncClearUploadButton(fileInput);
         } catch {
             renderUploadStatus(
                 "Upload failed because the server did not respond.",

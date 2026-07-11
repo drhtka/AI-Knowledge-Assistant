@@ -726,8 +726,32 @@ select:disabled {
     gap: 20px;
 }
 
+#upload-form .upload-file-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 #upload-form input[type="file"] {
+    flex: 1;
     margin-bottom: 0;
+}
+
+.upload-clear-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 12px;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.upload-clear-button[hidden] {
+    display: none;
 }
 
 #upload-form .meta {
