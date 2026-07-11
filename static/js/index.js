@@ -4,6 +4,9 @@ const demoButtons = document.querySelectorAll("[data-demo-question]");
 const uploadForm = document.getElementById("upload-form");
 const uploadResult = document.getElementById("upload-result");
 const clearUploadFileButton = document.getElementById("clear-upload-file-button");
+const mainFlowChunkingPreset = document.getElementById("main_flow_chunking_preset");
+const mainFlowPresetResult = document.getElementById("main-flow-preset-result");
+const runtimeSummaryPreset = document.getElementById("runtime-summary-preset");
 const chunkingPresetForm = document.getElementById("chunking-preset-form");
 const chunkingResult = document.getElementById("chunking-result");
 const storageBackendForm = document.getElementById("storage-backend-form");
@@ -92,6 +95,95 @@ function getSelectedUploadExtension(fileInput) {
 
 function isSupportedUploadFile(fileInput) {
     return supportedUploadExtensions.includes(getSelectedUploadExtension(fileInput));
+}
+
+function getPresetLabel(presetValue) {
+    if (typeof presetValue !== "string" || !presetValue.trim()) {
+        return "";
+    }
+
+    return presetValue.split("_", 1)[0];
+}
+
+function setPresetStatus(resultElement, message, tone = "meta") {
+    if (!(resultElement instanceof HTMLElement)) {
+        return;
+    }
+
+    const baseClass = resultElement.dataset.baseClass || resultElement.className;
+    resultElement.dataset.baseClass = baseClass;
+
+    if (tone === "error") {
+        resultElement.className = `${baseClass} error-text`;
+    } else if (tone === "success") {
+        resultElement.className = `${baseClass} success-text`;
+    } else {
+        resultElement.className = `${baseClass} meta`;
+    }
+
+    resultElement.textContent = message;
+}
+
+async function applyChunkingPresetSelection(
+    presetInput,
+    resultElement,
+    { reloadOnSuccess = false, buildSuccessMessage = null } = {},
+) {
+    if (!(presetInput instanceof HTMLSelectElement)) {
+        return;
+    }
+
+    presetInput.disabled = true;
+    setPresetStatus(resultElement, "Applying chunking preset and scheduling background reindex...");
+
+    try {
+        const response = await fetch("/chunking-config", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ preset: presetInput.value }),
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = payload.detail ?? "Chunking preset update failed.";
+            setPresetStatus(resultElement, errorMessage, "error");
+            return;
+        }
+
+        const presetLabel = getPresetLabel(payload.current_preset) || presetInput.value;
+        if (runtimeSummaryPreset instanceof HTMLElement) {
+            runtimeSummaryPreset.textContent = presetLabel;
+        }
+
+        const successMessage =
+            typeof buildSuccessMessage === "function"
+                ? buildSuccessMessage(payload, presetLabel)
+                : `Preset updated: ${presetLabel}. ${payload.reindex_message}`;
+
+        setPresetStatus(
+            resultElement,
+            successMessage,
+            "success",
+        );
+
+        void refreshReindexStatus();
+
+        if (reloadOnSuccess) {
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 2200);
+        }
+    } catch {
+        setPresetStatus(
+            resultElement,
+            "Preset update failed because the server did not respond.",
+            "error",
+        );
+    } finally {
+        presetInput.disabled = false;
+    }
 }
 
 function syncClearUploadButton(fileInput) {
@@ -398,60 +490,32 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
     });
 }
 
+if (chunkingResult instanceof HTMLElement) {
+    chunkingResult.dataset.baseClass = chunkingResultBaseClass;
+}
+
+if (mainFlowPresetResult instanceof HTMLElement) {
+    mainFlowPresetResult.dataset.baseClass = "upload-result compact-control-result-slot";
+}
+
 if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof HTMLElement) {
     const presetInput = chunkingPresetForm.elements.namedItem("chunking_preset");
 
-    chunkingPresetForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        if (!(presetInput instanceof HTMLSelectElement)) {
-            return;
-        }
-
-        presetInput.disabled = true;
-
-        chunkingResult.className = `${chunkingResultBaseClass} meta`;
-        chunkingResult.textContent = "Applying chunking preset and scheduling background reindex...";
-
-        try {
-            const response = await fetch("/chunking-config", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ preset: presetInput.value }),
-            });
-            const payload = await response.json();
-
-            if (!response.ok) {
-                const errorMessage = payload.detail ?? "Chunking preset update failed.";
-                chunkingResult.className = `${chunkingResultBaseClass} error-text`;
-                chunkingResult.textContent = errorMessage;
-                return;
-            }
-
-            chunkingResult.className = `${chunkingResultBaseClass} success-text`;
-            chunkingResult.textContent =
-                `Preset updated: ${payload.chunk_size_words}/${payload.chunk_overlap_words}. ${payload.reindex_message}`;
-            void refreshReindexStatus();
-            window.setTimeout(() => {
-                window.location.reload();
-            }, 2200);
-        } catch {
-            chunkingResult.className = `${chunkingResultBaseClass} error-text`;
-            chunkingResult.textContent = "Preset update failed because the server did not respond.";
-        } finally {
-            if (presetInput instanceof HTMLSelectElement) {
-                presetInput.disabled = false;
-            }
-        }
-    });
-
     if (presetInput instanceof HTMLSelectElement) {
         presetInput.addEventListener("change", () => {
-            chunkingPresetForm.requestSubmit();
+            void applyChunkingPresetSelection(presetInput, chunkingResult, {
+                reloadOnSuccess: true,
+                buildSuccessMessage: (payload) =>
+                    `Preset updated: ${payload.chunk_size_words}/${payload.chunk_overlap_words}. ${payload.reindex_message}`,
+            });
         });
     }
+}
+
+if (mainFlowChunkingPreset instanceof HTMLSelectElement && mainFlowPresetResult instanceof HTMLElement) {
+    mainFlowChunkingPreset.addEventListener("change", () => {
+        void applyChunkingPresetSelection(mainFlowChunkingPreset, mainFlowPresetResult);
+    });
 }
 
 if (storageBackendForm instanceof HTMLFormElement && storageBackendResult instanceof HTMLElement) {

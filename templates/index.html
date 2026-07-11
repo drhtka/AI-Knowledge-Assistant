@@ -15,7 +15,7 @@
         </div>
         <div class="mini-summary-card">
             <span class="stat-label">Preset</span>
-            <strong>{{ system_config.current_preset_label }}</strong>
+            <strong id="runtime-summary-preset">{{ system_config.current_preset_label }}</strong>
         </div>
         <div class="mini-summary-card">
             <span class="stat-label">Top K</span>
@@ -61,7 +61,7 @@
                 placeholder="Як мені оцінювати якість пошуку?"
                 required
             />
-            <div class="summary-grid compact-control-grid">
+            <div class="summary-grid compact-control-grid compact-control-grid-three">
                 <div class="dashboard-panel compact-control-panel">
                     <label for="retrieval_mode">Режим пошуку</label>
                     <select id="retrieval_mode" name="retrieval_mode">
@@ -88,7 +88,30 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="dashboard-panel compact-control-panel">
+                    <label for="main_flow_chunking_preset">Preset</label>
+                    <div class="select-with-status">
+                        <select
+                            id="main_flow_chunking_preset"
+                            {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                        >
+                            {% for preset in system_config.preset_display_options %}
+                            <option
+                                value="{{ preset.value }}"
+                                {% if system_config.current_preset == preset.value %}selected{% endif %}
+                            >
+                                {{ preset.label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="select-status-check" aria-hidden="true">✓</span>
+                    </div>
+                </div>
             </div>
+            <div
+                id="main-flow-preset-result"
+                class="upload-result meta compact-control-result-slot"
+            ></div>
             <div class="actions">
                 <button type="submit">Запитати асистента</button>
                 <button type="button" id="clear-form">Очистити</button>
