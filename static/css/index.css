@@ -231,6 +231,14 @@ h2 {
     -webkit-text-fill-color: transparent;
 }
 
+.hero-card-title {
+    display: inline-block;
+    background: linear-gradient(90deg, #bfdbfe 0%, #c4b5fd 35%, #a7f3d0 68%, #86efac 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 .intro,
 .meta,
 code,

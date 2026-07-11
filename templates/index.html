@@ -3,7 +3,7 @@
 {% block content %}
 <article class="content-card overview-card dashboard-card">
     <p class="section-kicker">Runtime Summary</p>
-    <h2>Поточний стан системи</h2>
+    <h2 class="hero-card-title">Поточний стан системи</h2>
     <div class="summary-grid summary-grid-five">
         <div class="mini-summary-card">
             <span class="stat-label">Mode</span>
@@ -44,7 +44,7 @@
                 </span>
             </span>
         </div>
-        <h2>Запит до асистента</h2>
+        <h2 class="hero-card-title">Запит до асистента</h2>
         <div class="actions">
             {% for item in demo_prompts %}
             <button type="button" data-demo-question="{{ item.question }}">
@@ -97,7 +97,7 @@
     </article>
 
 <article class="content-card">
-    <h2>Відповідь</h2>
+    <h2 class="hero-card-title">Відповідь</h2>
     {% if ask_result %}
     <p>{{ ask_result.answer }}</p>
     <p class="meta">
