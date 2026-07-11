@@ -290,13 +290,16 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
 }
 
 if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof HTMLElement) {
+    const presetInput = chunkingPresetForm.elements.namedItem("chunking_preset");
+
     chunkingPresetForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        const presetInput = chunkingPresetForm.elements.namedItem("chunking_preset");
         if (!(presetInput instanceof HTMLSelectElement)) {
             return;
         }
+
+        presetInput.disabled = true;
 
         chunkingResult.className = "upload-result meta";
         chunkingResult.textContent = "Applying chunking preset and scheduling background reindex...";
@@ -328,8 +331,18 @@ if (chunkingPresetForm instanceof HTMLFormElement && chunkingResult instanceof H
         } catch {
             chunkingResult.className = "upload-result error-text";
             chunkingResult.textContent = "Preset update failed because the server did not respond.";
+        } finally {
+            if (presetInput instanceof HTMLSelectElement) {
+                presetInput.disabled = false;
+            }
         }
     });
+
+    if (presetInput instanceof HTMLSelectElement) {
+        presetInput.addEventListener("change", () => {
+            chunkingPresetForm.requestSubmit();
+        });
+    }
 }
 
 if (storageBackendForm instanceof HTMLFormElement && storageBackendResult instanceof HTMLElement) {
