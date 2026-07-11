@@ -101,9 +101,16 @@
             </span>
         </div>
         <h2>Storage backend</h2>
-        <p class="meta system-runtime-meta">
-            Default backend: <code>{{ system_config.default_storage_backend }}</code>
-        </p>
+        <div class="system-runtime-summary">
+            <div class="system-runtime-summary-row">
+                <span class="meta">Default backend</span>
+                <code>{{ system_config.default_storage_backend }}</code>
+            </div>
+            <div class="system-runtime-summary-row system-runtime-summary-row-active">
+                <span class="meta">Поточний backend</span>
+                <code>{{ system_config.current_storage_backend }}</code>
+            </div>
+        </div>
         <form id="storage-backend-form" class="inline-form system-backend-form">
             <div class="label-with-tooltip">
                 <label for="storage_backend">Активний backend</label>
@@ -128,9 +135,7 @@
                 </div>
             </div>
         </form>
-        <div id="storage-backend-result" class="upload-result meta compact-control-result-slot system-runtime-result">
-            Поточний backend: <code>{{ system_config.current_storage_backend }}</code>
-        </div>
+        <div id="storage-backend-result" class="upload-result meta compact-control-result-slot system-runtime-result"></div>
     </article>
 
     <article class="content-card dashboard-card system-runtime-card">
