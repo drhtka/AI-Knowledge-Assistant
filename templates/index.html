@@ -4,16 +4,7 @@
 <article class="content-card overview-card dashboard-card">
     <p class="section-kicker">Runtime Summary</p>
     <h2>Поточний стан системи</h2>
-    <p class="meta">
-        {% if has_documents %}
-        Корпус готовий до запитів: {{ document_count }} документів уже
-        доступно для локального пошуку.
-        {% else %}
-        Корпус порожній. Для сильного демо краще підтримувати demo corpus або
-        швидко завантажити власні документи.
-        {% endif %}
-    </p>
-    <div class="summary-grid">
+    <div class="summary-grid summary-grid-five">
         <div class="mini-summary-card">
             <span class="stat-label">Mode</span>
             <strong>{{ retrieval_mode }}</strong>
@@ -29,6 +20,16 @@
         <div class="mini-summary-card">
             <span class="stat-label">Top K</span>
             <strong>{{ top_k }}</strong>
+        </div>
+        <div class="mini-summary-card">
+            <span class="stat-label">Corpus</span>
+            <strong>
+                {% if has_documents %}
+                {{ document_count }} документів
+                {% else %}
+                порожній
+                {% endif %}
+            </strong>
         </div>
     </div>
 </article>

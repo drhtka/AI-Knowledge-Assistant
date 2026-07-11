@@ -178,6 +178,10 @@ main {
     margin: 14px 0;
 }
 
+.summary-grid-five {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .compact-control-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
