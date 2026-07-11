@@ -584,6 +584,7 @@ select:disabled {
     margin-top: 0;
     margin-bottom: 4px;
     gap: 10px;
+    justify-content: center;
 }
 
 .chunking-summary-pill {
