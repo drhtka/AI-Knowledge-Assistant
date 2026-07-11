@@ -362,10 +362,11 @@ select:disabled {
 .ask-settings-strip {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 14px;
-    border-color: rgba(96, 165, 250, 0.22);
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.54));
+    gap: 10px;
+    padding: 12px;
+    border-color: rgba(96, 165, 250, 0.14);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.34));
+    box-shadow: none;
 }
 
 .ask-settings-kicker-row {
@@ -375,19 +376,29 @@ select:disabled {
 .ask-settings-row {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    gap: 8px;
 }
 
 .ask-settings-control {
-    padding: 12px;
+    padding: 10px;
     margin: 0;
-    border-color: rgba(51, 65, 85, 0.82);
-    background: rgba(15, 23, 42, 0.68);
+    border-color: rgba(51, 65, 85, 0.58);
+    background: rgba(15, 23, 42, 0.42);
     box-shadow: none;
 }
 
 .ask-settings-control .label-with-tooltip {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+}
+
+.ask-settings-control label {
+    color: #dbeafe;
+    font-size: 13px;
+}
+
+.ask-settings-control select {
+    background: rgba(2, 6, 23, 0.28);
+    border-color: rgba(71, 85, 105, 0.58);
 }
 
 .overview-card {
