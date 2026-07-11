@@ -779,7 +779,8 @@ def external_search_page(request: Request) -> HTMLResponse:
             ),
             "page_title": "External Search | AI Knowledge Assistant",
             "page_heading": "Зовнішній вебпошук",
-            "page_intro": (
+            "page_intro": "",
+            "page_intro_tooltip": (
                 "Окремий екран для пошуку по зовнішніх джерелах: запускайте "
                 "web search і переглядайте результати без змішування з локальним корпусом."
             ),
@@ -806,7 +807,8 @@ def system_page(request: Request) -> HTMLResponse:
             ),
             "page_title": "System | AI Knowledge Assistant",
             "page_heading": "Система та діагностика",
-            "page_intro": (
+            "page_intro": "",
+            "page_intro_tooltip": (
                 "Технічний контур проєкту: активний backend, reindex, "
                 "runtime observability та JSON для демонстрації інженерної глибини."
             ),
