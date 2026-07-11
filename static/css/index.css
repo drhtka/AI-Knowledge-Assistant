@@ -716,6 +716,11 @@ select:disabled {
     pointer-events: none;
 }
 
+.info-tooltip-open-right .info-tooltip-bubble {
+    left: 0;
+    right: auto;
+}
+
 .info-tooltip:hover .info-tooltip-bubble,
 .info-tooltip:focus-visible .info-tooltip-bubble {
     opacity: 1;
