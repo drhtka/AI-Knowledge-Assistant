@@ -18,7 +18,11 @@ const reindexFinishedAt = document.getElementById("reindex-finished-at");
 const reindexStatusMessage = document.getElementById("reindex-status-message");
 const refreshReindexStatusButton = document.getElementById("refresh-reindex-status-button");
 const startReindexButton = document.getElementById("start-reindex-button");
+const uploadResultBaseClass = "upload-result meta workflow-result-slot";
 const chunkingResultBaseClass = "upload-result workflow-result-slot chunking-result-slot";
+const supportedUploadExtensions = [".txt", ".md", ".pdf"];
+const uploadErrorResetDelayMs = 3500;
+let uploadStatusResetTimerId = null;
 
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -46,8 +50,53 @@ function renderUploadStatus(message, className = "upload-result meta") {
         return;
     }
 
+    if (uploadStatusResetTimerId !== null) {
+        window.clearTimeout(uploadStatusResetTimerId);
+        uploadStatusResetTimerId = null;
+    }
+
     uploadResult.className = className;
     uploadResult.textContent = message;
+
+    if (className.includes("error-text")) {
+        uploadStatusResetTimerId = window.setTimeout(() => {
+            resetUploadStatus();
+        }, uploadErrorResetDelayMs);
+    }
+}
+
+function resetUploadStatus() {
+    if (!(uploadResult instanceof HTMLElement)) {
+        return;
+    }
+
+    if (uploadStatusResetTimerId !== null) {
+        window.clearTimeout(uploadStatusResetTimerId);
+        uploadStatusResetTimerId = null;
+    }
+
+    uploadResult.className = uploadResultBaseClass;
+    uploadResult.textContent = "";
+}
+
+function getSelectedUploadExtension(fileInput) {
+    if (!(fileInput instanceof HTMLInputElement) || !fileInput.files || fileInput.files.length === 0) {
+        return "";
+    }
+
+    const fileName = fileInput.files[0].name.toLowerCase();
+    const dotIndex = fileName.lastIndexOf(".");
+    return dotIndex >= 0 ? fileName.slice(dotIndex) : "";
+}
+
+function isSupportedUploadFile(fileInput) {
+    return supportedUploadExtensions.includes(getSelectedUploadExtension(fileInput));
+}
+
+if (uploadResult instanceof HTMLElement && uploadResult.classList.contains("error-text")) {
+    uploadStatusResetTimerId = window.setTimeout(() => {
+        resetUploadStatus();
+    }, uploadErrorResetDelayMs);
 }
 
 function updateReindexBadge(state) {
@@ -250,20 +299,53 @@ if (clearFormButton && questionForm) {
 }
 
 if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement) {
+    const fileInput = uploadForm.elements.namedItem("file");
+
+    if (fileInput instanceof HTMLInputElement) {
+        fileInput.addEventListener("change", () => {
+            if (!fileInput.files || fileInput.files.length === 0) {
+                resetUploadStatus();
+                return;
+            }
+
+            if (!isSupportedUploadFile(fileInput)) {
+                renderUploadStatus(
+                    "Only .txt, .md, and .pdf files are supported.",
+                    `${uploadResultBaseClass} error-text`,
+                );
+                return;
+            }
+
+            resetUploadStatus();
+        });
+    }
+
     uploadForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        const fileInput = uploadForm.elements.namedItem("file");
         if (!(fileInput instanceof HTMLInputElement) || !fileInput.files || fileInput.files.length === 0) {
-            uploadResult.className = "upload-result error-text";
-            uploadResult.textContent = "Choose a .txt, .md, or .pdf file first.";
+            renderUploadStatus(
+                "Choose a .txt, .md, or .pdf file first.",
+                `${uploadResultBaseClass} error-text`,
+            );
+            return;
+        }
+
+        if (!isSupportedUploadFile(fileInput)) {
+            renderUploadStatus(
+                "Only .txt, .md, and .pdf files are supported.",
+                `${uploadResultBaseClass} error-text`,
+            );
             return;
         }
 
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
 
-        renderUploadStatus("Uploading document and scheduling background reindex...");
+        renderUploadStatus(
+            "Uploading document and scheduling background reindex...",
+            uploadResultBaseClass,
+        );
 
         try {
             const response = await fetch("/ingest", {
@@ -274,7 +356,7 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
 
             if (!response.ok) {
                 const errorMessage = payload.detail ?? "Upload failed.";
-                renderUploadStatus(errorMessage, "upload-result error-text");
+                renderUploadStatus(errorMessage, `${uploadResultBaseClass} error-text`);
                 return;
             }
 
@@ -284,7 +366,7 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
         } catch {
             renderUploadStatus(
                 "Upload failed because the server did not respond.",
-                "upload-result error-text",
+                `${uploadResultBaseClass} error-text`,
             );
         }
     });
