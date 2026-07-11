@@ -563,47 +563,44 @@ if (topKInput instanceof HTMLSelectElement) {
 syncMainFlowRuntimeSummary();
 
 if (storageBackendForm instanceof HTMLFormElement && storageBackendResult instanceof HTMLElement) {
-    storageBackendForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
+    const backendInput = storageBackendForm.elements.namedItem("storage_backend");
 
-        const backendInput = storageBackendForm.elements.namedItem("storage_backend");
-        if (!(backendInput instanceof HTMLSelectElement)) {
-            return;
-        }
+    if (backendInput instanceof HTMLSelectElement) {
+        backendInput.addEventListener("change", async () => {
+            storageBackendResult.className = "upload-result meta compact-control-result-slot system-runtime-result";
+            storageBackendResult.textContent = "Applying storage backend and scheduling background reindex...";
 
-        storageBackendResult.className = "upload-result meta";
-        storageBackendResult.textContent = "Applying storage backend and scheduling background reindex...";
+            try {
+                const response = await fetch("/storage-config", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ backend: backendInput.value }),
+                });
+                const payload = await response.json();
 
-        try {
-            const response = await fetch("/storage-config", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ backend: backendInput.value }),
-            });
-            const payload = await response.json();
+                if (!response.ok) {
+                    const errorMessage = payload.detail ?? "Storage backend update failed.";
+                    storageBackendResult.className = "upload-result error-text compact-control-result-slot system-runtime-result";
+                    storageBackendResult.textContent = errorMessage;
+                    return;
+                }
 
-            if (!response.ok) {
-                const errorMessage = payload.detail ?? "Storage backend update failed.";
-                storageBackendResult.className = "upload-result error-text";
-                storageBackendResult.textContent = errorMessage;
-                return;
+                storageBackendResult.className = "upload-result success-text compact-control-result-slot system-runtime-result";
+                storageBackendResult.textContent =
+                    `Active backend=${payload.current_backend}. ${payload.reindex_message}`;
+                void refreshReindexStatus();
+                window.setTimeout(() => {
+                    window.location.reload();
+                }, 300);
+            } catch {
+                storageBackendResult.className = "upload-result error-text compact-control-result-slot system-runtime-result";
+                storageBackendResult.textContent =
+                    "Storage backend update failed because the server did not respond.";
             }
-
-            storageBackendResult.className = "upload-result success-text";
-            storageBackendResult.textContent =
-                `Active backend=${payload.current_backend}. ${payload.reindex_message}`;
-            void refreshReindexStatus();
-            window.setTimeout(() => {
-                window.location.reload();
-            }, 300);
-        } catch {
-            storageBackendResult.className = "upload-result error-text";
-            storageBackendResult.textContent =
-                "Storage backend update failed because the server did not respond.";
-        }
-    });
+        });
+    }
 }
 
 if (reindexStatusBadge instanceof HTMLElement) {

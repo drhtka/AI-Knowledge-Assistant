@@ -773,10 +773,6 @@ select:disabled {
     flex: 1 1 220px;
 }
 
-.system-runtime-form-row button {
-    min-width: 132px;
-}
-
 .system-runtime-result {
     margin-top: 10px;
 }
