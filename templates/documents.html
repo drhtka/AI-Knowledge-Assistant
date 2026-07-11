@@ -121,7 +121,7 @@
             <h3 class="feature-subsection-title">Розбиття документів (chunking)</h3>
         </div>
         <p class="meta">
-            Поточний пресет: <code>{{ system_config.current_preset }}</code> |
+            Поточний пресет: <code>{{ system_config.current_preset_label }}</code> |
             chunk size={{ system_config.chunk_size_words }} |
             overlap={{ system_config.chunk_overlap_words }}
         </p>
@@ -131,7 +131,9 @@
                 <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по preset">
                     ?
                     <span class="info-tooltip-bubble">
-                        small 50/10, legacy 80/20, baseline 120/30
+                        {% for preset in system_config.preset_display_options %}
+                        {{ preset.label }} {{ preset.chunk_size_words }}/{{ preset.chunk_overlap_words }}{% if not loop.last %}<br />{% endif %}
+                        {% endfor %}
                     </span>
                 </span>
             </div>

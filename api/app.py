@@ -583,8 +583,13 @@ def _build_page_context(
         reverse=True,
     )
     preset_display_options = [
-        {"value": preset, "label": _preset_label(preset)}
-        for preset in CHUNKING_PRESETS.keys()
+        {
+            "value": preset,
+            "label": _preset_label(preset),
+            "chunk_size_words": config["chunk_size_words"],
+            "chunk_overlap_words": config["chunk_overlap_words"],
+        }
+        for preset, config in CHUNKING_PRESETS.items()
     ]
     question = request.query_params.get("question", "")
     has_top_k_query = "top_k" in request.query_params
