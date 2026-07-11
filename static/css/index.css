@@ -342,17 +342,11 @@ select:disabled {
     margin-top: 18px;
 }
 
-.ask-layout-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(260px, 30%);
-    gap: 20px;
-    align-items: start;
-}
-
 .ask-main-column {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    margin-top: 18px;
 }
 
 .ask-main-column input {
@@ -365,11 +359,10 @@ select:disabled {
     margin-top: 6px;
 }
 
-.ask-settings-panel {
+.ask-settings-strip {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    height: 100%;
     padding: 14px;
     border-color: rgba(96, 165, 250, 0.22);
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.54));
@@ -379,9 +372,9 @@ select:disabled {
     margin-bottom: 0;
 }
 
-.ask-settings-stack {
-    display: flex;
-    flex-direction: column;
+.ask-settings-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -1163,7 +1156,7 @@ pre {
         grid-template-columns: 1fr;
     }
 
-    .ask-layout-grid {
+    .ask-settings-row {
         grid-template-columns: 1fr;
     }
 
