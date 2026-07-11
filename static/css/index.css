@@ -662,8 +662,6 @@ select:disabled {
 .feature-subsection-header {
     display: flex;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
 }
 
 .feature-subsection-title {
@@ -673,19 +671,25 @@ select:disabled {
     color: #e9d5ff;
 }
 
-.chunking-selected-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    padding: 6px 10px;
-    border: 1px solid rgba(134, 239, 172, 0.35);
-    border-radius: 999px;
-    background: rgba(22, 101, 52, 0.2);
-    color: #dcfce7;
-    font-size: 12px;
+.select-with-status {
+    position: relative;
+    flex: 1 1 220px;
+}
+
+.select-with-status select {
+    margin-bottom: 0;
+    padding-right: 42px;
+}
+
+.select-status-check {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #86efac;
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    pointer-events: none;
 }
 
 .info-tooltip {

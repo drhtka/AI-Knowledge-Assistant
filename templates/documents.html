@@ -119,9 +119,6 @@
         </div>
         <div class="feature-subsection-header">
             <h3 class="feature-subsection-title">Розбиття документів (chunking)</h3>
-            <span class="chunking-selected-badge" title="Активний preset">
-                ✓ {{ system_config.current_preset_label }}
-            </span>
         </div>
         <p class="meta">
             Поточний пресет: <code>{{ system_config.current_preset }}</code> |
@@ -131,20 +128,23 @@
         <form id="chunking-preset-form" class="inline-form">
             <label for="chunking_preset">Оберіть пресет</label>
             <div class="inline-form-row">
-                <select
-                    id="chunking_preset"
-                    name="chunking_preset"
-                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
-                >
-                    {% for preset in system_config.preset_display_options %}
-                    <option
-                        value="{{ preset.value }}"
-                        {% if system_config.current_preset == preset.value %}selected{% endif %}
+                <div class="select-with-status">
+                    <select
+                        id="chunking_preset"
+                        name="chunking_preset"
+                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
                     >
-                        {{ preset.label }}
-                    </option>
-                    {% endfor %}
-                </select>
+                        {% for preset in system_config.preset_display_options %}
+                        <option
+                            value="{{ preset.value }}"
+                            {% if system_config.current_preset == preset.value %}selected{% endif %}
+                        >
+                            {{ preset.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="select-status-check" aria-hidden="true">✓</span>
+                </div>
                 <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
                     Застосувати пресет
                 </button>
