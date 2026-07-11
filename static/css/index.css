@@ -634,7 +634,7 @@ select:disabled {
 
 .feature-panel-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
 }
 
@@ -650,7 +650,7 @@ select:disabled {
 
 .feature-subsection-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
 }
 
@@ -666,8 +666,10 @@ select:disabled {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     width: 22px;
     height: 22px;
+    margin-top: 2px;
     border: 1px solid rgba(148, 163, 184, 0.4);
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.9);
