@@ -752,6 +752,39 @@ select:disabled {
     margin-top: 28px;
 }
 
+.system-runtime-card h2 {
+    margin-bottom: 0;
+}
+
+.system-runtime-meta {
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+.system-backend-form {
+    margin-top: 18px;
+}
+
+.system-runtime-form-row {
+    align-items: center;
+}
+
+.system-runtime-form-row .select-with-status {
+    flex: 1 1 220px;
+}
+
+.system-runtime-form-row button {
+    min-width: 132px;
+}
+
+.system-runtime-result {
+    margin-top: 10px;
+}
+
+.system-observability-grid {
+    margin-top: 18px;
+}
+
 .dashboard-panel.inline-form {
     margin-top: 0;
 }

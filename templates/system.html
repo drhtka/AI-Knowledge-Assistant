@@ -88,37 +88,95 @@
 </section>
 
 <section class="feature-grid">
-    <article class="content-card dashboard-card">
-        <p class="section-kicker">Infrastructure</p>
-        <h2>Storage backend (інфраструктура)</h2>
-        <p class="meta">
-            Це технічне налаштування системи: воно перемикає шлях зберігання та
-            retrieval runtime, але не змінює саме розбиття документів.
+    <article class="content-card dashboard-card system-runtime-card">
+        <div class="section-kicker-row">
+            <p class="section-kicker">Infrastructure</p>
+            <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення про storage backend">
+                ?
+                <span class="info-tooltip-bubble">
+                    Це технічне налаштування системи: воно перемикає шлях
+                    зберігання та retrieval runtime, але не змінює саме
+                    розбиття документів.
+                </span>
+            </span>
+        </div>
+        <h2>Storage backend</h2>
+        <p class="meta system-runtime-meta">
+            Default backend: <code>{{ system_config.default_storage_backend }}</code>
         </p>
-        <form id="storage-backend-form" class="inline-form">
-            <label for="storage_backend">Активний backend</label>
-            <div class="inline-form-row">
-                <select
-                    id="storage_backend"
-                    name="storage_backend"
-                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
-                >
-                    {% for backend in system_config.available_storage_backends %}
-                    <option
-                        value="{{ backend }}"
-                        {% if system_config.current_storage_backend == backend %}selected{% endif %}
+        <form id="storage-backend-form" class="inline-form system-backend-form">
+            <div class="label-with-tooltip">
+                <label for="storage_backend">Активний backend</label>
+            </div>
+            <div class="inline-form-row system-runtime-form-row">
+                <div class="select-with-status">
+                    <select
+                        id="storage_backend"
+                        name="storage_backend"
+                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
                     >
-                        {{ backend }}
-                    </option>
-                    {% endfor %}
-                </select>
+                        {% for backend in system_config.available_storage_backends %}
+                        <option
+                            value="{{ backend }}"
+                            {% if system_config.current_storage_backend == backend %}selected{% endif %}
+                        >
+                            {{ backend }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="select-status-check" aria-hidden="true">✓</span>
+                </div>
                 <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
                     Apply backend
                 </button>
             </div>
         </form>
-        <div id="storage-backend-result" class="upload-result meta">
+        <div id="storage-backend-result" class="upload-result meta compact-control-result-slot system-runtime-result">
             Поточний backend: <code>{{ system_config.current_storage_backend }}</code>
+        </div>
+    </article>
+
+    <article class="content-card dashboard-card system-runtime-card">
+        <div class="section-kicker-row">
+            <p class="section-kicker">Observability</p>
+            <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення про runtime observability">
+                ?
+                <span class="info-tooltip-bubble">
+                    Read-only runtime-зріз для демо: активний backend, готовність
+                    retrieval/indexing і поточний стан reindex без JSON деталей.
+                </span>
+            </span>
+        </div>
+        <h2>Runtime observability</h2>
+        <div class="reindex-status-grid system-observability-grid">
+            <div class="reindex-status-item">
+                <span class="meta">backend</span>
+                <strong>{{ runtime_observability.active_storage_backend }}</strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">state</span>
+                <strong>{{ runtime_observability.active_backend_state }}</strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">retrieval ready</span>
+                <strong>
+                    {% if runtime_observability.active_backend_retrieval_ready %}yes{% else %}no{% endif %}
+                </strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">indexing ready</span>
+                <strong>
+                    {% if runtime_observability.active_backend_indexing_ready %}yes{% else %}no{% endif %}
+                </strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">reindex state</span>
+                <strong>{{ runtime_observability.reindex_state }}</strong>
+            </div>
+            <div class="reindex-status-item">
+                <span class="meta">summary</span>
+                <strong>{{ runtime_observability.active_backend_summary_message }}</strong>
+            </div>
         </div>
     </article>
 </section>
@@ -276,28 +334,6 @@
 </section>
 
 {% if admin_auth.is_authenticated %}
-<section class="feature-grid">
-    <article class="content-card">
-        <h2>Runtime observability</h2>
-        <ul class="list-reset">
-            <li>
-                <strong>backend={{ runtime_observability.active_storage_backend }}</strong>
-            </li>
-            <li>
-                state={{ runtime_observability.active_backend_state }} |
-                retrieval_ready={{ runtime_observability.active_backend_retrieval_ready }}
-            </li>
-            <li>
-                indexing_ready={{ runtime_observability.active_backend_indexing_ready }} |
-                reindex_state={{ runtime_observability.reindex_state }}
-            </li>
-            <li>
-                summary={{ runtime_observability.active_backend_summary_message }}
-            </li>
-        </ul>
-    </article>
-</section>
-
 <section class="json-stack">
     <article class="content-card json-card">
         <h2>JSON storage diagnostics</h2>
