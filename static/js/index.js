@@ -26,7 +26,9 @@ const uploadResultBaseClass = "upload-result meta workflow-result-slot";
 const chunkingResultBaseClass = "upload-result workflow-result-slot chunking-result-slot";
 const supportedUploadExtensions = [".txt", ".md", ".pdf"];
 const uploadErrorResetDelayMs = 3500;
+const presetStatusResetDelayMs = 3500;
 let uploadStatusResetTimerId = null;
+let presetStatusResetTimerId = null;
 
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -110,6 +112,11 @@ function setPresetStatus(resultElement, message, tone = "meta") {
         return;
     }
 
+    if (presetStatusResetTimerId !== null) {
+        window.clearTimeout(presetStatusResetTimerId);
+        presetStatusResetTimerId = null;
+    }
+
     const baseClass = resultElement.dataset.baseClass || resultElement.className;
     resultElement.dataset.baseClass = baseClass;
 
@@ -122,6 +129,12 @@ function setPresetStatus(resultElement, message, tone = "meta") {
     }
 
     resultElement.textContent = message;
+
+    if (resultElement === mainFlowPresetResult && tone !== "meta") {
+        presetStatusResetTimerId = window.setTimeout(() => {
+            setPresetStatus(resultElement, "", "meta");
+        }, presetStatusResetDelayMs);
+    }
 }
 
 async function applyChunkingPresetSelection(

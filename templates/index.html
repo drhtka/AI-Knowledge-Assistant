@@ -64,29 +64,35 @@
             <div class="summary-grid compact-control-grid compact-control-grid-three">
                 <div class="dashboard-panel compact-control-panel">
                     <label for="retrieval_mode">Режим пошуку</label>
-                    <select id="retrieval_mode" name="retrieval_mode">
-                        {% for mode in retrieval_mode_options %}
-                        <option
-                            value="{{ mode }}"
-                            {% if retrieval_mode == mode %}selected{% endif %}
-                        >
-                            {{ mode }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <div class="select-with-status">
+                        <select id="retrieval_mode" name="retrieval_mode">
+                            {% for mode in retrieval_mode_options %}
+                            <option
+                                value="{{ mode }}"
+                                {% if retrieval_mode == mode %}selected{% endif %}
+                            >
+                                {{ mode }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="select-status-check" aria-hidden="true">✓</span>
+                    </div>
                 </div>
                 <div class="dashboard-panel compact-control-panel">
                     <label for="top_k">Top K</label>
-                    <select id="top_k" name="top_k">
-                        {% for value in system_config.available_top_k %}
-                        <option
-                            value="{{ value }}"
-                            {% if top_k == value %}selected{% endif %}
-                        >
-                            {{ value }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <div class="select-with-status">
+                        <select id="top_k" name="top_k">
+                            {% for value in system_config.available_top_k %}
+                            <option
+                                value="{{ value }}"
+                                {% if top_k == value %}selected{% endif %}
+                            >
+                                {{ value }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="select-status-check" aria-hidden="true">✓</span>
+                    </div>
                 </div>
                 <div class="dashboard-panel compact-control-panel">
                     <label for="main_flow_chunking_preset">Preset</label>
