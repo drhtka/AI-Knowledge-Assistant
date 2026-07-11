@@ -120,11 +120,23 @@
         <div class="feature-subsection-header">
             <h3 class="feature-subsection-title hero-card-title">Розбиття документів (chunking)</h3>
         </div>
-        <p class="meta">
-            Поточний пресет: <code>{{ system_config.current_preset_label }}</code> |
-            chunk size={{ system_config.chunk_size_words }} |
-            overlap={{ system_config.chunk_overlap_words }}
-        </p>
+        <div class="chunking-summary-shell">
+            <span class="chunking-summary-caption">Поточна конфігурація</span>
+            <div class="pill-row chunking-summary-row">
+                <span class="mode-pill chunking-summary-pill chunking-summary-pill-accent">
+                    <span class="chunking-summary-label">Preset</span>
+                    <strong>{{ system_config.current_preset_label }}</strong>
+                </span>
+                <span class="mode-pill chunking-summary-pill">
+                    <span class="chunking-summary-label">Chunk size</span>
+                    <strong>{{ system_config.chunk_size_words }} слів</strong>
+                </span>
+                <span class="mode-pill chunking-summary-pill">
+                    <span class="chunking-summary-label">Overlap</span>
+                    <strong>{{ system_config.chunk_overlap_words }} слів</strong>
+                </span>
+            </div>
+        </div>
         <form id="chunking-preset-form" class="inline-form">
             <div class="label-with-tooltip">
                 <label for="chunking_preset">Оберіть пресет</label>
