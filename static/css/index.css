@@ -769,11 +769,11 @@ select:disabled {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 16px;
+    padding: 14px;
 }
 
 .system-runtime-summary {
-    margin-top: 8px;
+    margin-top: 6px;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -805,7 +805,7 @@ select:disabled {
 }
 
 .system-backend-form {
-    margin-top: 12px;
+    margin-top: 10px;
 }
 
 .system-runtime-form-row {
@@ -824,7 +824,7 @@ select:disabled {
 }
 
 .system-observability-grid {
-    margin-top: 12px;
+    margin-top: 10px;
     grid-auto-rows: 1fr;
 }
 
