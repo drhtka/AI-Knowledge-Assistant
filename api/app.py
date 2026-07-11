@@ -740,7 +740,8 @@ def documents_page(request: Request) -> HTMLResponse:
             ),
             "page_title": "Add Document | AI Knowledge Assistant",
             "page_heading": "Додати документ",
-            "page_intro": (
+            "page_intro": "",
+            "page_intro_tooltip": (
                 "Тут можна завантажити нові файли в локальний корпус, "
                 "перевірити наявні документи та керувати chunking для індексації."
             ),
