@@ -255,8 +255,15 @@ select:disabled {
 .documents-workflow-grid {
     display: grid;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: stretch;
     gap: 20px;
     margin-bottom: 20px;
+}
+
+.documents-workflow-grid > article {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
 }
 
 .overview-grid > *,
@@ -832,6 +839,10 @@ button {
 
 .upload-result {
     margin-top: 12px;
+}
+
+.workflow-result-slot {
+    min-height: 56px;
 }
 
 .upload-result-card {
