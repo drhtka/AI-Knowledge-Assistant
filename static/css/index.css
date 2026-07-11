@@ -769,13 +769,14 @@ select:disabled {
     display: flex;
     flex-direction: column;
     height: 100%;
+    padding: 16px;
 }
 
 .system-runtime-summary {
-    margin-top: 10px;
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .system-runtime-summary-row {
@@ -783,7 +784,7 @@ select:disabled {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 12px;
     background: rgba(15, 23, 42, 0.48);
@@ -804,7 +805,7 @@ select:disabled {
 }
 
 .system-backend-form {
-    margin-top: 18px;
+    margin-top: 12px;
 }
 
 .system-runtime-form-row {
@@ -816,15 +817,20 @@ select:disabled {
 }
 
 .system-runtime-result {
-    margin-top: 10px;
-    min-height: 44px;
+    margin-top: 8px;
+    min-height: 32px;
     display: flex;
     align-items: center;
 }
 
 .system-observability-grid {
-    margin-top: 18px;
+    margin-top: 12px;
     grid-auto-rows: 1fr;
+}
+
+.system-observability-grid .reindex-status-item {
+    padding: 10px;
+    gap: 5px;
 }
 
 .system-observability-summary-item strong {
