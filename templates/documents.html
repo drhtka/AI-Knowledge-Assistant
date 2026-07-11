@@ -100,16 +100,21 @@
 
     <article class="content-card dashboard-card feature-subsection">
         <p class="section-kicker">Indexing Setup</p>
-        <h3 class="feature-subsection-title">Розбиття документів (chunking)</h3>
+        <div class="feature-subsection-header">
+            <h3 class="feature-subsection-title">Розбиття документів (chunking)</h3>
+            <span class="info-tooltip" tabindex="0" aria-label="Пояснення про chunking">
+                ?
+                <span class="info-tooltip-bubble">
+                    Це налаштування визначає, як документи діляться на фрагменти
+                    для індексації та пошуку. Зміна пресету перебудує індекс з
+                    новою конфігурацією.
+                </span>
+            </span>
+        </div>
         <p class="meta">
             Поточний пресет: <code>{{ system_config.current_preset }}</code> |
             chunk size={{ system_config.chunk_size_words }} |
             overlap={{ system_config.chunk_overlap_words }}
-        </p>
-        <p class="meta">
-            Це налаштування визначає, як документи діляться на фрагменти для
-            індексації та пошуку. Зміна пресету перебудує індекс з новою
-            конфігурацією.
         </p>
         <form id="chunking-preset-form" class="inline-form">
             <label for="chunking_preset">Оберіть пресет</label>
