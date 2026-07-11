@@ -721,10 +721,15 @@ select:disabled {
     display: flex;
     flex-direction: column;
     margin-top: 24px;
+    gap: 14px;
+}
+
+#upload-form input[type="file"] {
+    margin-bottom: 0;
 }
 
 #upload-form .meta {
-    margin: 0 0 16px;
+    margin: 0;
     text-align: center;
 }
 
