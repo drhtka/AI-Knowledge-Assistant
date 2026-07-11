@@ -88,14 +88,13 @@
 </section>
 
 {% if not admin_auth.is_authenticated %}
-<article class="content-card admin-guard-card">
-    <p class="section-kicker">Admin Preview</p>
-    <h2>Системні інструменти захищені</h2>
-    <p class="meta">
-        Storage backend, reindex, diagnostics і JSON залишаються видимими як
-        demo-елементи, але керування і детальні дані доступні тільки адміну.
+<div class="admin-access-note">
+    <span class="admin-access-note-label">Admin Access</span>
+    <p class="admin-access-note-text">
+        Storage backend, reindex, diagnostics і JSON доступні тільки після
+        admin auth.
     </p>
-</article>
+</div>
 {% endif %}
 
 <section class="feature-grid">
