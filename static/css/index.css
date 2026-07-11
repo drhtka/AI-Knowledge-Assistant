@@ -625,6 +625,16 @@ select:disabled {
     color: #dbeafe;
 }
 
+.feature-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.feature-panel-header h2 {
+    margin-bottom: 0;
+}
+
 .feature-subsection {
     display: flex;
     flex-direction: column;
