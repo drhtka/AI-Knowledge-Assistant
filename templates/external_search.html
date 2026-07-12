@@ -13,8 +13,20 @@
                 <div class="external-search-settings-row">
                     <div class="dashboard-panel compact-control-panel ask-settings-control">
                         <span class="stat-label">Ліміт результатів</span>
-                        <strong class="external-search-fixed-value">{{ web_top_k }}</strong>
-                        <input type="hidden" id="web_top_k" name="web_top_k" value="{{ web_top_k }}" />
+                        <div class="external-search-top-k-row" role="radiogroup" aria-label="Ліміт результатів">
+                            {% for value in web_top_k_options %}
+                            <label class="external-search-top-k-pill">
+                                <input
+                                    type="radio"
+                                    name="web_top_k"
+                                    value="{{ value }}"
+                                    {% if web_top_k == value %}checked{% endif %}
+                                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                                />
+                                <span>{{ value }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>

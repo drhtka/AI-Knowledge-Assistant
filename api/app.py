@@ -125,7 +125,7 @@ DEMO_PROMPTS = [
 
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 TOP_K_OPTIONS = (1, 2, 3)
-WEB_TOP_K_OPTIONS = (3,)
+WEB_TOP_K_OPTIONS = (1, 2, 3)
 ADMIN_REDIRECT_PATHS = {"/", "/documents", "/external-search", "/system", "/docs"}
 
 
