@@ -43,10 +43,10 @@ main {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 40px;
-    padding: 0 14px;
+    min-height: 42px;
+    padding: 0 18px;
     border: 1px solid #334155;
-    border-radius: 10px;
+    border-radius: 999px;
     background: #111827;
     color: #e6edf7;
     text-decoration: none;
@@ -119,6 +119,9 @@ main {
 
 .admin-auth-form button {
     align-self: flex-start;
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 999px;
     border-color: rgba(248, 113, 113, 0.38);
     background: linear-gradient(180deg, rgba(185, 28, 28, 0.34), rgba(31, 41, 55, 0.94));
     color: #fff1f2;
