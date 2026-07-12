@@ -234,6 +234,7 @@ async function submitQuestionWithFetch(questionValue) {
     const topKInput = document.getElementById("top_k");
     const submitButton = getQuestionSubmitButton();
     const clearButton = getQuestionClearButton();
+    const questionInput = getQuestionInput();
     const payload = {
         question: questionValue,
         retrieval_mode:
@@ -283,6 +284,11 @@ async function submitQuestionWithFetch(questionValue) {
         renderSearchResultContent(searchPayload);
         renderModeComparisonContent(modeComparisonPayload);
         replaceUrlWithQuestionParams(questionValue, payload.retrieval_mode, String(payload.top_k));
+
+        if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
+            questionInput.value = "";
+            questionInput.focus();
+        }
     } catch {
         if (askResultContent instanceof HTMLElement) {
             askResultContent.innerHTML =
