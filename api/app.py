@@ -126,6 +126,7 @@ DEMO_PROMPTS = [
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 TOP_K_OPTIONS = (1, 2, 3)
 WEB_TOP_K_OPTIONS = (1, 2, 3)
+WEB_QUESTION_MAX_LENGTH = 220
 ADMIN_REDIRECT_PATHS = {"/", "/documents", "/external-search", "/system", "/docs"}
 
 
@@ -604,7 +605,11 @@ def _build_page_context(
     retrieval_mode = request.query_params.get("retrieval_mode", "auto") or "auto"
     if retrieval_mode not in RETRIEVAL_MODE_OPTIONS:
         retrieval_mode = "auto"
-    raw_web_question = (request.query_params.get("web_question", "") or "").strip() if include_web_results else ""
+    raw_web_question = (
+        (request.query_params.get("web_question", "") or "").strip()[:WEB_QUESTION_MAX_LENGTH]
+        if include_web_results
+        else ""
+    )
     web_question = raw_web_question if include_web_results and is_admin else ""
     web_top_k_raw = request.query_params.get("web_top_k", str(WEB_TOP_K_OPTIONS[0])) or str(WEB_TOP_K_OPTIONS[0])
     try:

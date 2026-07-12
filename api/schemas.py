@@ -328,7 +328,7 @@ class WebSearchHistoryResponse(BaseModel):
 
 
 class WebSearchRequest(BaseModel):
-    question: str = Field(min_length=3, max_length=500)
+    question: str = Field(min_length=3, max_length=220)
     top_k: int = Field(default=3, ge=1, le=3)
 
 

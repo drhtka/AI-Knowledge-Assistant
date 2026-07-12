@@ -360,6 +360,10 @@ select:disabled {
     margin-top: 18px;
 }
 
+.external-search-main-column {
+    margin-top: 0;
+}
+
 .ask-main-column {
     display: flex;
     flex-direction: column;
@@ -430,20 +434,56 @@ select:disabled {
     gap: 8px;
 }
 
-.external-search-settings-row {
-    display: flex;
-    justify-content: center;
+.external-search-composer {
+    width: min(100%, 860px);
+    min-height: 164px;
+    align-self: center;
+    box-sizing: border-box;
+    padding: 24px 24px 18px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 30px;
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.92), rgba(30, 41, 59, 0.96));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.external-search-settings-row .ask-settings-control {
-    width: min(100%, 220px);
+.external-search-input {
+    width: 100%;
+    min-height: 92px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #f8fafc;
+    font-size: 18px;
+    line-height: 1.5;
+    resize: none;
+    margin: 0;
+}
+
+.external-search-input::placeholder {
+    color: rgba(226, 232, 240, 0.68);
+}
+
+.external-search-input:focus {
+    outline: none;
+}
+
+.external-search-input:disabled {
+    background: transparent;
+}
+
+.external-search-composer-footer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 10px;
 }
 
 .external-search-top-k-row {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 10px;
-    margin-top: 8px;
+    margin-top: 0;
 }
 
 .external-search-top-k-pill {
@@ -451,8 +491,8 @@ select:disabled {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     cursor: pointer;
 }
 
@@ -468,32 +508,32 @@ select:disabled {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
-    border: 1px solid rgba(125, 211, 252, 0.24);
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
     border-radius: 999px;
-    background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.92));
-    color: #c4b5fd;
-    font-size: 15px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    font-size: 14px;
     font-weight: 700;
     transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, transform 120ms ease;
 }
 
 .external-search-top-k-pill input:checked + span {
-    border-color: rgba(192, 132, 252, 0.62);
-    background: linear-gradient(180deg, rgba(91, 33, 182, 0.44), rgba(30, 41, 59, 0.96));
-    color: #f5d0fe;
-    box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.22);
+    border-color: rgba(96, 165, 250, 0.62);
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.4), rgba(51, 65, 85, 0.92));
+    color: #eff6ff;
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.2);
 }
 
 .external-search-top-k-pill input:focus-visible + span {
-    outline: 2px solid rgba(196, 181, 253, 0.5);
+    outline: 2px solid rgba(147, 197, 253, 0.48);
     outline-offset: 2px;
 }
 
 .external-search-top-k-pill input:not(:disabled):hover + span {
-    border-color: rgba(125, 211, 252, 0.42);
-    color: #e9d5ff;
+    border-color: rgba(148, 163, 184, 0.4);
+    color: #f8fafc;
     transform: translateY(-1px);
 }
 
