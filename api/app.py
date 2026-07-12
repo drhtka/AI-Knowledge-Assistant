@@ -125,6 +125,7 @@ DEMO_PROMPTS = [
 
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 TOP_K_OPTIONS = (1, 2, 3)
+WEB_TOP_K_OPTIONS = (3,)
 ADMIN_REDIRECT_PATHS = {"/", "/documents", "/external-search", "/system", "/docs"}
 
 
@@ -603,10 +604,14 @@ def _build_page_context(
     retrieval_mode = request.query_params.get("retrieval_mode", "auto") or "auto"
     if retrieval_mode not in RETRIEVAL_MODE_OPTIONS:
         retrieval_mode = "auto"
-    raw_web_question = request.query_params.get("web_question", "") if include_web_results else ""
+    raw_web_question = (request.query_params.get("web_question", "") or "").strip() if include_web_results else ""
     web_question = raw_web_question if include_web_results and is_admin else ""
-    web_top_k_raw = request.query_params.get("web_top_k", "5") or "5"
-    web_top_k = max(1, min(10, int(web_top_k_raw)))
+    web_top_k_raw = request.query_params.get("web_top_k", str(WEB_TOP_K_OPTIONS[0])) or str(WEB_TOP_K_OPTIONS[0])
+    try:
+        parsed_web_top_k = int(web_top_k_raw)
+    except ValueError:
+        parsed_web_top_k = WEB_TOP_K_OPTIONS[0]
+    web_top_k = parsed_web_top_k if parsed_web_top_k in WEB_TOP_K_OPTIONS else WEB_TOP_K_OPTIONS[0]
 
     search_result = None
     ask_result = None
@@ -647,6 +652,7 @@ def _build_page_context(
         ),
         "web_question": web_question,
         "web_top_k": web_top_k,
+        "web_top_k_options": WEB_TOP_K_OPTIONS,
         "demo_prompts": DEMO_PROMPTS,
         "search_result": search_result,
         "ask_result": ask_result,

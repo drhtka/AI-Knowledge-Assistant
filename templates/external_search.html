@@ -2,35 +2,53 @@
 
 {% block content %}
 <section class="overview-grid">
-    <article class="feature-block feature-panel web-search-panel">
+    <article class="content-card ask-card external-search-card">
         <p class="section-kicker">External Search</p>
         <h2 class="hero-card-title">Зовнішній вебпошук</h2>
-        <form method="get" action="/external-search">
-            <label for="web_question">Запит для зовнішнього пошуку</label>
-            <input
-                id="web_question"
-                name="web_question"
-                value="{{ web_question }}"
-                placeholder="Знайти свіжі приклади архітектур RAG"
-                {% if not admin_auth.is_authenticated %}disabled{% endif %}
-            />
+        <form method="get" action="/external-search" class="external-search-form">
+            <div class="dashboard-panel compact-control-panel ask-settings-strip">
+                <div class="section-kicker-row ask-settings-kicker-row">
+                    <p class="section-kicker">Налаштування</p>
+                </div>
+                <div class="external-search-settings-row">
+                    <div class="dashboard-panel compact-control-panel ask-settings-control">
+                        <div class="label-with-tooltip">
+                            <label for="web_top_k">Ліміт результатів</label>
+                        </div>
+                        <div class="select-with-status">
+                            <select
+                                id="web_top_k"
+                                name="web_top_k"
+                                {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                            >
+                                {% for value in web_top_k_options %}
+                                <option value="{{ value }}" {% if web_top_k == value %}selected{% endif %}>
+                                    {{ value }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <span class="select-status-check" aria-hidden="true">✓</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            <label for="web_top_k">Ліміт результатів</label>
-            <input
-                id="web_top_k"
-                name="web_top_k"
-                type="number"
-                min="1"
-                max="10"
-                value="{{ web_top_k }}"
-                {% if not admin_auth.is_authenticated %}disabled{% endif %}
-            />
+            <div class="ask-main-column external-search-main-column">
+                <label for="web_question" class="ask-question-label">Запит для зовнішнього пошуку</label>
+                <input
+                    id="web_question"
+                    name="web_question"
+                    value="{{ web_question }}"
+                    placeholder="Знайти свіжі приклади архітектур RAG"
+                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                />
 
-            <div class="actions">
-                <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
-                    Шукати в інтернеті
-                </button>
-                <a class="button-link" href="/documents">Перейти до документів</a>
+                <div class="actions ask-main-actions">
+                    <button type="submit" {% if not admin_auth.is_authenticated %}disabled{% endif %}>
+                        Шукати в інтернеті
+                    </button>
+                    <a class="button-link" href="/documents">Перейти до документів</a>
+                </div>
             </div>
         </form>
     </article>

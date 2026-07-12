@@ -342,12 +342,21 @@ select:disabled {
     background: linear-gradient(180deg, rgba(196, 181, 253, 0.14), rgba(15, 23, 42, 0.85));
 }
 
+.ask-card.external-search-card {
+    border-color: rgba(196, 181, 253, 0.35);
+    box-shadow: 0 16px 34px rgba(91, 33, 182, 0.12);
+}
+
 .ask-card {
     border-color: rgba(34, 197, 94, 0.35);
     box-shadow: 0 16px 34px rgba(6, 95, 70, 0.14);
 }
 
 .ask-card #question-form {
+    margin-top: 18px;
+}
+
+.external-search-form {
     margin-top: 18px;
 }
 
@@ -419,6 +428,15 @@ select:disabled {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+}
+
+.external-search-settings-row {
+    display: flex;
+    justify-content: center;
+}
+
+.external-search-settings-row .ask-settings-control {
+    width: min(100%, 220px);
 }
 
 .ask-settings-control {
