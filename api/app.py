@@ -35,6 +35,7 @@ from api.schemas import (
     ChunkingConfigUpdateRequest,
     HealthResponse,
     IngestResponse,
+    ModeComparisonResponse,
     PgvectorMetadataSnapshotResponse,
     ReindexHistoryEntryResponse,
     ReindexHistoryResponse,
@@ -1044,6 +1045,15 @@ def search_endpoint(request: SearchRequest) -> SearchResponse:
         question=request.question,
         top_k=request.top_k,
         retrieval_mode=request.retrieval_mode,
+    )
+
+
+@app.post("/mode-comparison", response_model=ModeComparisonResponse)
+def mode_comparison_endpoint(request: SearchRequest) -> ModeComparisonResponse:
+    return ModeComparisonResponse(
+        question=request.question,
+        top_k=request.top_k,
+        items=_build_mode_comparison(request.question, request.top_k),
     )
 
 

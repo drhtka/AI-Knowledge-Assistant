@@ -105,6 +105,19 @@ class AskResponse(BaseModel):
     answer_mode: str
 
 
+class ModeComparisonItem(BaseModel):
+    mode: RetrievalModeValue
+    top_source: str
+    top_score: float
+    hit_count: int
+
+
+class ModeComparisonResponse(BaseModel):
+    question: str
+    top_k: int
+    items: list[ModeComparisonItem]
+
+
 class IngestResponse(BaseModel):
     status: str
     filename: str

@@ -1,6 +1,9 @@
 const questionForm = document.getElementById("question-form");
 const clearFormButton = document.getElementById("clear-form");
 const demoButtons = document.querySelectorAll("[data-demo-question]");
+const askResultContent = document.getElementById("ask-result-content");
+const searchResultContent = document.getElementById("search-result-content");
+const modeComparisonContent = document.getElementById("mode-comparison-content");
 const uploadForm = document.getElementById("upload-form");
 const uploadResult = document.getElementById("upload-result");
 const clearUploadFileButton = document.getElementById("clear-upload-file-button");
@@ -31,7 +34,6 @@ const uploadErrorResetDelayMs = 3500;
 const presetStatusResetDelayMs = 3500;
 let uploadStatusResetTimerId = null;
 let presetStatusResetTimerId = null;
-const questionScrollRestoreKey = "main-question-scroll-y";
 
 function getQuestionInput() {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -88,36 +90,216 @@ function replaceUrlWithoutQuestionParams() {
     window.history.replaceState({}, "", nextUrl.pathname + nextUrl.search);
 }
 
-function saveQuestionScrollPosition() {
-    try {
-        window.sessionStorage.setItem(questionScrollRestoreKey, String(window.scrollY));
-    } catch {
-        // Ignore storage failures and keep default navigation behavior.
+function replaceUrlWithQuestionParams(questionValue, retrievalModeValue, topKValue) {
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set("question", questionValue);
+    nextUrl.searchParams.set("retrieval_mode", retrievalModeValue);
+    nextUrl.searchParams.set("top_k", topKValue);
+    nextUrl.searchParams.delete("web_question");
+    nextUrl.searchParams.delete("web_top_k");
+    window.history.replaceState({}, "", nextUrl.pathname + nextUrl.search);
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
+
+function renderAskResultContent(payload) {
+    if (!(askResultContent instanceof HTMLElement)) {
+        return;
+    }
+
+    if (!payload) {
+        askResultContent.innerHTML = `
+            <p class="meta">
+                Поставте запитання, щоб переглянути обґрунтовану відповідь із посиланнями
+                на контекст.
+            </p>
+        `;
+        return;
+    }
+
+    const sourcesMarkup = payload.sources
+        .map((source) => `<li>${escapeHtml(source)}</li>`)
+        .join("");
+
+    askResultContent.innerHTML = `
+        <p>${escapeHtml(payload.answer)}</p>
+        <p class="meta">
+            впевненість=${escapeHtml(payload.confidence)} | затримка_мс=${escapeHtml(payload.latency_ms)} |
+            режим=${escapeHtml(payload.answer_mode)} | пошук=${escapeHtml(payload.retrieval_mode)}
+        </p>
+        <h3>Джерела</h3>
+        <ul class="list-reset">${sourcesMarkup}</ul>
+    `;
+}
+
+function renderSearchResultContent(payload) {
+    if (!(searchResultContent instanceof HTMLElement)) {
+        return;
+    }
+
+    if (!payload || !Array.isArray(payload.hits) || payload.hits.length === 0) {
+        const retrievalModeLine = payload
+            ? `<p class="meta">режим_пошуку=${escapeHtml(payload.retrieval_mode)}</p>`
+            : "";
+        searchResultContent.innerHTML = `
+            ${retrievalModeLine}
+            <p class="meta">
+                Поставте запитання, щоб переглянути знайдений контекст.
+            </p>
+        `;
+        return;
+    }
+
+    const hitsMarkup = payload.hits
+        .map(
+            (hit) => `
+                <li>
+                    <strong>${escapeHtml(hit.title)}</strong><br />
+                    <span class="meta">
+                        файл=${escapeHtml(hit.source_name)} | фрагмент=${escapeHtml(hit.chunk_index)} |
+                        тип=${escapeHtml(hit.file_type)} | оцінка=${escapeHtml(hit.score)}
+                    </span>
+                    <br />
+                    ${escapeHtml(hit.snippet)}
+                </li>
+            `,
+        )
+        .join("");
+
+    searchResultContent.innerHTML = `
+        <p class="meta">режим_пошуку=${escapeHtml(payload.retrieval_mode)}</p>
+        <ul class="list-reset">${hitsMarkup}</ul>
+    `;
+}
+
+function renderModeComparisonContent(payload) {
+    if (!(modeComparisonContent instanceof HTMLElement)) {
+        return;
+    }
+
+    const items = payload?.items;
+    if (!Array.isArray(items) || items.length === 0) {
+        modeComparisonContent.innerHTML = `
+            <p class="meta">
+                Поставте запитання, щоб порівняти \`auto\`, \`tfidf\` та \`embeddings\`
+                поруч.
+            </p>
+        `;
+        return;
+    }
+
+    const itemsMarkup = items
+        .map(
+            (item) => `
+                <div class="mode-compare-card">
+                    <h3>${escapeHtml(item.mode)}</h3>
+                    <p class="meta">топ_джерело=${escapeHtml(item.top_source)}</p>
+                    <p class="meta">топ_оцінка=${escapeHtml(item.top_score)}</p>
+                    <p class="meta">збігів=${escapeHtml(item.hit_count)}</p>
+                </div>
+            `,
+        )
+        .join("");
+
+    modeComparisonContent.innerHTML = `<div class="mode-compare-grid">${itemsMarkup}</div>`;
+}
+
+function renderQuestionLoadingState() {
+    if (askResultContent instanceof HTMLElement) {
+        askResultContent.innerHTML = '<p class="meta">Готуємо відповідь...</p>';
+    }
+    if (searchResultContent instanceof HTMLElement) {
+        searchResultContent.innerHTML = '<p class="meta">Шукаємо релевантний контекст...</p>';
+    }
+    if (modeComparisonContent instanceof HTMLElement) {
+        modeComparisonContent.innerHTML = '<p class="meta">Порівнюємо режими пошуку...</p>';
     }
 }
 
-function restoreQuestionScrollPosition() {
-    try {
-        const savedScrollY = window.sessionStorage.getItem(questionScrollRestoreKey);
-        if (savedScrollY === null) {
-            return;
-        }
-
-        window.sessionStorage.removeItem(questionScrollRestoreKey);
-        const parsedScrollY = Number(savedScrollY);
-        if (!Number.isFinite(parsedScrollY)) {
-            return;
-        }
-
-        window.requestAnimationFrame(() => {
-            window.scrollTo({ top: parsedScrollY, behavior: "auto" });
-        });
-    } catch {
-        // Ignore storage failures and keep default navigation behavior.
-    }
+function resetQuestionResultState() {
+    renderAskResultContent(null);
+    renderSearchResultContent(null);
+    renderModeComparisonContent(null);
 }
 
-restoreQuestionScrollPosition();
+async function submitQuestionWithFetch(questionValue) {
+    const retrievalModeInput = document.getElementById("retrieval_mode");
+    const topKInput = document.getElementById("top_k");
+    const submitButton = getQuestionSubmitButton();
+    const clearButton = getQuestionClearButton();
+    const payload = {
+        question: questionValue,
+        retrieval_mode:
+            retrievalModeInput instanceof HTMLSelectElement ? retrievalModeInput.value : "auto",
+        top_k: topKInput instanceof HTMLSelectElement ? Number(topKInput.value) : 3,
+    };
+
+    if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = true;
+    }
+    if (clearButton instanceof HTMLButtonElement) {
+        clearButton.disabled = true;
+    }
+
+    renderQuestionLoadingState();
+
+    try {
+        const [askResponse, searchResponse, modeComparisonResponse] = await Promise.all([
+            fetch("/ask", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            }),
+            fetch("/search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            }),
+            fetch("/mode-comparison", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            }),
+        ]);
+
+        if (!askResponse.ok || !searchResponse.ok || !modeComparisonResponse.ok) {
+            throw new Error("question_fetch_failed");
+        }
+
+        const [askPayload, searchPayload, modeComparisonPayload] = await Promise.all([
+            askResponse.json(),
+            searchResponse.json(),
+            modeComparisonResponse.json(),
+        ]);
+
+        renderAskResultContent(askPayload);
+        renderSearchResultContent(searchPayload);
+        renderModeComparisonContent(modeComparisonPayload);
+        replaceUrlWithQuestionParams(questionValue, payload.retrieval_mode, String(payload.top_k));
+    } catch {
+        if (askResultContent instanceof HTMLElement) {
+            askResultContent.innerHTML =
+                '<p class="error-text">Не вдалося отримати відповідь. Спробуйте ще раз.</p>';
+        }
+        if (searchResultContent instanceof HTMLElement) {
+            searchResultContent.innerHTML =
+                '<p class="error-text">Не вдалося оновити знайдений контекст.</p>';
+        }
+        if (modeComparisonContent instanceof HTMLElement) {
+            modeComparisonContent.innerHTML =
+                '<p class="error-text">Не вдалося оновити порівняння режимів.</p>';
+        }
+    } finally {
+        syncQuestionActionState();
+    }
+}
 
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -526,6 +708,7 @@ if (questionForm instanceof HTMLFormElement) {
         if (!questionValue) {
             event.preventDefault();
             replaceUrlWithoutQuestionParams();
+            resetQuestionResultState();
 
             if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
                 questionInput.focus();
@@ -536,8 +719,10 @@ if (questionForm instanceof HTMLFormElement) {
         if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
             questionInput.value = questionValue;
         }
-
-        saveQuestionScrollPosition();
+        if (typeof window.fetch === "function") {
+            event.preventDefault();
+            void submitQuestionWithFetch(questionValue);
+        }
     });
 }
 
@@ -549,6 +734,7 @@ if (clearFormButton && questionForm) {
         }
         syncQuestionActionState();
         replaceUrlWithoutQuestionParams();
+        resetQuestionResultState();
 
         if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
             questionInput.focus();

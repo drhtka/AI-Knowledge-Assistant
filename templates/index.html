@@ -189,74 +189,80 @@
         </form>
     </article>
 
-<article class="content-card">
+<article class="content-card" id="ask-result-card">
     <h2 class="hero-card-title">Відповідь</h2>
-    {% if ask_result %}
-    <p>{{ ask_result.answer }}</p>
-    <p class="meta">
-        впевненість={{ ask_result.confidence }} | затримка_мс={{
-        ask_result.latency_ms }} | режим={{ ask_result.answer_mode }} |
-        пошук={{ ask_result.retrieval_mode }}
-    </p>
-    <h3>Джерела</h3>
-    <ul class="list-reset">
-        {% for source in ask_result.sources %}
-        <li>{{ source }}</li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p class="meta">
-        Поставте запитання, щоб переглянути обґрунтовану відповідь із посиланнями
-        на контекст.
-    </p>
-    {% endif %}
-</article>
-
-<section class="feature-grid">
-    <article class="content-card">
-        <h2>Знайдений контекст</h2>
-        {% if search_result %}
-        <p class="meta">режим_пошуку={{ search_result.retrieval_mode }}</p>
-        {% endif %} {% if search_result and search_result.hits %}
+    <div id="ask-result-content">
+        {% if ask_result %}
+        <p>{{ ask_result.answer }}</p>
+        <p class="meta">
+            впевненість={{ ask_result.confidence }} | затримка_мс={{
+            ask_result.latency_ms }} | режим={{ ask_result.answer_mode }} |
+            пошук={{ ask_result.retrieval_mode }}
+        </p>
+        <h3>Джерела</h3>
         <ul class="list-reset">
-            {% for hit in search_result.hits %}
-            <li>
-                <strong>{{ hit.title }}</strong><br />
-                <span class="meta">
-                    файл={{ hit.source_name }} | фрагмент={{ hit.chunk_index }} |
-                    тип={{ hit.file_type }} | оцінка={{ hit.score }}
-                </span>
-                <br />
-                {{ hit.snippet }}
-            </li>
+            {% for source in ask_result.sources %}
+            <li>{{ source }}</li>
             {% endfor %}
         </ul>
         {% else %}
         <p class="meta">
-            Поставте запитання, щоб переглянути знайдений контекст.
+            Поставте запитання, щоб переглянути обґрунтовану відповідь із посиланнями
+            на контекст.
         </p>
         {% endif %}
+    </div>
+</article>
+
+<section class="feature-grid">
+    <article class="content-card" id="search-result-card">
+        <h2>Знайдений контекст</h2>
+        <div id="search-result-content">
+            {% if search_result %}
+            <p class="meta">режим_пошуку={{ search_result.retrieval_mode }}</p>
+            {% endif %} {% if search_result and search_result.hits %}
+            <ul class="list-reset">
+                {% for hit in search_result.hits %}
+                <li>
+                    <strong>{{ hit.title }}</strong><br />
+                    <span class="meta">
+                        файл={{ hit.source_name }} | фрагмент={{ hit.chunk_index }} |
+                        тип={{ hit.file_type }} | оцінка={{ hit.score }}
+                    </span>
+                    <br />
+                    {{ hit.snippet }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="meta">
+                Поставте запитання, щоб переглянути знайдений контекст.
+            </p>
+            {% endif %}
+        </div>
     </article>
 
-    <article class="content-card">
+    <article class="content-card" id="mode-comparison-card">
         <h2>Порівняння режимів пошуку</h2>
-        {% if mode_comparison %}
-        <div class="mode-compare-grid">
-            {% for item in mode_comparison %}
-            <div class="mode-compare-card">
-                <h3>{{ item.mode }}</h3>
-                <p class="meta">топ_джерело={{ item.top_source }}</p>
-                <p class="meta">топ_оцінка={{ item.top_score }}</p>
-                <p class="meta">збігів={{ item.hit_count }}</p>
+        <div id="mode-comparison-content">
+            {% if mode_comparison %}
+            <div class="mode-compare-grid">
+                {% for item in mode_comparison %}
+                <div class="mode-compare-card">
+                    <h3>{{ item.mode }}</h3>
+                    <p class="meta">топ_джерело={{ item.top_source }}</p>
+                    <p class="meta">топ_оцінка={{ item.top_score }}</p>
+                    <p class="meta">збігів={{ item.hit_count }}</p>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% else %}
+            <p class="meta">
+                Поставте запитання, щоб порівняти `auto`, `tfidf` та `embeddings`
+                поруч.
+            </p>
+            {% endif %}
         </div>
-        {% else %}
-        <p class="meta">
-            Поставте запитання, щоб порівняти `auto`, `tfidf` та `embeddings`
-            поруч.
-        </p>
-        {% endif %}
     </article>
 </section>
 {% endblock %}
