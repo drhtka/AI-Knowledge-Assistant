@@ -485,6 +485,13 @@ select:disabled {
     border-radius: 999px;
 }
 
+.external-search-form .ask-main-actions button,
+.external-search-form .ask-main-actions .button-link {
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 999px;
+}
+
 .ask-demo-kicker-row {
     margin-top: 10px;
     margin-bottom: 0;
