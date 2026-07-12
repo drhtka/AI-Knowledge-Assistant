@@ -27,6 +27,11 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      SERPAPI_ENABLED: ${SERPAPI_ENABLED:-false}
+      SERPAPI_ENGINE: ${SERPAPI_ENGINE:-google}
+      SERPAPI_NUM_RESULTS: ${SERPAPI_NUM_RESULTS:-5}
+      SERPAPI_TIMEOUT_SEC: ${SERPAPI_TIMEOUT_SEC:-15}
     expose:
       - "8000"
     depends_on:
