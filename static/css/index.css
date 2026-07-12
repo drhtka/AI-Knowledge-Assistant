@@ -479,11 +479,24 @@ select:disabled {
     margin-top: 10px;
 }
 
+.external-search-top-k-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
 .external-search-top-k-row {
     display: flex;
     justify-content: flex-start;
     gap: 10px;
     margin-top: 0;
+}
+
+.external-search-top-k-caption {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 12px;
 }
 
 .external-search-top-k-pill {

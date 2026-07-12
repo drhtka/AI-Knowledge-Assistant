@@ -17,19 +17,22 @@
                         {% if not admin_auth.is_authenticated %}disabled{% endif %}
                     >{{ web_question }}</textarea>
                     <div class="external-search-composer-footer">
-                        <div class="external-search-top-k-row" role="radiogroup" aria-label="Ліміт результатів">
-                            {% for value in web_top_k_options %}
-                            <label class="external-search-top-k-pill">
-                                <input
-                                    type="radio"
-                                    name="web_top_k"
-                                    value="{{ value }}"
-                                    {% if web_top_k == value %}checked{% endif %}
-                                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
-                                />
-                                <span>{{ value }}</span>
-                            </label>
-                            {% endfor %}
+                        <div class="external-search-top-k-group">
+                            <div class="external-search-top-k-row" role="radiogroup" aria-label="Ліміт результатів">
+                                {% for value in web_top_k_options %}
+                                <label class="external-search-top-k-pill">
+                                    <input
+                                        type="radio"
+                                        name="web_top_k"
+                                        value="{{ value }}"
+                                        {% if web_top_k == value %}checked{% endif %}
+                                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                                    />
+                                    <span>{{ value }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <p class="meta external-search-top-k-caption">Ліміт результатів</p>
                         </div>
                     </div>
                 </div>
