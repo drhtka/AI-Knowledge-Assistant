@@ -77,6 +77,16 @@ function syncQuestionActionState() {
     }
 }
 
+function replaceUrlWithoutQuestionParams() {
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.delete("question");
+    nextUrl.searchParams.delete("top_k");
+    nextUrl.searchParams.delete("retrieval_mode");
+    nextUrl.searchParams.delete("web_question");
+    nextUrl.searchParams.delete("web_top_k");
+    window.history.replaceState({}, "", nextUrl.pathname + nextUrl.search);
+}
+
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
         const nextUrl = new URL(window.location.origin + "/");
@@ -483,14 +493,11 @@ if (questionForm instanceof HTMLFormElement) {
 
         if (!questionValue) {
             event.preventDefault();
+            replaceUrlWithoutQuestionParams();
 
-            const nextUrl = new URL(window.location.href);
-            nextUrl.searchParams.delete("question");
-            nextUrl.searchParams.delete("top_k");
-            nextUrl.searchParams.delete("retrieval_mode");
-            nextUrl.searchParams.delete("web_question");
-            nextUrl.searchParams.delete("web_top_k");
-            window.location.assign(nextUrl.pathname + nextUrl.search);
+            if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
+                questionInput.focus();
+            }
             return;
         }
 
@@ -507,14 +514,11 @@ if (clearFormButton && questionForm) {
             questionInput.value = "";
         }
         syncQuestionActionState();
+        replaceUrlWithoutQuestionParams();
 
-        const nextUrl = new URL(window.location.href);
-        nextUrl.searchParams.delete("question");
-        nextUrl.searchParams.delete("top_k");
-        nextUrl.searchParams.delete("retrieval_mode");
-        nextUrl.searchParams.delete("web_question");
-        nextUrl.searchParams.delete("web_top_k");
-        window.location.assign(nextUrl.pathname + nextUrl.search);
+        if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
+            questionInput.focus();
+        }
     });
 }
 
