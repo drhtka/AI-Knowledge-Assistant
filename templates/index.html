@@ -157,13 +157,6 @@
                     </span>
                 </div>
                 <label for="question" class="ask-question-label">Поставте запитання</label>
-                <div class="actions">
-                    {% for item in demo_prompts %}
-                    <button type="button" data-demo-question="{{ item.question }}">
-                        {{ item.label }}
-                    </button>
-                    {% endfor %}
-                </div>
                 <div class="ask-question-composer">
                     <textarea
                         id="question"
@@ -173,6 +166,15 @@
                         {% if not admin_auth.is_authenticated %}readonly title="Без admin auth доступні тільки demo-запити"{% endif %}
                         required
                     >{{ question }}</textarea>
+                    <div class="ask-question-composer-footer">
+                        <div class="ask-demo-pill-row">
+                            {% for item in demo_prompts %}
+                            <button type="button" class="ask-demo-pill" data-demo-question="{{ item.question }}">
+                                {{ item.label }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 {% if not admin_auth.is_authenticated %}
                 <p class="meta ask-input-lock-note">

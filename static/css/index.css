@@ -389,6 +389,8 @@ select:disabled {
     width: min(100%, 860px);
     min-height: 164px;
     align-self: center;
+    display: flex;
+    flex-direction: column;
     box-sizing: border-box;
     padding: 24px;
     border: 1px solid rgba(148, 163, 184, 0.22);
@@ -424,6 +426,35 @@ select:disabled {
     background: transparent;
 }
 
+.ask-question-composer-footer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.ask-demo-pill-row {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ask-demo-pill {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+}
+
+.ask-demo-pill:hover:not(:disabled) {
+    border-color: rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+}
+
 .ask-main-column input {
     width: min(100%, 760px);
     min-height: 52px;
@@ -446,6 +477,12 @@ select:disabled {
 
 .ask-main-actions {
     margin-top: 6px;
+}
+
+.ask-card #question-form .ask-main-actions button {
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 999px;
 }
 
 .ask-demo-kicker-row {
