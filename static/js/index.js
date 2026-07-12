@@ -31,6 +31,7 @@ const uploadErrorResetDelayMs = 3500;
 const presetStatusResetDelayMs = 3500;
 let uploadStatusResetTimerId = null;
 let presetStatusResetTimerId = null;
+const questionScrollRestoreKey = "main-question-scroll-y";
 
 function getQuestionInput() {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -86,6 +87,37 @@ function replaceUrlWithoutQuestionParams() {
     nextUrl.searchParams.delete("web_top_k");
     window.history.replaceState({}, "", nextUrl.pathname + nextUrl.search);
 }
+
+function saveQuestionScrollPosition() {
+    try {
+        window.sessionStorage.setItem(questionScrollRestoreKey, String(window.scrollY));
+    } catch {
+        // Ignore storage failures and keep default navigation behavior.
+    }
+}
+
+function restoreQuestionScrollPosition() {
+    try {
+        const savedScrollY = window.sessionStorage.getItem(questionScrollRestoreKey);
+        if (savedScrollY === null) {
+            return;
+        }
+
+        window.sessionStorage.removeItem(questionScrollRestoreKey);
+        const parsedScrollY = Number(savedScrollY);
+        if (!Number.isFinite(parsedScrollY)) {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            window.scrollTo({ top: parsedScrollY, behavior: "auto" });
+        });
+    } catch {
+        // Ignore storage failures and keep default navigation behavior.
+    }
+}
+
+restoreQuestionScrollPosition();
 
 function fillQuestionInput(questionText) {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -504,6 +536,8 @@ if (questionForm instanceof HTMLFormElement) {
         if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
             questionInput.value = questionValue;
         }
+
+        saveQuestionScrollPosition();
     });
 }
 
