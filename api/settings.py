@@ -104,9 +104,16 @@ PGVECTOR_DATABASE_URL = _env_str(
 LLM_ENABLED = _env_flag("LLM_ENABLED", default=False)
 LLM_API_KEY = _env_str("LLM_API_KEY", "")
 LLM_API_BASE = _env_str("LLM_API_BASE", "https://api.openai.com/v1").rstrip("/")
+LLM_CHAT_COMPLETIONS_URL = _env_str("LLM_CHAT_COMPLETIONS_URL", "").rstrip("/")
 LLM_MODEL = _env_str("LLM_MODEL", "gpt-4o-mini")
 LLM_TIMEOUT_SEC = float(_env_str("LLM_TIMEOUT_SEC", "20"))
 LLM_MAX_TOKENS = int(_env_str("LLM_MAX_TOKENS", "220"))
+
+WEB_SEARCH_OPENAI_ENABLED = _env_flag("WEB_SEARCH_OPENAI_ENABLED", default=False)
+WEB_SEARCH_OPENAI_URL = _env_str("WEB_SEARCH_OPENAI_URL", "").rstrip("/")
+WEB_SEARCH_OPENAI_API_KEY = _env_str("WEB_SEARCH_OPENAI_API_KEY", "")
+WEB_SEARCH_OPENAI_MODEL = _env_str("WEB_SEARCH_OPENAI_MODEL", LLM_MODEL)
+WEB_SEARCH_OPENAI_TIMEOUT_SEC = float(_env_str("WEB_SEARCH_OPENAI_TIMEOUT_SEC", "20"))
 
 SERPAPI_ENABLED = _env_flag("SERPAPI_ENABLED", default=False)
 SERPAPI_API_KEY = _env_str("SERPAPI_API_KEY", "")

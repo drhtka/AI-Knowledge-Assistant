@@ -28,6 +28,15 @@ services:
     env_file:
       - .env
     environment:
+      LLM_ENABLED: ${LLM_ENABLED:-true}
+      LLM_CHAT_COMPLETIONS_URL: ${LLM_CHAT_COMPLETIONS_URL:-https://3xanny-secureapi.hf.space/v1/chat/completions}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_TIMEOUT_SEC: ${LLM_TIMEOUT_SEC:-20}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-220}
+      WEB_SEARCH_OPENAI_ENABLED: ${WEB_SEARCH_OPENAI_ENABLED:-true}
+      WEB_SEARCH_OPENAI_URL: ${WEB_SEARCH_OPENAI_URL:-https://3xanny-secureapi.hf.space/v1/chat/completions}
+      WEB_SEARCH_OPENAI_MODEL: ${WEB_SEARCH_OPENAI_MODEL:-gpt-4o-mini}
+      WEB_SEARCH_OPENAI_TIMEOUT_SEC: ${WEB_SEARCH_OPENAI_TIMEOUT_SEC:-20}
       SERPAPI_ENABLED: ${SERPAPI_ENABLED:-false}
       SERPAPI_ENGINE: ${SERPAPI_ENGINE:-google}
       SERPAPI_NUM_RESULTS: ${SERPAPI_NUM_RESULTS:-5}

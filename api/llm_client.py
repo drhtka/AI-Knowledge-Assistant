@@ -6,6 +6,7 @@ from urllib import error, request
 from api.settings import (
     LLM_API_BASE,
     LLM_API_KEY,
+    LLM_CHAT_COMPLETIONS_URL,
     LLM_ENABLED,
     LLM_MAX_TOKENS,
     LLM_MODEL,
@@ -17,7 +18,7 @@ def generate_answer_from_context(question: str, context: str) -> str | None:
     if not LLM_ENABLED or not LLM_API_KEY.strip():
         return None
 
-    endpoint = f"{LLM_API_BASE}/chat/completions"
+    endpoint = LLM_CHAT_COMPLETIONS_URL or f"{LLM_API_BASE}/chat/completions"
     payload = {
         "model": LLM_MODEL,
         "temperature": 0.2,
