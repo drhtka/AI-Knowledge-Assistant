@@ -12,23 +12,9 @@
                 </div>
                 <div class="external-search-settings-row">
                     <div class="dashboard-panel compact-control-panel ask-settings-control">
-                        <div class="label-with-tooltip">
-                            <label for="web_top_k">Ліміт результатів</label>
-                        </div>
-                        <div class="select-with-status">
-                            <select
-                                id="web_top_k"
-                                name="web_top_k"
-                                {% if not admin_auth.is_authenticated %}disabled{% endif %}
-                            >
-                                {% for value in web_top_k_options %}
-                                <option value="{{ value }}" {% if web_top_k == value %}selected{% endif %}>
-                                    {{ value }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <span class="select-status-check" aria-hidden="true">✓</span>
-                        </div>
+                        <span class="stat-label">Ліміт результатів</span>
+                        <strong class="external-search-fixed-value">{{ web_top_k }}</strong>
+                        <input type="hidden" id="web_top_k" name="web_top_k" value="{{ web_top_k }}" />
                     </div>
                 </div>
             </div>
