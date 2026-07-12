@@ -38,7 +38,9 @@ function getQuestionInput() {
     }
 
     const questionInput = questionForm.elements.namedItem("question");
-    return questionInput instanceof HTMLInputElement ? questionInput : null;
+    return questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement
+        ? questionInput
+        : null;
 }
 
 function getQuestionSubmitButton() {
@@ -56,7 +58,9 @@ function getQuestionClearButton() {
 
 function getNormalizedQuestionValue() {
     const questionInput = getQuestionInput();
-    return questionInput instanceof HTMLInputElement ? questionInput.value.trim() : "";
+    return questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement
+        ? questionInput.value.trim()
+        : "";
 }
 
 function syncQuestionActionState() {
@@ -82,7 +86,7 @@ function fillQuestionInput(questionText) {
     }
 
     const questionInput = getQuestionInput();
-    if (questionInput instanceof HTMLInputElement) {
+    if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
         questionInput.value = questionText;
         syncQuestionActionState();
         questionInput.focus();
@@ -465,7 +469,10 @@ if (questionForm instanceof HTMLFormElement) {
 
     syncQuestionActionState();
 
-    if (questionInput instanceof HTMLInputElement && !questionInput.readOnly) {
+    if (
+        (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) &&
+        !questionInput.readOnly
+    ) {
         questionInput.addEventListener("input", () => {
             syncQuestionActionState();
         });
@@ -487,7 +494,7 @@ if (questionForm instanceof HTMLFormElement) {
             return;
         }
 
-        if (questionInput instanceof HTMLInputElement) {
+        if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
             questionInput.value = questionValue;
         }
     });
@@ -496,7 +503,7 @@ if (questionForm instanceof HTMLFormElement) {
 if (clearFormButton && questionForm) {
     clearFormButton.addEventListener("click", () => {
         const questionInput = getQuestionInput();
-        if (questionInput instanceof HTMLInputElement) {
+        if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
             questionInput.value = "";
         }
         syncQuestionActionState();

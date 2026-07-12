@@ -164,14 +164,16 @@
                     </button>
                     {% endfor %}
                 </div>
-                <input
-                    id="question"
-                    name="question"
-                    value="{{ question }}"
-                    placeholder="{% if admin_auth.is_authenticated %}Як мені оцінювати якість пошуку?{% else %}Оберіть один із demo-запитів вище{% endif %}"
-                    {% if not admin_auth.is_authenticated %}readonly title="Без admin auth доступні тільки demo-запити"{% endif %}
-                    required
-                />
+                <div class="ask-question-composer">
+                    <textarea
+                        id="question"
+                        name="question"
+                        class="ask-question-input"
+                        placeholder="{% if admin_auth.is_authenticated %}Як мені оцінювати якість пошуку?{% else %}Оберіть один із demo-запитів вище{% endif %}"
+                        {% if not admin_auth.is_authenticated %}readonly title="Без admin auth доступні тільки demo-запити"{% endif %}
+                        required
+                    >{{ question }}</textarea>
+                </div>
                 {% if not admin_auth.is_authenticated %}
                 <p class="meta ask-input-lock-note">
                     Без <code>admin auth</code> доступні тільки demo-запити.
