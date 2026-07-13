@@ -1088,12 +1088,12 @@ select:disabled {
 }
 
 .chunking-summary-shell {
-    margin-top: 2px;
+    margin-top: 14px;
 }
 
 .chunking-summary-caption {
     display: inline-block;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     color: #94a3b8;
     font-size: 11px;
     font-weight: 700;
@@ -1103,8 +1103,8 @@ select:disabled {
 
 .chunking-summary-row {
     margin-top: 0;
-    margin-bottom: 4px;
-    gap: 10px;
+    margin-bottom: 10px;
+    gap: 12px;
     justify-content: center;
 }
 
@@ -1684,12 +1684,14 @@ select:disabled {
 .feature-subsection {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 20px;
 }
 
 .feature-subsection-header {
     display: flex;
     align-items: flex-start;
+    margin-bottom: 6px;
 }
 
 .feature-subsection-title {
@@ -1703,7 +1705,8 @@ select:disabled {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 20px;
+    margin-top: 8px;
 }
 
 .chunking-custom-form .label-with-tooltip,
@@ -1715,7 +1718,9 @@ select:disabled {
 .chunking-custom-form .label-with-tooltip {
     width: 100%;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    margin-top: 4px;
 }
 
 .chunking-custom-form .label-with-tooltip label {
