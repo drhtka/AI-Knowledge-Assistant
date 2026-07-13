@@ -82,41 +82,69 @@
             {% if upload_feedback and upload_feedback.status == "ok" %}
             <div class="upload-result upload-result-card success-text">
                 <strong>Документ успішно завантажено</strong>
-                <p class="meta">
-                    файл={{ upload_feedback.source_name }} |
-                    тип={{ upload_feedback.file_type }} |
-                    очікуваних_фрагментів={{ upload_feedback.estimated_chunks }}
-                </p>
-                <p class="meta">
-                    {{ upload_feedback.reindex_message or "Фоновий reindex для документа вже запущено." }}
-                </p>
-                {% if upload_feedback.preview_text %}
-                <div class="upload-preview">
-                    <p class="meta"><strong>Попередній перегляд документа</strong></p>
-                    <p class="upload-preview-text">
-                        {{ upload_feedback.preview_text }}
-                    </p>
+                <p class="meta">Деталі відкрилися в модальному вікні.</p>
+                <div class="actions upload-result-actions">
+                    <button type="button" id="open-upload-success-modal-button">
+                        Переглянути деталі
+                    </button>
                 </div>
-                {% endif %}
-                <div class="actions">
+            </div>
+            <div
+                id="upload-success-modal"
+                class="upload-success-modal is-open"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="upload-success-modal-title"
+            >
+                <div class="upload-success-modal-backdrop" data-close-upload-modal></div>
+                <div class="upload-success-modal-dialog">
                     <button
                         type="button"
-                        data-demo-question="Про що документ {{ upload_feedback.source_name }}?"
+                        class="upload-success-modal-close"
+                        aria-label="Закрити модальне вікно"
+                        data-close-upload-modal
                     >
-                        Про що цей документ?
+                        ×
                     </button>
-                    <button
-                        type="button"
-                        data-demo-question="Які ключові моменти в {{ upload_feedback.source_name }}?"
-                    >
-                        Ключові моменти
-                    </button>
-                    <button
-                        type="button"
-                        data-demo-question="Поясни простими словами зміст {{ upload_feedback.source_name }}."
-                    >
-                        Простий підсумок
-                    </button>
+                    <div class="upload-success-modal-body">
+                        <strong id="upload-success-modal-title">Документ успішно завантажено</strong>
+                        <p class="meta">
+                            файл={{ upload_feedback.source_name }} |
+                            тип={{ upload_feedback.file_type }} |
+                            очікуваних_фрагментів={{ upload_feedback.estimated_chunks }}
+                        </p>
+                        <p class="meta">
+                            {{ upload_feedback.reindex_message or "Фоновий reindex для документа вже запущено." }}
+                        </p>
+                        {% if upload_feedback.preview_text %}
+                        <div class="upload-preview">
+                            <p class="meta"><strong>Попередній перегляд документа</strong></p>
+                            <p class="upload-preview-text">
+                                {{ upload_feedback.preview_text }}
+                            </p>
+                        </div>
+                        {% endif %}
+                        <div class="actions upload-result-actions">
+                            <button
+                                type="button"
+                                data-demo-question="Про що документ {{ upload_feedback.source_name }}?"
+                            >
+                                Про що цей документ?
+                            </button>
+                            <button
+                                type="button"
+                                data-demo-question="Які ключові моменти в {{ upload_feedback.source_name }}?"
+                            >
+                                Ключові моменти
+                            </button>
+                            <button
+                                type="button"
+                                data-demo-question="Поясни простими словами зміст {{ upload_feedback.source_name }}."
+                            >
+                                Простий підсумок
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% elif upload_feedback and upload_feedback.status == "error" %}

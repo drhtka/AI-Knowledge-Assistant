@@ -7,6 +7,8 @@ const modeComparisonContent = document.getElementById("mode-comparison-content")
 const uploadForm = document.getElementById("upload-form");
 const uploadResult = document.getElementById("upload-result");
 const clearUploadFileButton = document.getElementById("clear-upload-file-button");
+const openUploadSuccessModalButton = document.getElementById("open-upload-success-modal-button");
+const uploadSuccessModal = document.getElementById("upload-success-modal");
 const uploadDropzone = document.getElementById("upload-dropzone");
 const uploadSelectedFile = document.getElementById("upload-selected-file");
 const uploadDropzoneTitle = document.getElementById("upload-dropzone-title");
@@ -654,6 +656,45 @@ function renderUploadSuccess(payload) {
     const title = document.createElement("strong");
     title.textContent = "Document uploaded successfully";
 
+    const message = document.createElement("p");
+    message.className = "meta";
+    message.textContent = "Details are available in the modal window.";
+
+    const actions = document.createElement("div");
+    actions.className = "actions upload-result-actions";
+
+    const openButton = document.createElement("button");
+    openButton.type = "button";
+    openButton.textContent = "View Details";
+
+    const modal = document.createElement("div");
+    modal.id = "upload-success-modal";
+    modal.className = "upload-success-modal is-open";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "upload-success-modal-title");
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "upload-success-modal-backdrop";
+    backdrop.dataset.closeUploadModal = "true";
+
+    const dialog = document.createElement("div");
+    dialog.className = "upload-success-modal-dialog";
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "upload-success-modal-close";
+    closeButton.setAttribute("aria-label", "Close modal");
+    closeButton.dataset.closeUploadModal = "true";
+    closeButton.textContent = "×";
+
+    const body = document.createElement("div");
+    body.className = "upload-success-modal-body";
+
+    const modalTitle = document.createElement("strong");
+    modalTitle.id = "upload-success-modal-title";
+    modalTitle.textContent = "Document uploaded successfully";
+
     const details = document.createElement("p");
     details.className = "meta";
     details.textContent =
@@ -681,19 +722,8 @@ function renderUploadSuccess(payload) {
         previewBlock.append(previewTitle, previewText);
     }
 
-    const ctaButton = document.createElement("button");
-    ctaButton.type = "button";
-    ctaButton.textContent = "Ask About This Document";
-    ctaButton.addEventListener("click", () => {
-        fillQuestionInput(`What is ${payload.source_name} about?`);
-    });
-
-    const quickPromptIntro = document.createElement("p");
-    quickPromptIntro.className = "meta";
-    quickPromptIntro.textContent = "Quick prompts for the uploaded document:";
-
     const quickPromptActions = document.createElement("div");
-    quickPromptActions.className = "actions";
+    quickPromptActions.className = "actions upload-result-actions";
 
     const quickPrompts = [
         `What is ${payload.source_name} about?`,
@@ -707,16 +737,43 @@ function renderUploadSuccess(payload) {
         promptButton.textContent = promptText;
         promptButton.addEventListener("click", () => {
             fillQuestionInput(promptText);
+            modal.classList.remove("is-open");
         });
         quickPromptActions.append(promptButton);
     });
 
+    const closeModal = () => {
+        modal.classList.remove("is-open");
+    };
+
+    openButton.addEventListener("click", () => {
+        modal.classList.add("is-open");
+    });
+
+    modal.addEventListener("click", (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (target?.dataset.closeUploadModal === "true") {
+            closeModal();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && modal.classList.contains("is-open")) {
+            closeModal();
+        }
+    });
+
+    actions.append(openButton);
+    body.append(modalTitle, details, followUp);
+
     if (previewBlock instanceof HTMLDivElement) {
-        uploadResult.append(title, details, followUp, previewBlock, ctaButton, quickPromptIntro, quickPromptActions);
-        return;
+        body.append(previewBlock);
     }
 
-    uploadResult.append(title, details, followUp, ctaButton, quickPromptIntro, quickPromptActions);
+    body.append(quickPromptActions);
+    dialog.append(closeButton, body);
+    modal.append(backdrop, dialog);
+    uploadResult.append(title, message, actions, modal);
 }
 
 demoButtons.forEach((button) => {
