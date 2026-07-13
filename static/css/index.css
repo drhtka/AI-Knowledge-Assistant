@@ -693,7 +693,7 @@ select:disabled {
 }
 
 .ask-main-actions {
-    margin-top: 6px;
+    margin-top: -6px;
 }
 
 .ask-card #question-form .ask-main-actions button {
