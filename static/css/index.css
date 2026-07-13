@@ -490,6 +490,7 @@ select:disabled {
     min-height: 38px;
     padding: 8px 34px 8px 10px;
     font-size: 13px;
+    background: transparent;
 }
 
 .ask-settings-row-in-composer .select-status-check {
