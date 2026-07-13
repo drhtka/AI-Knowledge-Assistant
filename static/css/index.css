@@ -1681,6 +1681,10 @@ select:disabled {
     justify-content: center;
 }
 
+#upload-form #upload-button {
+    border-radius: 999px;
+}
+
 .feature-subsection {
     display: flex;
     flex-direction: column;
@@ -2068,6 +2072,73 @@ button {
     border: 1px solid #166534;
     border-radius: 12px;
     background: rgba(22, 101, 52, 0.14);
+}
+
+.upload-result-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.upload-result-actions button,
+.upload-success-modal-close {
+    border-radius: 999px;
+}
+
+.upload-success-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.upload-success-modal.is-open {
+    display: flex;
+}
+
+.upload-success-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.72);
+    backdrop-filter: blur(6px);
+}
+
+.upload-success-modal-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(720px, 100%);
+    max-height: min(80vh, 820px);
+    overflow-y: auto;
+    padding: 22px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
+    box-shadow: 0 28px 80px rgba(2, 6, 23, 0.5);
+}
+
+.upload-success-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.upload-success-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    line-height: 1;
 }
 
 .upload-preview {
