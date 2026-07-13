@@ -1247,6 +1247,11 @@ select:disabled {
     justify-content: center;
 }
 
+.system-runtime-card:first-child .label-with-tooltip label {
+    text-align: center;
+    margin-left: 88px;
+}
+
 .system-runtime-summary-row {
     justify-content: space-between;
 }
