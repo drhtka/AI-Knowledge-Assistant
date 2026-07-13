@@ -878,6 +878,34 @@ if (topKInput instanceof HTMLSelectElement) {
     });
 }
 
+const composerSettingsSelects = document.querySelectorAll(".ask-settings-row-in-composer select");
+composerSettingsSelects.forEach((select) => {
+    if (!(select instanceof HTMLSelectElement)) {
+        return;
+    }
+
+    const wrapper = select.closest(".select-with-status");
+    if (!(wrapper instanceof HTMLElement)) {
+        return;
+    }
+
+    select.addEventListener("mousedown", () => {
+        wrapper.classList.add("select-open");
+    });
+
+    select.addEventListener("blur", () => {
+        window.setTimeout(() => {
+            wrapper.classList.remove("select-open");
+        }, 0);
+    });
+
+    select.addEventListener("change", () => {
+        window.setTimeout(() => {
+            wrapper.classList.remove("select-open");
+        }, 0);
+    });
+});
+
 syncMainFlowRuntimeSummary();
 
 if (storageBackendForm instanceof HTMLFormElement && storageBackendResult instanceof HTMLElement) {
