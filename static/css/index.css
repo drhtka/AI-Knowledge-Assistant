@@ -436,11 +436,24 @@ select:disabled {
     margin-top: 10px;
 }
 
+.ask-demo-pill-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
 .ask-demo-pill-row {
     display: flex;
     justify-content: flex-start;
     gap: 10px;
     flex-wrap: wrap;
+}
+
+.ask-demo-footer-label {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 12px;
 }
 
 .ask-demo-pill {

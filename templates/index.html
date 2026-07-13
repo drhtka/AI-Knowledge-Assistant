@@ -145,9 +145,6 @@
                 ></div>
             </div>
             <div class="ask-main-column">
-                <div class="section-kicker-row ask-demo-kicker-row">
-                    <p class="section-kicker">Демо запити</p>
-                </div>
                 <label for="question" class="ask-question-label">Поставте запитання</label>
                 <div class="ask-question-composer">
                     <textarea
@@ -159,12 +156,15 @@
                         required
                     >{{ question }}</textarea>
                     <div class="ask-question-composer-footer">
-                        <div class="ask-demo-pill-row">
-                            {% for item in demo_prompts %}
-                            <button type="button" class="ask-demo-pill" data-demo-question="{{ item.question }}">
-                                {{ item.label }}
-                            </button>
-                            {% endfor %}
+                        <div class="ask-demo-pill-group">
+                            <div class="ask-demo-pill-row">
+                                {% for item in demo_prompts %}
+                                <button type="button" class="ask-demo-pill" data-demo-question="{{ item.question }}">
+                                    {{ item.label }}
+                                </button>
+                                {% endfor %}
+                            </div>
+                            <p class="meta ask-demo-footer-label">Демо запити</p>
                         </div>
                     </div>
                 </div>
