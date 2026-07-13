@@ -113,13 +113,41 @@
         </div>
         <form id="storage-backend-form" class="inline-form system-backend-form">
             <div class="label-with-tooltip">
-                <label for="storage_backend">Виберіть backend</label>
+                <label for="storage_backend_button">Виберіть backend</label>
             </div>
             <div class="inline-form-row system-runtime-form-row">
-                <div class="select-with-status">
+                <div class="custom-select system-custom-select{% if not admin_auth.is_authenticated %} is-disabled{% endif %}" data-target-select="storage_backend">
+                    <button
+                        type="button"
+                        id="storage_backend_button"
+                        class="custom-select-trigger"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                    >
+                        <span class="custom-select-value">
+                            {% for backend in system_config.available_storage_backends %}{% if system_config.current_storage_backend == backend %}{{ backend }}{% endif %}{% endfor %}
+                        </span>
+                        <span class="custom-select-arrow" aria-hidden="true"></span>
+                    </button>
+                    <div class="custom-select-dropdown" role="listbox">
+                        {% for backend in system_config.available_storage_backends %}
+                        <button
+                            type="button"
+                            class="custom-select-option{% if system_config.current_storage_backend == backend %} is-selected{% endif %}"
+                            data-value="{{ backend }}"
+                            role="option"
+                            aria-selected="{% if system_config.current_storage_backend == backend %}true{% else %}false{% endif %}"
+                            {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                        >
+                            {{ backend }}
+                        </button>
+                        {% endfor %}
+                    </div>
                     <select
                         id="storage_backend"
                         name="storage_backend"
+                        class="custom-select-native"
                         {% if not admin_auth.is_authenticated %}disabled{% endif %}
                     >
                         {% for backend in system_config.available_storage_backends %}
@@ -131,7 +159,6 @@
                         </option>
                         {% endfor %}
                     </select>
-                    <span class="select-status-check" aria-hidden="true">✓</span>
                 </div>
             </div>
         </form>
