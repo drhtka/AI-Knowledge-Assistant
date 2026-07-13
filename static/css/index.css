@@ -1179,10 +1179,10 @@ select:disabled {
 }
 
 .system-runtime-summary {
-    margin-top: 4px;
+    margin-top: 30px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 20px;
 }
 
 .system-runtime-summary-row {
@@ -1244,12 +1244,26 @@ select:disabled {
 
 .system-runtime-card:first-child .label-with-tooltip,
 .system-runtime-card:first-child .inline-form-row {
+    display: flex;
     justify-content: center;
 }
 
+.system-runtime-card:first-child .system-backend-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.system-runtime-card:first-child .label-with-tooltip {
+    width: 100%;
+    margin-bottom: 4px;
+}
+
 .system-runtime-card:first-child .label-with-tooltip label {
+    display: block;
+    width: 100%;
     text-align: center;
-    margin-left: 88px;
 }
 
 .system-runtime-summary-row {
