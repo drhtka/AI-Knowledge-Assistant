@@ -878,6 +878,8 @@ if (topKInput instanceof HTMLSelectElement) {
     });
 }
 
+syncMainFlowRuntimeSummary();
+
 const composerSettingsSelects = document.querySelectorAll(".ask-settings-row-in-composer select");
 composerSettingsSelects.forEach((select) => {
     if (!(select instanceof HTMLSelectElement)) {
@@ -889,24 +891,36 @@ composerSettingsSelects.forEach((select) => {
         return;
     }
 
-    select.addEventListener("mousedown", () => {
+    const closeArrow = () => {
+        wrapper.classList.remove("select-open");
+    };
+
+    select.addEventListener("pointerdown", () => {
         wrapper.classList.add("select-open");
     });
 
-    select.addEventListener("blur", () => {
-        window.setTimeout(() => {
-            wrapper.classList.remove("select-open");
-        }, 0);
+    select.addEventListener("keydown", (event) => {
+        if (event.key === " " || event.key === "Enter" || event.key === "ArrowDown" || event.key === "ArrowUp") {
+            wrapper.classList.add("select-open");
+        }
     });
 
     select.addEventListener("change", () => {
+        closeArrow();
+    });
+
+    select.addEventListener("blur", () => {
+        closeArrow();
+    });
+
+    select.addEventListener("click", () => {
         window.setTimeout(() => {
-            wrapper.classList.remove("select-open");
+            if (document.activeElement !== select) {
+                closeArrow();
+            }
         }, 0);
     });
 });
-
-syncMainFlowRuntimeSummary();
 
 if (storageBackendForm instanceof HTMLFormElement && storageBackendResult instanceof HTMLElement) {
     const backendInput = storageBackendForm.elements.namedItem("storage_backend");

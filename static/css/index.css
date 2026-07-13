@@ -508,8 +508,7 @@ select:disabled {
     transition: transform 0.18s ease;
 }
 
-.ask-settings-row-in-composer .select-with-status:focus-within .select-status-check,
-.ask-settings-row-in-composer .select-with-status.select-open .select-status-check {
+.ask-settings-row-in-composer .select-with-status:focus-within .select-status-check {
     transform: translateY(-50%) rotate(180deg);
 }
 
