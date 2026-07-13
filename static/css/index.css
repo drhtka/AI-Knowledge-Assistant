@@ -495,13 +495,21 @@ select:disabled {
 
 .ask-settings-row-in-composer .select-status-check {
     right: 12px;
-    font-size: 14px;
-    color: #86efac;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #86efac;
+    color: transparent;
+    font-size: 0;
+    line-height: 0;
     z-index: 2;
+    transform: translateY(-50%);
+    transition: transform 0.18s ease;
 }
 
 .ask-settings-row-in-composer .select-with-status:focus-within .select-status-check {
-    color: #86efac;
+    transform: translateY(-50%) rotate(180deg);
 }
 
 .ask-settings-row-in-composer .label-with-tooltip {
