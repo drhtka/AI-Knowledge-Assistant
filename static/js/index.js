@@ -9,6 +9,8 @@ const uploadResult = document.getElementById("upload-result");
 const clearUploadFileButton = document.getElementById("clear-upload-file-button");
 const uploadDropzone = document.getElementById("upload-dropzone");
 const uploadSelectedFile = document.getElementById("upload-selected-file");
+const uploadDropzoneTitle = document.getElementById("upload-dropzone-title");
+const uploadDropzoneSubtitle = document.getElementById("upload-dropzone-subtitle");
 const mainFlowChunkingPreset = document.getElementById("main_flow_chunking_preset");
 const mainFlowPresetResult = document.getElementById("main-flow-preset-result");
 const runtimeSummaryMode = document.getElementById("runtime-summary-mode");
@@ -498,6 +500,16 @@ function syncUploadDropzoneState(fileInput) {
 
     if (uploadDropzone instanceof HTMLElement) {
         uploadDropzone.classList.toggle("has-file", Boolean(selectedFileName));
+    }
+
+    if (uploadDropzoneTitle instanceof HTMLElement) {
+        uploadDropzoneTitle.textContent = selectedFileName || "Перетягніть файл сюди";
+    }
+
+    if (uploadDropzoneSubtitle instanceof HTMLElement) {
+        uploadDropzoneSubtitle.textContent = selectedFileName
+            ? "Файл готовий до завантаження"
+            : "або натисніть, щоб вибрати документ";
     }
 
     if (uploadSelectedFile instanceof HTMLElement) {
@@ -1044,6 +1056,7 @@ function initializeCustomSelects(rootSelector) {
 
 initializeCustomSelects(".ask-settings-row-in-composer .custom-select");
 initializeCustomSelects(".system-runtime-form-row .custom-select");
+initializeCustomSelects(".chunking-custom-form-row .custom-select");
 
 if (storageBackendForm instanceof HTMLFormElement && storageBackendResult instanceof HTMLElement) {
     const backendInput = storageBackendForm.elements.namedItem("storage_backend");

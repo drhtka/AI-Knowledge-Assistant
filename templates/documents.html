@@ -29,12 +29,30 @@
                     class="upload-dropzone{% if not admin_auth.is_authenticated %} is-disabled{% endif %}"
                     id="upload-dropzone"
                 >
-                    <span class="upload-dropzone-icon" aria-hidden="true">⇪</span>
-                    <span class="upload-dropzone-copy">
-                        <strong>Перетягніть файл сюди</strong>
-                        <span>або натисніть, щоб вибрати документ</span>
+                    <span class="upload-dropzone-main">
+                        <span class="upload-dropzone-icon" aria-hidden="true">⇪</span>
+                        <span class="upload-dropzone-copy">
+                            <strong id="upload-dropzone-title">Перетягніть файл сюди</strong>
+                            <span id="upload-dropzone-subtitle">або натисніть, щоб вибрати документ</span>
+                        </span>
                     </span>
-                    <span class="upload-dropzone-meta">TXT, MD, PDF</span>
+                    <span class="upload-dropzone-footer">
+                        <span class="upload-dropzone-meta">TXT, MD, PDF</span>
+                        <span class="upload-selected-file" id="upload-selected-file">
+                            Файл ще не вибрано.
+                        </span>
+                    </span>
+                    <button
+                        type="button"
+                        id="clear-upload-file-button"
+                        class="upload-clear-button upload-clear-button-inside"
+                        aria-label="Очистити вибраний файл"
+                        title="Очистити вибраний файл"
+                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                        hidden
+                    >
+                        ×
+                    </button>
                     <input
                         id="upload_file"
                         name="file"
@@ -45,21 +63,7 @@
                         required
                     />
                 </label>
-                <button
-                    type="button"
-                    id="clear-upload-file-button"
-                    class="upload-clear-button"
-                    aria-label="Очистити вибраний файл"
-                    title="Очистити вибраний файл"
-                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
-                    hidden
-                >
-                    ×
-                </button>
             </div>
-            <p class="meta upload-selected-file" id="upload-selected-file">
-                Файл ще не вибрано.
-            </p>
             <p class="meta">
                 Підтримувані формати: <code>.txt</code>, <code>.md</code> та
                 <code>.pdf</code>
@@ -156,9 +160,9 @@
                 </span>
             </div>
         </div>
-        <form id="chunking-preset-form" class="inline-form">
+        <form id="chunking-preset-form" class="inline-form chunking-custom-form">
             <div class="label-with-tooltip">
-                <label for="chunking_preset">Оберіть пресет</label>
+                <label for="chunking_preset_button">Оберіть пресет</label>
                 <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по preset">
                     ?
                     <span class="info-tooltip-bubble">
@@ -168,11 +172,39 @@
                     </span>
                 </span>
             </div>
-            <div class="inline-form-row">
-                <div class="select-with-status">
+            <div class="inline-form-row chunking-custom-form-row">
+                <div class="custom-select system-custom-select{% if not admin_auth.is_authenticated %} is-disabled{% endif %}" data-target-select="chunking_preset">
+                    <button
+                        type="button"
+                        id="chunking_preset_button"
+                        class="custom-select-trigger"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                    >
+                        <span class="custom-select-value">
+                            {% for preset in system_config.preset_display_options %}{% if system_config.current_preset == preset.value %}{{ preset.label }}{% endif %}{% endfor %}
+                        </span>
+                        <span class="custom-select-arrow" aria-hidden="true"></span>
+                    </button>
+                    <div class="custom-select-dropdown" role="listbox">
+                        {% for preset in system_config.preset_display_options %}
+                        <button
+                            type="button"
+                            class="custom-select-option{% if system_config.current_preset == preset.value %} is-selected{% endif %}"
+                            data-value="{{ preset.value }}"
+                            role="option"
+                            aria-selected="{% if system_config.current_preset == preset.value %}true{% else %}false{% endif %}"
+                            {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                        >
+                            {{ preset.label }}
+                        </button>
+                        {% endfor %}
+                    </div>
                     <select
                         id="chunking_preset"
                         name="chunking_preset"
+                        class="custom-select-native"
                         {% if not admin_auth.is_authenticated %}disabled{% endif %}
                     >
                         {% for preset in system_config.preset_display_options %}
@@ -184,7 +216,6 @@
                         </option>
                         {% endfor %}
                     </select>
-                    <span class="select-status-check" aria-hidden="true">✓</span>
                 </div>
             </div>
         </form>
