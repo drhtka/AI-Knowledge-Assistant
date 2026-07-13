@@ -8,6 +8,16 @@
         <form method="get" action="/external-search" class="external-search-form">
             <div class="ask-main-column external-search-main-column">
                 <div class="external-search-composer">
+                    <button
+                        type="button"
+                        id="external-search-clear-button"
+                        class="external-search-clear-button"
+                        aria-label="Очистити запит"
+                        title="Очистити запит"
+                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                    >
+                        ×
+                    </button>
                     <textarea
                         id="web_question"
                         name="web_question"

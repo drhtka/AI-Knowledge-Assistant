@@ -9,6 +9,8 @@ const uploadResult = document.getElementById("upload-result");
 const clearUploadFileButton = document.getElementById("clear-upload-file-button");
 const openUploadSuccessModalButton = document.getElementById("open-upload-success-modal-button");
 const uploadSuccessModal = document.getElementById("upload-success-modal");
+const externalSearchInput = document.getElementById("web_question");
+const externalSearchClearButton = document.getElementById("external-search-clear-button");
 const uploadDropzone = document.getElementById("upload-dropzone");
 const uploadSelectedFile = document.getElementById("upload-selected-file");
 const uploadDropzoneTitle = document.getElementById("upload-dropzone-title");
@@ -1016,6 +1018,29 @@ if (topKInput instanceof HTMLSelectElement) {
 }
 
 syncMainFlowRuntimeSummary();
+
+if (externalSearchInput instanceof HTMLTextAreaElement && externalSearchClearButton instanceof HTMLButtonElement) {
+    const syncExternalSearchClearButton = () => {
+        const hasValue = externalSearchInput.value.trim().length > 0;
+        externalSearchClearButton.classList.toggle("is-active", hasValue && !externalSearchInput.disabled);
+        externalSearchClearButton.disabled = !hasValue || externalSearchInput.disabled;
+    };
+
+    externalSearchInput.addEventListener("input", () => {
+        syncExternalSearchClearButton();
+    });
+
+    externalSearchClearButton.addEventListener("click", () => {
+        if (externalSearchClearButton.disabled) {
+            return;
+        }
+        externalSearchInput.value = "";
+        syncExternalSearchClearButton();
+        externalSearchInput.focus();
+    });
+
+    syncExternalSearchClearButton();
+}
 
 function initializeCustomSelects(rootSelector) {
     const customSelects = document.querySelectorAll(rootSelector);
