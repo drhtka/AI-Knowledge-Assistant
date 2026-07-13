@@ -1,5 +1,6 @@
 const questionForm = document.getElementById("question-form");
 const clearFormButton = document.getElementById("clear-form");
+const questionClearButton = document.getElementById("question-clear-button");
 const demoButtons = document.querySelectorAll("[data-demo-question]");
 const askResultContent = document.getElementById("ask-result-content");
 const searchResultContent = document.getElementById("search-result-content");
@@ -64,7 +65,11 @@ function getQuestionSubmitButton() {
 }
 
 function getQuestionClearButton() {
-    return clearFormButton instanceof HTMLButtonElement ? clearFormButton : null;
+    return questionClearButton instanceof HTMLButtonElement
+        ? questionClearButton
+        : clearFormButton instanceof HTMLButtonElement
+          ? clearFormButton
+          : null;
 }
 
 function getNormalizedQuestionValue() {
@@ -78,13 +83,16 @@ function syncQuestionActionState() {
     const hasQuestionValue = Boolean(getNormalizedQuestionValue());
     const submitButton = getQuestionSubmitButton();
     const clearButton = getQuestionClearButton();
+    const questionInput = getQuestionInput();
+    const canClear = hasQuestionValue && !(questionInput instanceof HTMLTextAreaElement && questionInput.readOnly);
 
     if (submitButton instanceof HTMLButtonElement) {
         submitButton.disabled = !hasQuestionValue;
     }
 
     if (clearButton instanceof HTMLButtonElement) {
-        clearButton.disabled = !hasQuestionValue;
+        clearButton.disabled = !canClear;
+        clearButton.classList.toggle("is-active", canClear);
     }
 }
 
