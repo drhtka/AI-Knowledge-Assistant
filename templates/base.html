@@ -30,7 +30,7 @@
                         <p class="meta">
                             Активна admin-сесія для <code>{{ admin_auth.username }}</code>.
                         </p>
-                        <form method="post" action="/admin/logout" class="admin-auth-form">
+                        <form method="post" action="/admin/logout" class="admin-auth-form admin-auth-form-centered">
                             <input type="hidden" name="next" value="{{ admin_auth.current_path }}" />
                             <button type="submit">Вийти з admin</button>
                         </form>

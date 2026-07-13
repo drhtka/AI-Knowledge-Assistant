@@ -105,6 +105,14 @@ main {
     margin-top: auto;
 }
 
+.admin-auth-form-centered {
+    align-items: center;
+}
+
+.admin-auth-form-centered button {
+    align-self: center;
+}
+
 .admin-auth-form input[type="password"] {
     width: 100%;
     box-sizing: border-box;
