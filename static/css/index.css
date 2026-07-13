@@ -1219,6 +1219,7 @@ select:disabled {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
 }
 
 .system-runtime-card:first-child .section-kicker-row,
@@ -1235,8 +1236,15 @@ select:disabled {
     text-align: center;
 }
 
-.system-runtime-card:first-child .system-runtime-summary {
+.system-runtime-card:first-child .system-runtime-summary,
+.system-runtime-card:first-child .system-backend-form,
+.system-runtime-card:first-child .system-runtime-result {
     margin-inline: auto;
+}
+
+.system-runtime-card:first-child .label-with-tooltip,
+.system-runtime-card:first-child .inline-form-row {
+    justify-content: center;
 }
 
 .system-runtime-summary-row {
