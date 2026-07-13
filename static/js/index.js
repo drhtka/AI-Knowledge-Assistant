@@ -96,6 +96,20 @@ function syncQuestionActionState() {
     }
 }
 
+function clearQuestionInputAndState() {
+    const questionInput = getQuestionInput();
+    if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
+        questionInput.value = "";
+    }
+    syncQuestionActionState();
+    replaceUrlWithoutQuestionParams();
+    resetQuestionResultState();
+
+    if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
+        questionInput.focus();
+    }
+}
+
 function replaceUrlWithoutQuestionParams() {
     const nextUrl = new URL(window.location.href);
     nextUrl.searchParams.delete("question");
@@ -794,6 +808,7 @@ demoButtons.forEach((button) => {
 
 if (questionForm instanceof HTMLFormElement) {
     const questionInput = getQuestionInput();
+    const questionClearControl = getQuestionClearButton();
 
     syncQuestionActionState();
 
@@ -803,6 +818,15 @@ if (questionForm instanceof HTMLFormElement) {
     ) {
         questionInput.addEventListener("input", () => {
             syncQuestionActionState();
+        });
+    }
+
+    if (questionClearControl instanceof HTMLButtonElement) {
+        questionClearControl.addEventListener("click", () => {
+            if (questionClearControl.disabled) {
+                return;
+            }
+            clearQuestionInputAndState();
         });
     }
 
@@ -830,19 +854,9 @@ if (questionForm instanceof HTMLFormElement) {
     });
 }
 
-if (clearFormButton && questionForm) {
+if (clearFormButton && questionForm && !questionClearButton) {
     clearFormButton.addEventListener("click", () => {
-        const questionInput = getQuestionInput();
-        if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
-            questionInput.value = "";
-        }
-        syncQuestionActionState();
-        replaceUrlWithoutQuestionParams();
-        resetQuestionResultState();
-
-        if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
-            questionInput.focus();
-        }
+        clearQuestionInputAndState();
     });
 }
 
