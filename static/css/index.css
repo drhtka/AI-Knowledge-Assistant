@@ -427,11 +427,11 @@ select:disabled {
 
 .ask-question-submit-button {
     position: absolute;
-    right: 24px;
-    bottom: 22px;
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
+    left: 50%;
+    bottom: 18px;
+    width: 80px;
+    min-width: 80px;
+    height: 80px;
     padding: 0;
     display: inline-flex;
     align-items: center;
@@ -442,16 +442,17 @@ select:disabled {
     color: #94a3b8;
     opacity: 0.55;
     cursor: default;
+    transform: translateX(-50%);
     transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, opacity 120ms ease, transform 120ms ease;
 }
 
 .ask-question-submit-icon {
     width: 0;
     height: 0;
-    border-top: 7px solid transparent;
-    border-bottom: 7px solid transparent;
-    border-left: 11px solid currentColor;
-    transform: translateX(1px);
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-left: 20px solid currentColor;
+    transform: translateX(2px);
 }
 
 .ask-question-submit-button:not(:disabled) {
@@ -466,7 +467,7 @@ select:disabled {
     border-color: rgba(34, 197, 94, 0.7);
     background: rgba(21, 128, 61, 0.3);
     color: #bbf7d0;
-    transform: translateY(-1px);
+    transform: translateX(-50%) translateY(-1px);
 }
 
 .ask-question-submit-button:disabled {
@@ -493,7 +494,7 @@ select:disabled {
 .ask-question-input {
     width: 100%;
     min-height: 92px;
-    padding: 0 56px 56px 0;
+    padding: 0 56px 96px 0;
     border: 0;
     border-radius: 0;
     background: transparent;
