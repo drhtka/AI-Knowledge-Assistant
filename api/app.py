@@ -177,13 +177,13 @@ def _build_admin_auth_context(request: Request) -> dict[str, object]:
         flash_tone = "error"
     elif status == "required":
         if required == "documents":
-            flash_message = "Сторінка документів доступна тільки після admin auth."
+            flash_message = "Сторінка документів доступна тільки авторизації"
         elif required == "external_search":
-            flash_message = "Сторінка зовнішнього вебпошуку доступна тільки після admin auth."
+            flash_message = "Сторінка зовнішнього вебпошуку доступна тільки авторизації"
         elif required == "system":
-            flash_message = "Системні інструменти доступні тільки після admin auth."
+            flash_message = "Системні інструменти доступні тільки авторизації"
         elif required == "api_docs":
-            flash_message = "API docs доступні тільки після admin auth."
+            flash_message = "API docs доступні тільки авторизації"
         else:
             flash_message = "Для цієї дії потрібен admin доступ."
 
@@ -630,7 +630,7 @@ def _build_page_context(
     web_search_result = None
     web_search_error = ""
     if include_web_results and raw_web_question and not is_admin:
-        web_search_error = "Зовнішній вебпошук доступний тільки після admin auth."
+        web_search_error = "Зовнішній вебпошук доступний тільки авторизації"
     elif web_question:
         try:
             web_search_result = web_search(question=web_question, top_k=web_top_k)
@@ -703,7 +703,7 @@ def index(request: Request) -> HTMLResponse:
             "active_page": "assistant",
             "admin_access_note_text": (
                 "Документи, система і вебпошук доступні тільки після "
-                "авторизації, пароль по запиту. Тут без авторизації доступні demo-запити."
+                "авторизації, пароль по запиту. Також без авторизації доступні тільки demo-запити."
             ),
         },
     )
@@ -776,7 +776,7 @@ def documents_page(request: Request) -> HTMLResponse:
             "admin_required_area": "documents",
             "admin_access_note_text": (
                 "Керування документами, upload, chunking і reindex доступні "
-                "тільки після admin auth."
+                "тільки авторизації"
             ),
         },
     )
@@ -804,7 +804,7 @@ def external_search_page(request: Request) -> HTMLResponse:
             "active_page": "external_search",
             "admin_required_area": "external_search",
             "admin_access_note_text": (
-                "Зовнішній вебпошук доступний тільки після admin auth."
+                "Зовнішній вебпошук доступний тільки авторизації"
             ),
         },
     )
@@ -833,7 +833,7 @@ def system_page(request: Request) -> HTMLResponse:
             "admin_required_area": "system",
             "admin_access_note_text": (
                 "Storage backend, reindex, diagnostics і JSON доступні "
-                "тільки після admin auth."
+                "тільки авторизації"
             ),
         },
     )
