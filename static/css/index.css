@@ -431,8 +431,9 @@ select:disabled {
 
 .ask-question-composer-footer {
     display: flex;
-    justify-content: flex-start;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
     margin-top: 10px;
 }
 
@@ -451,6 +452,19 @@ select:disabled {
 }
 
 .ask-demo-footer-label {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.ask-settings-footer-label-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.ask-settings-footer-label {
     margin: 0;
     color: #94a3b8;
     font-size: 12px;
