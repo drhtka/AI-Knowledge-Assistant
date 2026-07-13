@@ -895,30 +895,40 @@ composerSettingsSelects.forEach((select) => {
         wrapper.classList.remove("select-open");
     };
 
-    select.addEventListener("pointerdown", () => {
+    const openArrow = () => {
         wrapper.classList.add("select-open");
-    });
+    };
+
+    select.addEventListener("pointerdown", openArrow);
 
     select.addEventListener("keydown", (event) => {
         if (event.key === " " || event.key === "Enter" || event.key === "ArrowDown" || event.key === "ArrowUp") {
-            wrapper.classList.add("select-open");
+            openArrow();
         }
     });
 
     select.addEventListener("change", () => {
-        closeArrow();
+        window.requestAnimationFrame(() => {
+            closeArrow();
+        });
     });
 
-    select.addEventListener("blur", () => {
-        closeArrow();
-    });
+    select.addEventListener("blur", closeArrow);
 
     select.addEventListener("click", () => {
-        window.setTimeout(() => {
+        window.requestAnimationFrame(() => {
             if (document.activeElement !== select) {
                 closeArrow();
             }
-        }, 0);
+        });
+    });
+
+    select.addEventListener("keyup", (event) => {
+        if (event.key === "Enter" || event.key === "Escape") {
+            window.requestAnimationFrame(() => {
+                closeArrow();
+            });
+        }
     });
 });
 
