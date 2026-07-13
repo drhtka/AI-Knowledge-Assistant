@@ -72,7 +72,7 @@
                             <div class="ask-settings-row ask-settings-row-in-composer">
                                 <div class="dashboard-panel compact-control-panel ask-settings-control">
                                     <div class="label-with-tooltip">
-                                        <label for="retrieval_mode">Режим</label>
+                                        <label for="retrieval_mode_button">Mode</label>
                                         <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по режиму пошуку">
                                             ?
                                             <span class="info-tooltip-bubble">
@@ -82,8 +82,33 @@
                                             </span>
                                         </span>
                                     </div>
-                                    <div class="select-with-status">
-                                        <select id="retrieval_mode" name="retrieval_mode">
+                                    <div class="custom-select" data-target-select="retrieval_mode">
+                                        <button
+                                            type="button"
+                                            id="retrieval_mode_button"
+                                            class="custom-select-trigger"
+                                            aria-haspopup="listbox"
+                                            aria-expanded="false"
+                                        >
+                                            <span class="custom-select-value">
+                                                {% for mode in retrieval_mode_options %}{% if retrieval_mode == mode %}{{ mode }}{% endif %}{% endfor %}
+                                            </span>
+                                            <span class="custom-select-arrow" aria-hidden="true"></span>
+                                        </button>
+                                        <div class="custom-select-dropdown" role="listbox">
+                                            {% for mode in retrieval_mode_options %}
+                                            <button
+                                                type="button"
+                                                class="custom-select-option{% if retrieval_mode == mode %} is-selected{% endif %}"
+                                                data-value="{{ mode }}"
+                                                role="option"
+                                                aria-selected="{% if retrieval_mode == mode %}true{% else %}false{% endif %}"
+                                            >
+                                                {{ mode }}
+                                            </button>
+                                            {% endfor %}
+                                        </div>
+                                        <select id="retrieval_mode" name="retrieval_mode" class="custom-select-native">
                                             {% for mode in retrieval_mode_options %}
                                             <option
                                                 value="{{ mode }}"
@@ -93,12 +118,11 @@
                                             </option>
                                             {% endfor %}
                                         </select>
-                                        <span class="select-status-check" aria-hidden="true"></span>
                                     </div>
                                 </div>
                                 <div class="dashboard-panel compact-control-panel ask-settings-control">
                                     <div class="label-with-tooltip">
-                                        <label for="top_k">Top K</label>
+                                        <label for="top_k_button">Top K</label>
                                         <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по Top K">
                                             ?
                                             <span class="info-tooltip-bubble">
@@ -107,8 +131,33 @@
                                             </span>
                                         </span>
                                     </div>
-                                    <div class="select-with-status">
-                                        <select id="top_k" name="top_k">
+                                    <div class="custom-select" data-target-select="top_k">
+                                        <button
+                                            type="button"
+                                            id="top_k_button"
+                                            class="custom-select-trigger"
+                                            aria-haspopup="listbox"
+                                            aria-expanded="false"
+                                        >
+                                            <span class="custom-select-value">
+                                                {% for value in system_config.available_top_k %}{% if top_k == value %}{{ value }}{% endif %}{% endfor %}
+                                            </span>
+                                            <span class="custom-select-arrow" aria-hidden="true"></span>
+                                        </button>
+                                        <div class="custom-select-dropdown" role="listbox">
+                                            {% for value in system_config.available_top_k %}
+                                            <button
+                                                type="button"
+                                                class="custom-select-option{% if top_k == value %} is-selected{% endif %}"
+                                                data-value="{{ value }}"
+                                                role="option"
+                                                aria-selected="{% if top_k == value %}true{% else %}false{% endif %}"
+                                            >
+                                                {{ value }}
+                                            </button>
+                                            {% endfor %}
+                                        </div>
+                                        <select id="top_k" name="top_k" class="custom-select-native">
                                             {% for value in system_config.available_top_k %}
                                             <option
                                                 value="{{ value }}"
@@ -118,12 +167,11 @@
                                             </option>
                                             {% endfor %}
                                         </select>
-                                        <span class="select-status-check" aria-hidden="true"></span>
                                     </div>
                                 </div>
                                 <div class="dashboard-panel compact-control-panel ask-settings-control">
                                     <div class="label-with-tooltip">
-                                        <label for="main_flow_chunking_preset">Preset</label>
+                                        <label for="main_flow_chunking_preset_button">Preset</label>
                                         <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по preset">
                                             ?
                                             <span class="info-tooltip-bubble">
@@ -133,9 +181,37 @@
                                             </span>
                                         </span>
                                     </div>
-                                    <div class="select-with-status">
+                                    <div class="custom-select{% if not admin_auth.is_authenticated %} is-disabled{% endif %}" data-target-select="main_flow_chunking_preset">
+                                        <button
+                                            type="button"
+                                            id="main_flow_chunking_preset_button"
+                                            class="custom-select-trigger"
+                                            aria-haspopup="listbox"
+                                            aria-expanded="false"
+                                            {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                                        >
+                                            <span class="custom-select-value">
+                                                {% for preset in system_config.preset_display_options %}{% if system_config.current_preset == preset.value %}{{ preset.label }}{% endif %}{% endfor %}
+                                            </span>
+                                            <span class="custom-select-arrow" aria-hidden="true"></span>
+                                        </button>
+                                        <div class="custom-select-dropdown" role="listbox">
+                                            {% for preset in system_config.preset_display_options %}
+                                            <button
+                                                type="button"
+                                                class="custom-select-option{% if system_config.current_preset == preset.value %} is-selected{% endif %}"
+                                                data-value="{{ preset.value }}"
+                                                role="option"
+                                                aria-selected="{% if system_config.current_preset == preset.value %}true{% else %}false{% endif %}"
+                                                {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                                            >
+                                                {{ preset.label }}
+                                            </button>
+                                            {% endfor %}
+                                        </div>
                                         <select
                                             id="main_flow_chunking_preset"
+                                            class="custom-select-native"
                                             {% if not admin_auth.is_authenticated %}disabled{% endif %}
                                         >
                                             {% for preset in system_config.preset_display_options %}
@@ -147,7 +223,6 @@
                                             </option>
                                             {% endfor %}
                                         </select>
-                                        <span class="select-status-check" aria-hidden="true"></span>
                                     </div>
                                 </div>
                             </div>

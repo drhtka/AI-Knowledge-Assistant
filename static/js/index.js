@@ -880,54 +880,96 @@ if (topKInput instanceof HTMLSelectElement) {
 
 syncMainFlowRuntimeSummary();
 
-const composerSettingsSelects = document.querySelectorAll(".ask-settings-row-in-composer select");
-composerSettingsSelects.forEach((select) => {
-    if (!(select instanceof HTMLSelectElement)) {
+const composerSettingsSelects = document.querySelectorAll(".ask-settings-row-in-composer .custom-select");
+composerSettingsSelects.forEach((customSelect) => {
+    if (!(customSelect instanceof HTMLElement)) {
         return;
     }
 
-    const wrapper = select.closest(".select-with-status");
-    if (!(wrapper instanceof HTMLElement)) {
+    const trigger = customSelect.querySelector(".custom-select-trigger");
+    const valueElement = customSelect.querySelector(".custom-select-value");
+    const nativeSelect = customSelect.querySelector(".custom-select-native");
+    const options = customSelect.querySelectorAll(".custom-select-option");
+
+    if (
+        !(trigger instanceof HTMLButtonElement) ||
+        !(valueElement instanceof HTMLElement) ||
+        !(nativeSelect instanceof HTMLSelectElement)
+    ) {
         return;
     }
 
-    const closeArrow = () => {
-        wrapper.classList.remove("select-open");
+    const closeDropdown = () => {
+        customSelect.classList.remove("is-open");
+        trigger.setAttribute("aria-expanded", "false");
     };
 
-    const openArrow = () => {
-        wrapper.classList.add("select-open");
+    const openDropdown = () => {
+        document
+            .querySelectorAll(".ask-settings-row-in-composer .custom-select.is-open")
+            .forEach((node) => {
+                if (node instanceof HTMLElement && node !== customSelect) {
+                    node.classList.remove("is-open");
+                    const otherTrigger = node.querySelector(".custom-select-trigger");
+                    if (otherTrigger instanceof HTMLButtonElement) {
+                        otherTrigger.setAttribute("aria-expanded", "false");
+                    }
+                }
+            });
+        customSelect.classList.add("is-open");
+        trigger.setAttribute("aria-expanded", "true");
     };
 
-    select.addEventListener("pointerdown", openArrow);
+    const syncSelectedOption = (nextValue) => {
+        nativeSelect.value = nextValue;
+        const selectedOption = nativeSelect.selectedOptions[0];
+        valueElement.textContent = selectedOption ? selectedOption.textContent ?? "" : "";
+        options.forEach((option) => {
+            if (!(option instanceof HTMLButtonElement)) {
+                return;
+            }
+            const isSelected = option.dataset.value === nextValue;
+            option.classList.toggle("is-selected", isSelected);
+            option.setAttribute("aria-selected", isSelected ? "true" : "false");
+        });
+    };
 
-    select.addEventListener("keydown", (event) => {
-        if (event.key === " " || event.key === "Enter" || event.key === "ArrowDown" || event.key === "ArrowUp") {
-            openArrow();
+    trigger.addEventListener("click", () => {
+        if (trigger.disabled) {
+            return;
+        }
+        if (customSelect.classList.contains("is-open")) {
+            closeDropdown();
+            return;
+        }
+        openDropdown();
+    });
+
+    options.forEach((option) => {
+        if (!(option instanceof HTMLButtonElement)) {
+            return;
+        }
+        option.addEventListener("click", () => {
+            if (option.disabled) {
+                return;
+            }
+            const nextValue = option.dataset.value ?? "";
+            syncSelectedOption(nextValue);
+            nativeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+            closeDropdown();
+        });
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!customSelect.contains(event.target instanceof Node ? event.target : null)) {
+            closeDropdown();
         }
     });
 
-    select.addEventListener("change", () => {
-        window.requestAnimationFrame(() => {
-            closeArrow();
-        });
-    });
-
-    select.addEventListener("blur", closeArrow);
-
-    select.addEventListener("click", () => {
-        window.requestAnimationFrame(() => {
-            if (document.activeElement !== select) {
-                closeArrow();
-            }
-        });
-    });
-
-    select.addEventListener("keyup", (event) => {
-        if (event.key === "Enter" || event.key === "Escape") {
-            window.requestAnimationFrame(() => {
-                closeArrow();
-            });
+    trigger.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            closeDropdown();
+            trigger.blur();
         }
     });
 });

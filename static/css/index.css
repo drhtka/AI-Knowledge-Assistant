@@ -483,38 +483,116 @@ select:disabled {
 
 .ask-settings-row-in-composer .ask-settings-control label {
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
+    color: #94a3b8;
 }
 
-.ask-settings-row-in-composer .ask-settings-control select {
+.ask-settings-row-in-composer .custom-select {
+    position: relative;
+    z-index: 3;
+}
+
+.ask-settings-row-in-composer .custom-select-native {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.ask-settings-row-in-composer .custom-select-trigger {
+    width: 100%;
     min-height: 38px;
     padding: 8px 34px 8px 10px;
-    font-size: 13px;
+    border: 0;
+    border-radius: 14px;
     background: transparent;
+    color: #e2e8f0;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
 }
 
-.ask-settings-row-in-composer .select-status-check {
+.ask-settings-row-in-composer .custom-select-value {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ask-settings-row-in-composer .custom-select-arrow {
+    position: absolute;
+    top: 50%;
     right: 12px;
     width: 0;
     height: 0;
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
     border-top: 7px solid #86efac;
-    color: transparent;
-    font-size: 0;
-    line-height: 0;
-    z-index: 2;
     transform: translateY(-50%);
     transition: transform 0.18s ease;
+    pointer-events: none;
 }
 
-.ask-settings-row-in-composer .select-with-status:focus-within .select-status-check {
+.ask-settings-row-in-composer .custom-select.is-open {
+    z-index: 20;
+}
+
+.ask-settings-row-in-composer .custom-select.is-open .custom-select-arrow {
     transform: translateY(-50%) rotate(180deg);
+}
+
+.ask-settings-row-in-composer .custom-select-dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 8px);
+    display: none;
+    padding: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.96);
+    box-shadow: 0 12px 30px rgba(2, 6, 23, 0.45);
+}
+
+.ask-settings-row-in-composer .custom-select.is-open .custom-select-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ask-settings-row-in-composer .custom-select-option {
+    width: 100%;
+    min-height: 34px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #e2e8f0;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ask-settings-row-in-composer .custom-select-option:hover,
+.ask-settings-row-in-composer .custom-select-option.is-selected {
+    background: rgba(148, 163, 184, 0.14);
+}
+
+.ask-settings-row-in-composer .custom-select.is-disabled .custom-select-trigger,
+.ask-settings-row-in-composer .custom-select-option:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .ask-settings-row-in-composer .label-with-tooltip {
     gap: 6px;
     margin-bottom: 6px;
+    padding-left: 6px;
 }
 
 .ask-settings-row-in-composer .info-tooltip {
