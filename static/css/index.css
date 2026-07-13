@@ -425,6 +425,54 @@ select:disabled {
     transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, opacity 120ms ease, transform 120ms ease;
 }
 
+.ask-question-submit-button {
+    position: absolute;
+    right: 24px;
+    bottom: 22px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    opacity: 0.55;
+    cursor: default;
+    transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, opacity 120ms ease, transform 120ms ease;
+}
+
+.ask-question-submit-icon {
+    width: 0;
+    height: 0;
+    border-top: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+    border-left: 11px solid currentColor;
+    transform: translateX(1px);
+}
+
+.ask-question-submit-button:not(:disabled) {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(21, 128, 61, 0.2);
+    color: #86efac;
+    opacity: 1;
+    cursor: pointer;
+}
+
+.ask-question-submit-button:not(:disabled):hover {
+    border-color: rgba(34, 197, 94, 0.7);
+    background: rgba(21, 128, 61, 0.3);
+    color: #bbf7d0;
+    transform: translateY(-1px);
+}
+
+.ask-question-submit-button:disabled {
+    cursor: not-allowed;
+}
+
 .ask-question-clear-button.is-active {
     opacity: 1;
     cursor: pointer;
@@ -445,7 +493,7 @@ select:disabled {
 .ask-question-input {
     width: 100%;
     min-height: 92px;
-    padding: 0 56px 0 0;
+    padding: 0 56px 56px 0;
     border: 0;
     border-radius: 0;
     background: transparent;

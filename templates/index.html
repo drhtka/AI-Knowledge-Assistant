@@ -58,6 +58,15 @@
                     >
                         ×
                     </button>
+                    <button
+                        type="submit"
+                        id="question-submit-button"
+                        class="ask-question-submit-button"
+                        aria-label="Надіслати запитання"
+                        title="Надіслати запитання"
+                    >
+                        <span class="ask-question-submit-icon" aria-hidden="true"></span>
+                    </button>
                     <textarea
                         id="question"
                         name="question"
@@ -257,9 +266,6 @@
                     Без <code>admin auth</code> доступні тільки demo-запити.
                 </p>
                 {% endif %}
-                <div class="actions ask-main-actions">
-                    <button type="submit">Запитати</button>
-                </div>
             </div>
         </form>
     </article>
