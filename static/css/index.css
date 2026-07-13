@@ -475,10 +475,14 @@ select:disabled {
 
 .ask-settings-row-in-composer .ask-settings-control {
     padding: 8px;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
 }
 
 .ask-settings-row-in-composer .ask-settings-control label {
     font-size: 12px;
+    font-weight: 600;
 }
 
 .ask-settings-row-in-composer .ask-settings-control select {
