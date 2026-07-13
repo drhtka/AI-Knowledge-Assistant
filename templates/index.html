@@ -260,23 +260,50 @@
     <h2 class="hero-card-title">Відповідь</h2>
     <div id="ask-result-content">
         {% if ask_result %}
-        <p>{{ ask_result.answer }}</p>
-        <p class="meta">
-            впевненість={{ ask_result.confidence }} | затримка_мс={{
-            ask_result.latency_ms }} | режим={{ ask_result.answer_mode }} |
-            пошук={{ ask_result.retrieval_mode }}
-        </p>
-        <h3>Джерела</h3>
-        <ul class="list-reset">
-            {% for source in ask_result.sources %}
-            <li>{{ source }}</li>
-            {% endfor %}
-        </ul>
+        <div class="chat-single-response">
+            <div class="chat-single-response-head">
+                <div class="chat-single-response-identity">
+                    <span class="chat-single-response-avatar">A</span>
+                    <div class="chat-single-response-meta-group">
+                        <p class="chat-single-response-name">Assistant</p>
+                        <p class="meta chat-single-response-meta">
+                            впевненість={{ ask_result.confidence }} | затримка_мс={{
+                            ask_result.latency_ms }} | режим={{ ask_result.answer_mode }} |
+                            пошук={{ ask_result.retrieval_mode }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-single-response-bubble">
+                <p class="chat-single-response-text">{{ ask_result.answer }}</p>
+            </div>
+            <div class="chat-single-response-sources">
+                <p class="chat-single-response-sources-title">Sources</p>
+                <ul class="list-reset chat-single-response-sources-list">
+                    {% for source in ask_result.sources %}
+                    <li>{{ source }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
         {% else %}
-        <p class="meta">
-            Поставте запитання, щоб переглянути обґрунтовану відповідь із посиланнями
-            на контекст.
-        </p>
+        <div class="chat-single-response chat-single-response-empty">
+            <div class="chat-single-response-head">
+                <div class="chat-single-response-identity">
+                    <span class="chat-single-response-avatar">A</span>
+                    <div class="chat-single-response-meta-group">
+                        <p class="chat-single-response-name">Assistant</p>
+                        <p class="meta chat-single-response-meta">Single-turn grounded answer</p>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-single-response-bubble">
+                <p class="meta chat-single-response-placeholder">
+                    Поставте запитання, щоб переглянути обґрунтовану відповідь із
+                    посиланнями на контекст.
+                </p>
+            </div>
+        </div>
         {% endif %}
     </div>
 </article>
