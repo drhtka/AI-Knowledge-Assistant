@@ -703,7 +703,7 @@ def index(request: Request) -> HTMLResponse:
             "active_page": "assistant",
             "admin_access_note_text": (
                 "Документи, система і вебпошук доступні тільки після "
-                "admin auth. Тут без авторизації доступні demo-запити."
+                "авторизації, пароль по запиту. Тут без авторизації доступні demo-запити."
             ),
         },
     )
