@@ -13,51 +13,88 @@
         <main>
             <header class="page-header">
                 <div class="page-header-top">
-                    <section class="admin-auth-card">
-                        <p class="stat-label">Admin Access</p>
-                        {% if admin_auth.flash_message %}
-                        <p class="admin-auth-message admin-auth-message-{{ admin_auth.flash_tone }}">
-                            {{ admin_auth.flash_message }}
-                        </p>
-                        {% endif %}
-                        {% if admin_auth.using_fallback_session_secret %}
-                        <p class="meta">
-                            Для production обов'язково задайте
-                            <code>ADMIN_SESSION_SECRET</code>.
-                        </p>
-                        {% endif %}
-                        {% if admin_auth.is_authenticated %}
-                        <p class="meta">
-                            Активна admin-сесія для <code>{{ admin_auth.username }}</code>.
-                        </p>
-                        <form method="post" action="/admin/logout" class="admin-auth-form admin-auth-form-centered">
-                            <input type="hidden" name="next" value="{{ admin_auth.current_path }}" />
-                            <button type="submit">Вийти з admin</button>
-                        </form>
-                        {% elif admin_auth.enabled %}
-                        <p class="meta">
-                            Документи та система доступні для Admin. Або по запиту.
-                        </p>
-                        <form method="post" action="/admin/login" class="admin-auth-form">
-                            <input
-                                id="admin_password_input"
-                                type="password"
-                                name="password"
-                                placeholder="Введіть admin password"
-                                autocomplete="current-password"
-                                required
-                            />
-                            <input type="hidden" name="next" value="{{ admin_auth.current_path }}" />
-                            <button type="submit">Увійти</button>
-                        </form>
-                        {% else %}
-                        <p class="meta">
-                            Задайте <code>ADMIN_PASSWORD</code> у <code>.env</code>,
-                            щоб увімкнути admin-доступ. Після цього просто
-                            перезапустіть сервер.
-                        </p>
-                        {% endif %}
+                    {% if admin_auth.is_authenticated %}
+                    <form method="post" action="/admin/logout" class="admin-access-quick-logout">
+                        <input type="hidden" name="next" value="{{ admin_auth.current_path }}" />
+                        <button
+                            type="submit"
+                            class="admin-access-trigger is-authenticated"
+                            id="admin-access-trigger"
+                            aria-label="Admin logout"
+                        >
+                            <span class="admin-access-trigger-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+                                    <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+                                    <path d="M14 16l4-4-4-4" />
+                                    <path d="M18 12H9" />
+                                </svg>
+                            </span>
+                        </button>
+                    </form>
+                    {% else %}
+                    <button
+                        type="button"
+                        class="admin-access-trigger"
+                        id="admin-access-trigger"
+                        aria-label="Admin login"
+                        aria-haspopup="dialog"
+                        aria-controls="admin-access-modal"
+                    >
+                        <span class="admin-access-trigger-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                                <path d="M10 17l-5-5 5-5" />
+                                <path d="M5 12h12" />
+                            </svg>
+                        </span>
+                    </button>
+                    <section
+                        class="admin-access-modal"
+                        id="admin-access-modal"
+                        aria-hidden="true"
+                    >
+                        <div class="admin-access-modal-backdrop" data-close-admin-access-modal="true"></div>
+                        <div class="admin-access-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-access-modal-title">
+                            <button
+                                type="button"
+                                class="button-link admin-access-modal-close"
+                                data-close-admin-access-modal="true"
+                                aria-label="Закрити admin access"
+                            >
+                                ×
+                            </button>
+                            <div class="admin-access-modal-body">
+                                <p class="stat-label" id="admin-access-modal-title">Admin Access</p>
+                                {% if admin_auth.using_fallback_session_secret %}
+                                <p class="meta">
+                                    Для production обов'язково задайте
+                                    <code>ADMIN_SESSION_SECRET</code>.
+                                </p>
+                                {% endif %}
+                                {% if admin_auth.enabled %}
+                                <form method="post" action="/admin/login" class="admin-auth-form">
+                                    <input
+                                        id="admin_password_input"
+                                        type="password"
+                                        name="password"
+                                        placeholder="Введіть admin password"
+                                        autocomplete="current-password"
+                                        required
+                                    />
+                                    <input type="hidden" name="next" value="{{ admin_auth.current_path }}" />
+                                    <button type="submit">Увійти</button>
+                                </form>
+                                {% else %}
+                                <p class="meta">
+                                    Задайте <code>ADMIN_PASSWORD</code> у <code>.env</code>,
+                                    щоб увімкнути admin-доступ. Після цього просто
+                                    перезапустіть сервер.
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
                     </section>
+                    {% endif %}
                     <nav class="page-nav" aria-label="Primary">
                         <a
                             href="/"

@@ -23,7 +23,56 @@ main {
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    min-height: 270px;
+}
+
+.admin-access-trigger {
+    width: 52px;
+    min-width: 52px;
+    height: 52px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(248, 113, 113, 0.34);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(127, 29, 29, 0.3), rgba(15, 23, 42, 0.94));
+    box-shadow: 0 16px 34px rgba(127, 29, 29, 0.18);
+    color: #fff1f2;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.admin-access-trigger:hover,
+.admin-access-trigger:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(248, 113, 113, 0.55);
+    box-shadow: 0 18px 38px rgba(127, 29, 29, 0.24);
+    outline: none;
+}
+
+.admin-access-trigger.is-authenticated {
+    border-color: rgba(96, 165, 250, 0.4);
+    background: linear-gradient(180deg, rgba(30, 64, 175, 0.34), rgba(15, 23, 42, 0.94));
+    box-shadow: 0 16px 34px rgba(30, 64, 175, 0.2);
+    color: #dbeafe;
+}
+
+.admin-access-trigger-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.admin-access-trigger-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
 }
 
 .page-header-copy {
@@ -72,6 +121,60 @@ main {
     box-shadow: 0 16px 34px rgba(127, 29, 29, 0.18);
     position: relative;
     z-index: 2;
+}
+
+.admin-access-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.admin-access-modal.is-open {
+    display: flex;
+}
+
+.admin-access-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.76);
+    backdrop-filter: blur(8px);
+}
+
+.admin-access-modal-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(420px, 100%);
+    padding: 22px;
+    border: 1px solid rgba(248, 113, 113, 0.26);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
+    box-shadow: 0 28px 80px rgba(2, 6, 23, 0.56);
+}
+
+.admin-access-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.admin-access-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    line-height: 1;
 }
 
 .page-header-copy {

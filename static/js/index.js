@@ -10,6 +10,8 @@ const uploadResult = document.getElementById("upload-result");
 const clearUploadFileButton = document.getElementById("clear-upload-file-button");
 const openUploadSuccessModalButton = document.getElementById("open-upload-success-modal-button");
 const uploadSuccessModal = document.getElementById("upload-success-modal");
+const adminAccessTrigger = document.getElementById("admin-access-trigger");
+const adminAccessModal = document.getElementById("admin-access-modal");
 const externalSearchInput = document.getElementById("web_question");
 const externalSearchClearButton = document.getElementById("external-search-clear-button");
 const uploadDropzone = document.getElementById("upload-dropzone");
@@ -805,6 +807,35 @@ demoButtons.forEach((button) => {
         fillQuestionInput(button.dataset.demoQuestion ?? "");
     });
 });
+
+if (adminAccessTrigger instanceof HTMLButtonElement && adminAccessModal instanceof HTMLElement) {
+    const openAdminAccessModal = () => {
+        adminAccessModal.classList.add("is-open");
+        adminAccessModal.setAttribute("aria-hidden", "false");
+    };
+
+    const closeAdminAccessModal = () => {
+        adminAccessModal.classList.remove("is-open");
+        adminAccessModal.setAttribute("aria-hidden", "true");
+    };
+
+    adminAccessTrigger.addEventListener("click", () => {
+        openAdminAccessModal();
+    });
+
+    adminAccessModal.addEventListener("click", (event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        if (target?.dataset.closeAdminAccessModal === "true") {
+            closeAdminAccessModal();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && adminAccessModal.classList.contains("is-open")) {
+            closeAdminAccessModal();
+        }
+    });
+}
 
 if (questionForm instanceof HTMLFormElement) {
     const questionInput = getQuestionInput();
