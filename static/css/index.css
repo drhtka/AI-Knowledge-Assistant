@@ -590,9 +590,12 @@ select:disabled {
 }
 
 .ask-settings-row-in-composer .label-with-tooltip {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     gap: 6px;
-    margin-bottom: 6px;
-    padding-left: 6px;
+    margin: 0 auto 6px;
+    width: fit-content;
 }
 
 .ask-settings-row-in-composer .info-tooltip {
