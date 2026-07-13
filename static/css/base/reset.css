@@ -1,0 +1,58 @@
+body {
+    margin: 0;
+}
+
+h1,
+h2,
+h3 {
+    margin-top: 0;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+input,
+select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #e6edf7;
+    margin-bottom: 14px;
+}
+
+select {
+    appearance: none;
+}
+
+button {
+    border: 1px solid #334155;
+    background: #111827;
+    color: #e6edf7;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+pre {
+    overflow-x: auto;
+    background: #020617;
+    padding: 12px;
+    border-radius: 10px;
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}

@@ -1,0 +1,26 @@
+.chunking-custom-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.chunking-custom-form .label-with-tooltip,
+.chunking-custom-form-row {
+    display: flex;
+    justify-content: center;
+}
+
+.chunking-custom-form .label-with-tooltip {
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.chunking-custom-form .label-with-tooltip label {
+    display: block;
+    text-align: center;
+}

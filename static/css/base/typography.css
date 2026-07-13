@@ -1,0 +1,50 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #0b1020;
+    color: #e6edf7;
+}
+
+h2 {
+    font-size: 1.45rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #e9d5ff;
+    background: linear-gradient(90deg, #93c5fd 0%, #c4b5fd 45%, #86efac 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-card-title {
+    display: inline-block;
+    background: linear-gradient(90deg, #bfdbfe 0%, #c4b5fd 35%, #a7f3d0 68%, #86efac 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.intro,
+.meta,
+code,
+pre {
+    color: #c6d0e1;
+}
+
+a {
+    color: #93c5fd;
+}
+
+.list-reset li,
+.meta,
+a {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.error-text {
+    color: #fca5a5;
+}
+
+.success-text {
+    color: #86efac;
+}

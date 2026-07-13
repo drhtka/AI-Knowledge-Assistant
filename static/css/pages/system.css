@@ -1,0 +1,164 @@
+.system-runtime-grid {
+    align-items: stretch;
+    margin-bottom: 40px;
+}
+
+.system-lifecycle-grid {
+    margin-top: 12px;
+}
+
+.system-runtime-card h2 {
+    margin-bottom: 0;
+}
+
+.system-runtime-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 10px;
+}
+
+.system-runtime-summary {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.system-runtime-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 10px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.48);
+}
+
+.system-runtime-summary-row .meta {
+    margin: 0;
+}
+
+.system-runtime-summary-row code {
+    color: #f8fafc;
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.system-runtime-summary-row-active {
+    border-color: rgba(134, 239, 172, 0.28);
+    background: linear-gradient(180deg, rgba(20, 83, 45, 0.24), rgba(15, 23, 42, 0.6));
+}
+
+.system-backend-form {
+    margin-top: 8px;
+    width: 100%;
+}
+
+.system-runtime-card:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.system-runtime-card:first-child .section-kicker-row,
+.system-runtime-card:first-child h2,
+.system-runtime-card:first-child .system-runtime-summary,
+.system-runtime-card:first-child .system-backend-form,
+.system-runtime-card:first-child .system-runtime-result {
+    width: min(100%, 320px);
+}
+
+.system-runtime-card:first-child .section-kicker-row,
+.system-runtime-card:first-child h2 {
+    justify-content: center;
+    text-align: center;
+}
+
+.system-runtime-card:first-child .system-runtime-summary,
+.system-runtime-card:first-child .system-backend-form,
+.system-runtime-card:first-child .system-runtime-result {
+    margin-inline: auto;
+}
+
+.system-runtime-card:first-child .label-with-tooltip,
+.system-runtime-card:first-child .inline-form-row {
+    display: flex;
+    justify-content: center;
+}
+
+.system-runtime-card:first-child .system-backend-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.system-runtime-card:first-child .label-with-tooltip {
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.system-runtime-card:first-child .label-with-tooltip label {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.system-runtime-result {
+    margin-top: 6px;
+    min-height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.system-observability-grid {
+    margin-top: 30px;
+    gap: 10px;
+    grid-auto-rows: 1fr;
+}
+
+.system-observability-grid .reindex-status-item {
+    padding: 9px;
+    gap: 4px;
+}
+
+.system-observability-summary-item strong {
+    display: -webkit-box;
+    overflow: hidden;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-height: 1.4;
+    min-height: calc(1.4em * 3);
+}
+
+.dashboard-panel.inline-form {
+    margin-top: 0;
+}
+
+.settings-tiles-grid {
+    margin-top: 16px;
+}
+
+.settings-form-card {
+    margin-top: 0;
+}
+
+.settings-form-row {
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.settings-form-row .upload-result {
+    margin: 0;
+}
+
+.settings-form-row button {
+    width: 100%;
+    margin-top: auto;
+}

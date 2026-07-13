@@ -1,0 +1,56 @@
+@media (max-width: 860px) {
+    .page-header-top {
+        flex-direction: column;
+    }
+
+    .page-nav {
+        justify-content: flex-start;
+    }
+
+    .admin-auth-card {
+        max-width: none;
+    }
+
+    .overview-grid,
+    .documents-workflow-grid,
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ask-settings-row {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .control-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reindex-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reindex-status-actions {
+        width: 100%;
+    }
+
+    .mode-compare-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .inline-form-row button {
+        width: 100%;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

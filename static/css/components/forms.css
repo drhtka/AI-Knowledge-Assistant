@@ -1,0 +1,235 @@
+.label-with-tooltip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 0;
+    margin-bottom: 14px;
+}
+
+.label-with-tooltip label {
+    margin-bottom: 0;
+}
+
+.inline-form {
+    margin-top: 16px;
+}
+
+#storage-backend-form {
+    margin-top: 28px;
+}
+
+.control-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.control-grid-tiles {
+    align-items: stretch;
+}
+
+.control-grid-four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.control-field-tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 148px;
+    padding: 16px;
+    border: 1px solid #2563eb;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.12), rgba(15, 23, 42, 0.85));
+}
+
+.control-field label {
+    margin-bottom: 8px;
+}
+
+.control-field input,
+.control-field select {
+    margin-bottom: 8px;
+}
+
+.control-help {
+    margin: 0;
+    line-height: 1.45;
+}
+
+.pill-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.mode-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    border-radius: 999px;
+    background: rgba(30, 41, 59, 0.9);
+    color: #dbeafe;
+}
+
+.mode-pill.is-active {
+    border-color: rgba(134, 239, 172, 0.55);
+    background: rgba(22, 101, 52, 0.32);
+    color: #dcfce7;
+}
+
+.chunking-summary-shell {
+    margin-top: 14px;
+}
+
+.chunking-summary-caption {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.chunking-summary-row {
+    margin-top: 0;
+    margin-bottom: 10px;
+    gap: 12px;
+    justify-content: center;
+}
+
+.chunking-summary-pill {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 118px;
+    padding: 10px 12px;
+    border-color: rgba(96, 165, 250, 0.22);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.88));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.chunking-summary-pill-accent {
+    border-color: rgba(134, 239, 172, 0.38);
+    background: linear-gradient(180deg, rgba(20, 83, 45, 0.42), rgba(15, 23, 42, 0.92));
+}
+
+.chunking-summary-pill strong {
+    color: #f8fafc;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.chunking-summary-label {
+    display: block;
+    width: 100%;
+    color: #93c5fd;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.stat-pill-row {
+    margin-top: 4px;
+}
+
+.section-kicker {
+    margin: 0 0 10px;
+    color: #93c5fd;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.compact-list li {
+    padding: 9px 0;
+}
+
+.inline-form-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.inline-form-row select {
+    flex: 1 1 220px;
+    margin-bottom: 0;
+}
+
+.inline-form-row.settings-form-row select {
+    flex: 0 0 auto;
+}
+
+.inline-form-row button {
+    flex: 0 0 auto;
+}
+
+.feature-intro {
+    margin-top: -4px;
+    margin-bottom: 12px;
+    color: #dbeafe;
+}
+
+.section-kicker-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.section-kicker-row .section-kicker {
+    margin-bottom: 0;
+}
+
+.feature-panel-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.feature-panel-header h2 {
+    margin-bottom: 0;
+}
+
+.select-with-status {
+    position: relative;
+    flex: 1 1 220px;
+}
+
+.select-with-status select {
+    margin-bottom: 0;
+    padding-right: 42px;
+}
+
+.select-status-check {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #86efac;
+    font-size: 15px;
+    font-weight: 700;
+    pointer-events: none;
+}
+
+.upload-result {
+    margin-top: 12px;
+}
+
+.workflow-result-slot {
+    min-height: 56px;
+}
+
+.chunking-result-slot {
+    min-height: 88px;
+}
