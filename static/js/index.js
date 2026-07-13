@@ -7,6 +7,8 @@ const modeComparisonContent = document.getElementById("mode-comparison-content")
 const uploadForm = document.getElementById("upload-form");
 const uploadResult = document.getElementById("upload-result");
 const clearUploadFileButton = document.getElementById("clear-upload-file-button");
+const uploadDropzone = document.getElementById("upload-dropzone");
+const uploadSelectedFile = document.getElementById("upload-selected-file");
 const mainFlowChunkingPreset = document.getElementById("main_flow_chunking_preset");
 const mainFlowPresetResult = document.getElementById("main-flow-preset-result");
 const runtimeSummaryMode = document.getElementById("runtime-summary-mode");
@@ -488,6 +490,23 @@ function syncClearUploadButton(fileInput) {
     clearUploadFileButton.hidden = !hasFile;
 }
 
+function syncUploadDropzoneState(fileInput) {
+    const selectedFileName =
+        fileInput instanceof HTMLInputElement && fileInput.files && fileInput.files.length > 0
+            ? fileInput.files[0].name
+            : "";
+
+    if (uploadDropzone instanceof HTMLElement) {
+        uploadDropzone.classList.toggle("has-file", Boolean(selectedFileName));
+    }
+
+    if (uploadSelectedFile instanceof HTMLElement) {
+        uploadSelectedFile.textContent = selectedFileName
+            ? `Вибрано файл: ${selectedFileName}`
+            : "Файл ще не вибрано.";
+    }
+}
+
 function syncMainFlowRuntimeSummary() {
     const retrievalModeInput = document.getElementById("retrieval_mode");
     const topKInput = document.getElementById("top_k");
@@ -753,9 +772,11 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
 
     if (fileInput instanceof HTMLInputElement) {
         syncClearUploadButton(fileInput);
+        syncUploadDropzoneState(fileInput);
 
         fileInput.addEventListener("change", () => {
             syncClearUploadButton(fileInput);
+            syncUploadDropzoneState(fileInput);
 
             if (!fileInput.files || fileInput.files.length === 0) {
                 resetUploadStatus();
@@ -772,12 +793,58 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
 
             resetUploadStatus();
         });
+
+        const applyDroppedFiles = (files) => {
+            if (!(files instanceof FileList) || files.length === 0) {
+                return;
+            }
+
+            fileInput.files = files;
+            syncClearUploadButton(fileInput);
+            syncUploadDropzoneState(fileInput);
+            fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+        };
+
+        if (uploadDropzone instanceof HTMLElement && !fileInput.disabled) {
+            ["dragenter", "dragover"].forEach((eventName) => {
+                uploadDropzone.addEventListener(eventName, (event) => {
+                    event.preventDefault();
+                    uploadDropzone.classList.add("is-dragover");
+                });
+            });
+
+            ["dragleave", "dragend"].forEach((eventName) => {
+                uploadDropzone.addEventListener(eventName, () => {
+                    uploadDropzone.classList.remove("is-dragover");
+                });
+            });
+
+            uploadDropzone.addEventListener("drop", (event) => {
+                event.preventDefault();
+                uploadDropzone.classList.remove("is-dragover");
+
+                if (!(event.dataTransfer instanceof DataTransfer)) {
+                    return;
+                }
+
+                const transfer = new DataTransfer();
+                const [firstFile] = Array.from(event.dataTransfer.files);
+
+                if (!firstFile) {
+                    return;
+                }
+
+                transfer.items.add(firstFile);
+                applyDroppedFiles(transfer.files);
+            });
+        }
     }
 
     if (clearUploadFileButton instanceof HTMLButtonElement && fileInput instanceof HTMLInputElement) {
         clearUploadFileButton.addEventListener("click", () => {
             uploadForm.reset();
             syncClearUploadButton(fileInput);
+            syncUploadDropzoneState(fileInput);
             resetUploadStatus();
             fileInput.focus();
         });
@@ -827,6 +894,7 @@ if (uploadForm instanceof HTMLFormElement && uploadResult instanceof HTMLElement
             void refreshReindexStatus();
             uploadForm.reset();
             syncClearUploadButton(fileInput);
+            syncUploadDropzoneState(fileInput);
         } catch {
             renderUploadStatus(
                 "Upload failed because the server did not respond.",

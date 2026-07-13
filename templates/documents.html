@@ -24,14 +24,27 @@
         >
             <!-- <label for="upload_file">Документ</label>s -->
             <div class="upload-file-row">
-                <input
-                    id="upload_file"
-                    name="file"
-                    type="file"
-                    accept=".txt,.md,.pdf"
-                    {% if not admin_auth.is_authenticated %}disabled{% endif %}
-                    required
-                />
+                <label
+                    for="upload_file"
+                    class="upload-dropzone{% if not admin_auth.is_authenticated %} is-disabled{% endif %}"
+                    id="upload-dropzone"
+                >
+                    <span class="upload-dropzone-icon" aria-hidden="true">⇪</span>
+                    <span class="upload-dropzone-copy">
+                        <strong>Перетягніть файл сюди</strong>
+                        <span>або натисніть, щоб вибрати документ</span>
+                    </span>
+                    <span class="upload-dropzone-meta">TXT, MD, PDF</span>
+                    <input
+                        id="upload_file"
+                        name="file"
+                        type="file"
+                        accept=".txt,.md,.pdf"
+                        class="upload-dropzone-input"
+                        {% if not admin_auth.is_authenticated %}disabled{% endif %}
+                        required
+                    />
+                </label>
                 <button
                     type="button"
                     id="clear-upload-file-button"
@@ -44,6 +57,9 @@
                     ×
                 </button>
             </div>
+            <p class="meta upload-selected-file" id="upload-selected-file">
+                Файл ще не вибрано.
+            </p>
             <p class="meta">
                 Підтримувані формати: <code>.txt</code>, <code>.md</code> та
                 <code>.pdf</code>
