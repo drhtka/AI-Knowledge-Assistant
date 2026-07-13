@@ -1212,17 +1212,43 @@ select:disabled {
 
 .system-backend-form {
     margin-top: 8px;
+    width: 100%;
 }
 
-.system-runtime-form-row {
+.system-runtime-card:first-child {
+    display: flex;
+    flex-direction: column;
     align-items: center;
+}
+
+.system-runtime-card:first-child .section-kicker-row,
+.system-runtime-card:first-child h2,
+.system-runtime-card:first-child .system-runtime-summary,
+.system-runtime-card:first-child .system-backend-form,
+.system-runtime-card:first-child .system-runtime-result {
+    width: min(100%, 320px);
+}
+
+.system-runtime-card:first-child .section-kicker-row,
+.system-runtime-card:first-child h2 {
+    justify-content: center;
+    text-align: center;
+}
+
+.system-runtime-card:first-child .system-runtime-summary {
+    margin-inline: auto;
+}
+
+.system-runtime-summary-row {
+    justify-content: space-between;
 }
 
 .system-runtime-form-row .system-custom-select {
     position: relative;
     z-index: 3;
-    flex: 1 1 220px;
-    max-width: 320px;
+    flex: 0 0 220px;
+    width: 220px;
+    max-width: 220px;
 }
 
 .system-runtime-form-row .system-custom-select .custom-select-native {
@@ -1327,6 +1353,8 @@ select:disabled {
     min-height: 26px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .system-observability-grid {
