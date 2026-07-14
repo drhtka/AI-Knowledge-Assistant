@@ -64,7 +64,8 @@
 
 @media (max-width: 860px) {
     .info-tooltip-bubble,
-    .info-tooltip-open-right .info-tooltip-bubble {
+    .info-tooltip-open-right .info-tooltip-bubble,
+    .info-tooltip-open-top-left .info-tooltip-bubble {
         position: fixed;
         left: 16px;
         right: 16px;
