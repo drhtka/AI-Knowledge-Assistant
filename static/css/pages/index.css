@@ -277,6 +277,13 @@
     font-size: 12px;
 }
 
+.ask-demo-footer-label-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .ask-settings-composer-group {
     display: flex;
     flex-direction: column;
@@ -366,13 +373,6 @@
 .ask-main-column input[readonly] {
     cursor: not-allowed;
     background: rgba(15, 23, 42, 0.72);
-}
-
-.ask-input-lock-note {
-    width: min(100%, 760px);
-    align-self: center;
-    margin: -4px 0 0;
-    text-align: center;
 }
 
 .ask-main-actions {

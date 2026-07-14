@@ -146,7 +146,7 @@
                         name="question"
                         class="ask-question-input"
                         placeholder="{% if admin_auth.is_authenticated %}Як мені оцінювати якість пошуку?{% else %}Оберіть один із demo-запитів вище{% endif %}"
-                        {% if not admin_auth.is_authenticated %}readonly title="Без admin auth доступні тільки demo-запити"{% endif %}
+                        {% if not admin_auth.is_authenticated %}readonly title="Без авторизації доступні тільки demo-запити"{% endif %}
                         required
                     >{{ question }}</textarea>
                     <div class="ask-question-composer-footer">
@@ -158,7 +158,17 @@
                                 </button>
                                 {% endfor %}
                             </div>
-                            <p class="meta ask-demo-footer-label">Демо запити</p>
+                            <div class="ask-demo-footer-label-group">
+                                <p class="meta ask-demo-footer-label">Демо запити</p>
+                                {% if not admin_auth.is_authenticated %}
+                                <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення по demo-запитах">
+                                    ?
+                                    <span class="info-tooltip-bubble">
+                                        Без авторизації доступні тільки demo-запити.
+                                    </span>
+                                </span>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="ask-settings-composer-group">
                             <div class="ask-settings-row ask-settings-row-in-composer">
@@ -335,11 +345,6 @@
                     id="main-flow-preset-result"
                     class="upload-result meta compact-control-result-slot"
                 ></div>
-                {% if not admin_auth.is_authenticated %}
-                <p class="meta ask-input-lock-note">
-                    Без <code>admin auth</code> доступні тільки demo-запити.
-                </p>
-                {% endif %}
             </div>
         </form>
     </article>
