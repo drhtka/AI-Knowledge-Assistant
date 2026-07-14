@@ -55,12 +55,18 @@
     transform: translateY(0);
 }
 
-@media (max-width: 520px) {
+@media (max-width: 860px) {
     .info-tooltip-bubble,
     .info-tooltip-open-right .info-tooltip-bubble {
-        left: auto;
-        right: 0;
-        width: min(260px, calc(100vw - 32px));
-        max-width: calc(100vw - 32px);
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        top: auto;
+        bottom: 16px;
+        width: auto;
+        max-width: none;
+        border-radius: 14px;
+        transform: translateY(8px);
+        z-index: 120;
     }
 }
