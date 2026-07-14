@@ -1,3 +1,41 @@
+.engineering-overview-card {
+    margin-bottom: 20px;
+}
+
+.engineering-overview-intro {
+    margin: 10px 0 18px;
+    max-width: 860px;
+    color: #cbd5e1;
+}
+
+.engineering-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.engineering-overview-item {
+    gap: 10px;
+    min-height: 0;
+}
+
+.engineering-overview-item strong {
+    font-size: 18px;
+    line-height: 1.35;
+}
+
+.engineering-overview-item .meta {
+    margin: 0;
+    color: #cbd5e1;
+    line-height: 1.55;
+}
+
+@media (max-width: 860px) {
+    .engineering-overview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .external-search-form {
     margin-top: 18px;
 }

@@ -1,6 +1,75 @@
 {% extends "base.html" %}
 
 {% block content %}
+<article class="content-card overview-card dashboard-card engineering-overview-card">
+    <div class="section-kicker-row">
+        <p class="section-kicker">Engineering Overview</p>
+        <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Коротке пояснення архітектури">
+            ?
+            <span class="info-tooltip-bubble">
+                Короткий інженерний зріз для демо: які компоненти входять у
+                retrieval pipeline і як вони впливають на відповідь.
+            </span>
+        </span>
+    </div>
+    <h2 class="hero-card-title">Як працює асистент</h2>
+    <p class="engineering-overview-intro">
+        Цей демо-асистент поєднує локальний корпус документів, гібридний
+        retrieval і grounded answer generation. Нижче коротко показано, за що
+        відповідає кожен ключовий компонент.
+    </p>
+    <div class="engineering-overview-grid">
+        <article class="mini-summary-card engineering-overview-item">
+            <span class="stat-label">RAG</span>
+            <strong>Відповідь із прив'язкою до джерел</strong>
+            <p class="meta">
+                Асистент будує відповідь на основі знайдених фрагментів, а не
+                генерує її без контексту.
+            </p>
+        </article>
+        <article class="mini-summary-card engineering-overview-item">
+            <span class="stat-label">TF-IDF</span>
+            <strong>Лексичний пошук за словами</strong>
+            <p class="meta">
+                Добре працює, коли в запиті важливі точні терміни, назви або
+                прямі збіги по формулюваннях.
+            </p>
+        </article>
+        <article class="mini-summary-card engineering-overview-item">
+            <span class="stat-label">Embeddings</span>
+            <strong>Семантичний пошук за змістом</strong>
+            <p class="meta">
+                Допомагає знаходити релевантні фрагменти навіть тоді, коли
+                запит і документ сформульовані по-різному.
+            </p>
+        </article>
+        <article class="mini-summary-card engineering-overview-item">
+            <span class="stat-label">pgvector</span>
+            <strong>Vector storage для similarity search</strong>
+            <p class="meta">
+                Зберігає embedding-вектори та підтримує пошук близьких за
+                змістом документних фрагментів.
+            </p>
+        </article>
+        <article class="mini-summary-card engineering-overview-item">
+            <span class="stat-label">Chunking</span>
+            <strong>Розбиття документів на фрагменти</strong>
+            <p class="meta">
+                Текст індексується невеликими частинами з overlap, щоб retrieval
+                повертав точніший і стабільніший контекст.
+            </p>
+        </article>
+        <article class="mini-summary-card engineering-overview-item">
+            <span class="stat-label">Індекси</span>
+            <strong>Готовність до гібридного retrieval</strong>
+            <p class="meta">
+                Система підтримує lexical і vector-ready шари пошуку, а режим
+                <code>auto</code> обирає найкращу стратегію для запиту.
+            </p>
+        </article>
+    </div>
+</article>
+
 <article class="content-card overview-card dashboard-card">
     <p class="section-kicker">Runtime Summary</p>
     <h2 class="hero-card-title">Поточний стан системи</h2>
