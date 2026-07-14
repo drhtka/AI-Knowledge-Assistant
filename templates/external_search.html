@@ -220,4 +220,13 @@
         "is_authenticated": admin_auth.is_authenticated,
     } | tojson }}
 </script>
+
+{% if admin_auth.is_authenticated %}
+<section class="json-stack">
+    <article class="content-card json-card">
+        <h2>JSON відповіді вебпошуку</h2>
+        <pre>{{ web_search_result_json | tojson(indent=2) }}</pre>
+    </article>
+</section>
+{% endif %}
 {% endblock %}
