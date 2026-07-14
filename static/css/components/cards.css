@@ -44,7 +44,7 @@
 }
 
 .mini-summary-card strong {
-    color: #f8fafc;
+    color: #d8e0eb;
     font-size: 16px;
     line-height: 1.35;
     overflow-wrap: anywhere;
@@ -183,7 +183,7 @@
 }
 
 .stat-label {
-    color: #93c5fd;
+    color: #8eaeca;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -191,7 +191,7 @@
 }
 
 .stat-value {
-    color: #f8fafc;
+    color: #d8e0eb;
     font-size: 17px;
     font-weight: 700;
 }
@@ -261,7 +261,7 @@
 }
 
 .reindex-status-item strong {
-    color: #f8fafc;
+    color: #d8e0eb;
     font-size: 0.98rem;
     line-height: 1.35;
     overflow-wrap: anywhere;
@@ -314,7 +314,7 @@
 
 .mode-compare-card h3 {
     margin: 0;
-    color: #f8fafc;
+    color: #d8e0eb;
     font-size: 1.05rem;
 }
 
@@ -334,7 +334,7 @@
 }
 
 .mode-compare-shared-source-value {
-    color: #f8fafc;
+    color: #d8e0eb;
     line-height: 1.5;
     word-break: break-word;
 }
@@ -366,7 +366,7 @@
 
 .mode-compare-source-value {
     margin: 0;
-    color: #dbe4f0;
+    color: #c9d4e2;
     line-height: 1.5;
     word-break: break-word;
 }
@@ -426,7 +426,7 @@
 
 .search-context-card-title {
     margin: 4px 0 0;
-    color: #f8fafc;
+    color: #d8e0eb;
     line-height: 1.35;
 }
 
@@ -440,7 +440,7 @@
 
 .search-context-snippet {
     margin: 0;
-    color: #dbe4f0;
+    color: #c9d4e2;
     line-height: 1.65;
 }
 
