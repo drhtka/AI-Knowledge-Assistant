@@ -62,7 +62,6 @@ export function syncQuestionActionState() {
     const hasQuestionValue = Boolean(getNormalizedQuestionValue());
     const submitButton = getQuestionSubmitButton();
     const clearButton = getQuestionClearButton();
-    const questionInput = getQuestionInput();
     const hasResultState = hasQuestionResultState();
     const canClear = hasQuestionValue || hasResultState;
 
@@ -118,13 +117,42 @@ export function renderAskResultContent(payload) {
         .join("");
 
     askResultContent.innerHTML = `
-        <p>${escapeHtml(payload.answer)}</p>
-        <p class="meta">
-            впевненість=${escapeHtml(payload.confidence)} | затримка_мс=${escapeHtml(payload.latency_ms)} |
-            режим=${escapeHtml(payload.answer_mode)} | пошук=${escapeHtml(payload.retrieval_mode)}
-        </p>
-        <h3>Джерела</h3>
-        <ul class="list-reset">${sourcesMarkup}</ul>
+        <div class="chat-single-response">
+            <div class="chat-single-response-head">
+                <div class="chat-single-response-identity">
+                    <span class="chat-single-response-avatar">A</span>
+                    <div class="chat-single-response-meta-group">
+                        <p class="chat-single-response-name">Assistant</p>
+                        <p class="meta chat-single-response-meta">Single-turn grounded answer</p>
+                    </div>
+                </div>
+            </div>
+            <div class="pill-row answer-metric-row">
+                <span class="mode-pill answer-metric-pill">
+                    <span class="answer-metric-label">Confidence</span>
+                    <strong>${escapeHtml(payload.confidence)}</strong>
+                </span>
+                <span class="mode-pill answer-metric-pill">
+                    <span class="answer-metric-label">Latency</span>
+                    <strong>${escapeHtml(payload.latency_ms)} ms</strong>
+                </span>
+                <span class="mode-pill answer-metric-pill">
+                    <span class="answer-metric-label">Answer mode</span>
+                    <strong>${escapeHtml(payload.answer_mode)}</strong>
+                </span>
+                <span class="mode-pill answer-metric-pill">
+                    <span class="answer-metric-label">Retrieval</span>
+                    <strong>${escapeHtml(payload.retrieval_mode)}</strong>
+                </span>
+            </div>
+            <div class="chat-single-response-bubble">
+                <p class="chat-single-response-text">${escapeHtml(payload.answer)}</p>
+            </div>
+            <div class="chat-single-response-sources">
+                <p class="chat-single-response-sources-title">Sources</p>
+                <ul class="list-reset chat-single-response-sources-list">${sourcesMarkup}</ul>
+            </div>
+        </div>
     `;
 }
 
@@ -151,22 +179,46 @@ export function renderSearchResultContent(payload) {
     const hitsMarkup = payload.hits
         .map(
             (hit) => `
-                <li>
-                    <strong>${escapeHtml(hit.title)}</strong><br />
-                    <span class="meta">
-                        файл=${escapeHtml(hit.source_name)} | фрагмент=${escapeHtml(hit.chunk_index)} |
-                        тип=${escapeHtml(hit.file_type)} | оцінка=${escapeHtml(hit.score)}
-                    </span>
-                    <br />
-                    ${escapeHtml(hit.snippet)}
-                </li>
+                <article class="search-context-card">
+                    <div class="search-context-card-head">
+                        <div>
+                            <p class="meta search-context-card-kicker">Retrieved source</p>
+                            <h3 class="search-context-card-title">${escapeHtml(hit.title)}</h3>
+                        </div>
+                        <span class="mode-pill search-context-score-pill">${escapeHtml(hit.score)}</span>
+                    </div>
+                    <div class="pill-row search-context-meta-row">
+                        <span class="mode-pill search-context-meta-pill">
+                            <span class="search-context-meta-label">File</span>
+                            <strong>${escapeHtml(hit.source_name)}</strong>
+                        </span>
+                        <span class="mode-pill search-context-meta-pill">
+                            <span class="search-context-meta-label">Chunk</span>
+                            <strong>${escapeHtml(hit.chunk_index)}</strong>
+                        </span>
+                        <span class="mode-pill search-context-meta-pill">
+                            <span class="search-context-meta-label">Type</span>
+                            <strong>${escapeHtml(hit.file_type)}</strong>
+                        </span>
+                    </div>
+                    <p class="search-context-snippet">${escapeHtml(hit.snippet)}</p>
+                </article>
             `,
         )
         .join("");
 
     searchResultContent.innerHTML = `
-        <p class="meta">режим_пошуку=${escapeHtml(payload.retrieval_mode)}</p>
-        <ul class="list-reset">${hitsMarkup}</ul>
+        <div class="pill-row context-summary-row">
+            <span class="mode-pill context-summary-pill">
+                <span class="context-summary-label">Search mode</span>
+                <strong>${escapeHtml(payload.retrieval_mode)}</strong>
+            </span>
+            <span class="mode-pill context-summary-pill">
+                <span class="context-summary-label">Hits</span>
+                <strong>${escapeHtml(payload.hits.length)}</strong>
+            </span>
+        </div>
+        <div class="search-context-grid">${hitsMarkup}</div>
     `;
 }
 
@@ -191,9 +243,18 @@ export function renderModeComparisonContent(payload) {
             (item) => `
                 <div class="mode-compare-card">
                     <h3>${escapeHtml(item.mode)}</h3>
-                    <p class="meta">топ_джерело=${escapeHtml(item.top_source)}</p>
-                    <p class="meta">топ_оцінка=${escapeHtml(item.top_score)}</p>
-                    <p class="meta">збігів=${escapeHtml(item.hit_count)}</p>
+                    <div class="pill-row mode-compare-pill-row">
+                        <span class="mode-pill mode-compare-pill">
+                            <span class="mode-compare-pill-label">Top score</span>
+                            <strong>${escapeHtml(item.top_score)}</strong>
+                        </span>
+                        <span class="mode-pill mode-compare-pill">
+                            <span class="mode-compare-pill-label">Hits</span>
+                            <strong>${escapeHtml(item.hit_count)}</strong>
+                        </span>
+                    </div>
+                    <p class="meta mode-compare-source-label">Top source</p>
+                    <p class="mode-compare-source-value">${escapeHtml(item.top_source)}</p>
                 </div>
             `,
         )

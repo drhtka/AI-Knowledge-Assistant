@@ -8,6 +8,30 @@
     gap: 14px;
 }
 
+.answer-metric-row {
+    margin-top: 0;
+    gap: 10px;
+}
+
+.answer-metric-pill {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 124px;
+    padding: 10px 12px;
+    border-color: rgba(96, 165, 250, 0.22);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.88));
+}
+
+.answer-metric-label {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .chat-single-response-head {
     display: flex;
     align-items: flex-start;

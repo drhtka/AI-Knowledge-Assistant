@@ -280,13 +280,27 @@
                     <span class="chat-single-response-avatar">A</span>
                     <div class="chat-single-response-meta-group">
                         <p class="chat-single-response-name">Assistant</p>
-                        <p class="meta chat-single-response-meta">
-                            впевненість={{ ask_result.confidence }} | затримка_мс={{
-                            ask_result.latency_ms }} | режим={{ ask_result.answer_mode }} |
-                            пошук={{ ask_result.retrieval_mode }}
-                        </p>
+                        <p class="meta chat-single-response-meta">Single-turn grounded answer</p>
                     </div>
                 </div>
+            </div>
+            <div class="pill-row answer-metric-row">
+                <span class="mode-pill answer-metric-pill">
+                    <span class="answer-metric-label">Confidence</span>
+                    <strong>{{ ask_result.confidence }}</strong>
+                </span>
+                <span class="mode-pill answer-metric-pill">
+                    <span class="answer-metric-label">Latency</span>
+                    <strong>{{ ask_result.latency_ms }} ms</strong>
+                </span>
+                <span class="mode-pill answer-metric-pill">
+                    <span class="answer-metric-label">Answer mode</span>
+                    <strong>{{ ask_result.answer_mode }}</strong>
+                </span>
+                <span class="mode-pill answer-metric-pill">
+                    <span class="answer-metric-label">Retrieval</span>
+                    <strong>{{ ask_result.retrieval_mode }}</strong>
+                </span>
             </div>
             <div class="chat-single-response-bubble">
                 <p class="chat-single-response-text">{{ ask_result.answer }}</p>
@@ -327,21 +341,45 @@
         <h2>Знайдений контекст</h2>
         <div id="search-result-content">
             {% if search_result %}
-            <p class="meta">режим_пошуку={{ search_result.retrieval_mode }}</p>
+            <div class="pill-row context-summary-row">
+                <span class="mode-pill context-summary-pill">
+                    <span class="context-summary-label">Search mode</span>
+                    <strong>{{ search_result.retrieval_mode }}</strong>
+                </span>
+                <span class="mode-pill context-summary-pill">
+                    <span class="context-summary-label">Hits</span>
+                    <strong>{{ search_result.hits | length }}</strong>
+                </span>
+            </div>
             {% endif %} {% if search_result and search_result.hits %}
-            <ul class="list-reset">
+            <div class="search-context-grid">
                 {% for hit in search_result.hits %}
-                <li>
-                    <strong>{{ hit.title }}</strong><br />
-                    <span class="meta">
-                        файл={{ hit.source_name }} | фрагмент={{ hit.chunk_index }} |
-                        тип={{ hit.file_type }} | оцінка={{ hit.score }}
-                    </span>
-                    <br />
-                    {{ hit.snippet }}
-                </li>
+                <article class="search-context-card">
+                    <div class="search-context-card-head">
+                        <div>
+                            <p class="meta search-context-card-kicker">Retrieved source</p>
+                            <h3 class="search-context-card-title">{{ hit.title }}</h3>
+                        </div>
+                        <span class="mode-pill search-context-score-pill">{{ hit.score }}</span>
+                    </div>
+                    <div class="pill-row search-context-meta-row">
+                        <span class="mode-pill search-context-meta-pill">
+                            <span class="search-context-meta-label">File</span>
+                            <strong>{{ hit.source_name }}</strong>
+                        </span>
+                        <span class="mode-pill search-context-meta-pill">
+                            <span class="search-context-meta-label">Chunk</span>
+                            <strong>{{ hit.chunk_index }}</strong>
+                        </span>
+                        <span class="mode-pill search-context-meta-pill">
+                            <span class="search-context-meta-label">Type</span>
+                            <strong>{{ hit.file_type }}</strong>
+                        </span>
+                    </div>
+                    <p class="search-context-snippet">{{ hit.snippet }}</p>
+                </article>
                 {% endfor %}
-            </ul>
+            </div>
             {% else %}
             <p class="meta">
                 Поставте запитання, щоб переглянути знайдений контекст.
@@ -358,9 +396,18 @@
                 {% for item in mode_comparison %}
                 <div class="mode-compare-card">
                     <h3>{{ item.mode }}</h3>
-                    <p class="meta">топ_джерело={{ item.top_source }}</p>
-                    <p class="meta">топ_оцінка={{ item.top_score }}</p>
-                    <p class="meta">збігів={{ item.hit_count }}</p>
+                    <div class="pill-row mode-compare-pill-row">
+                        <span class="mode-pill mode-compare-pill">
+                            <span class="mode-compare-pill-label">Top score</span>
+                            <strong>{{ item.top_score }}</strong>
+                        </span>
+                        <span class="mode-pill mode-compare-pill">
+                            <span class="mode-compare-pill-label">Hits</span>
+                            <strong>{{ item.hit_count }}</strong>
+                        </span>
+                    </div>
+                    <p class="meta mode-compare-source-label">Top source</p>
+                    <p class="mode-compare-source-value">{{ item.top_source }}</p>
                 </div>
                 {% endfor %}
             </div>
