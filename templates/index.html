@@ -378,11 +378,11 @@
 <section class="json-stack">
     <article class="content-card json-card">
         <h2>JSON відповіді пошуку</h2>
-        <pre>{{ search_result_json | tojson(indent=2) }}</pre>
+        <pre id="search-result-json-content">{{ search_result_json | tojson(indent=2) }}</pre>
     </article>
     <article class="content-card json-card">
         <h2>JSON відповіді на запит</h2>
-        <pre>{{ ask_result_json | tojson(indent=2) }}</pre>
+        <pre id="ask-result-json-content">{{ ask_result_json | tojson(indent=2) }}</pre>
     </article>
 </section>
 {% endif %}

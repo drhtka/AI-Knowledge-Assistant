@@ -1,12 +1,22 @@
 import {
     askResultContent,
+    askResultJsonContent,
     modeComparisonContent,
     questionClearButton,
     questionForm,
     searchResultContent,
+    searchResultJsonContent,
     clearFormButton,
 } from "../dom/elements.js";
 import { escapeHtml } from "../shared/utils.js";
+
+function renderJsonDebugContent(target, payload) {
+    if (!(target instanceof HTMLElement)) {
+        return;
+    }
+
+    target.textContent = JSON.stringify(payload ?? {}, null, 2);
+}
 
 export function getQuestionInput() {
     if (!(questionForm instanceof HTMLFormElement)) {
@@ -81,6 +91,8 @@ export function replaceUrlWithQuestionParams(questionValue, retrievalModeValue, 
 }
 
 export function renderAskResultContent(payload) {
+    renderJsonDebugContent(askResultJsonContent, payload);
+
     if (!(askResultContent instanceof HTMLElement)) {
         return;
     }
@@ -111,6 +123,8 @@ export function renderAskResultContent(payload) {
 }
 
 export function renderSearchResultContent(payload) {
+    renderJsonDebugContent(searchResultJsonContent, payload);
+
     if (!(searchResultContent instanceof HTMLElement)) {
         return;
     }

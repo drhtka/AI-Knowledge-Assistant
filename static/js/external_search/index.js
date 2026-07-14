@@ -8,6 +8,7 @@ import {
     externalSearchResultsContent,
     externalSearchSessionContent,
     externalSearchSubmitButton,
+    webSearchResultJsonContent,
 } from "../dom/elements.js";
 import { escapeHtml } from "../shared/utils.js";
 
@@ -26,6 +27,14 @@ const externalSearchState = {
 };
 
 let isSearching = false;
+
+function renderExternalSearchJsonDebug(payload) {
+    if (!(webSearchResultJsonContent instanceof HTMLElement)) {
+        return;
+    }
+
+    webSearchResultJsonContent.textContent = JSON.stringify(payload ?? {}, null, 2);
+}
 
 function getExternalSearchTopKInputs() {
     if (!(externalSearchForm instanceof HTMLFormElement)) {
@@ -434,6 +443,7 @@ function renderExternalSearchActivity(entries, options = {}) {
 }
 
 function renderExternalSearchWorkspace() {
+    renderExternalSearchJsonDebug(externalSearchState.result);
     renderExternalSearchSession();
     renderExternalSearchResults();
     renderExternalSearchActions(externalSearchState.question);
