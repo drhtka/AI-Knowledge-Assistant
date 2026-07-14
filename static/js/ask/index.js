@@ -53,12 +53,18 @@ export function getNormalizedQuestionValue() {
         : "";
 }
 
+export function hasQuestionResultState() {
+    const currentUrl = new URL(window.location.href);
+    return currentUrl.searchParams.has("question");
+}
+
 export function syncQuestionActionState() {
     const hasQuestionValue = Boolean(getNormalizedQuestionValue());
     const submitButton = getQuestionSubmitButton();
     const clearButton = getQuestionClearButton();
     const questionInput = getQuestionInput();
-    const canClear = hasQuestionValue && !(questionInput instanceof HTMLTextAreaElement && questionInput.readOnly);
+    const hasResultState = hasQuestionResultState();
+    const canClear = hasQuestionValue || hasResultState;
 
     if (submitButton instanceof HTMLButtonElement) {
         submitButton.disabled = !hasQuestionValue;
