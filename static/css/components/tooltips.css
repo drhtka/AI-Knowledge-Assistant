@@ -61,12 +61,17 @@
         position: fixed;
         left: 16px;
         right: 16px;
-        top: auto;
-        bottom: 16px;
+        top: 50%;
+        bottom: auto;
         width: auto;
         max-width: none;
         border-radius: 14px;
-        transform: translateY(8px);
+        transform: translateY(calc(-50% + 8px));
         z-index: 120;
+    }
+
+    .info-tooltip:hover .info-tooltip-bubble,
+    .info-tooltip:focus-visible .info-tooltip-bubble {
+        transform: translateY(-50%);
     }
 }
