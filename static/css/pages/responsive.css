@@ -2,6 +2,7 @@
     .page-header-top {
         flex-direction: row;
         align-items: center;
+        position: relative;
     }
 
     .page-nav-toggle {
@@ -11,9 +12,12 @@
 
     .page-nav {
         display: none;
-        width: 100%;
+        position: absolute;
+        top: calc(100% + 12px);
+        left: 0;
+        right: 0;
         box-sizing: border-box;
-        order: 3;
+        width: 100%;
         flex-direction: column;
         align-items: stretch;
         justify-content: flex-start;
@@ -23,6 +27,7 @@
         border-radius: 20px;
         background: rgba(15, 23, 42, 0.96);
         box-shadow: 0 16px 34px rgba(2, 6, 23, 0.32);
+        z-index: 30;
     }
 
     .page-nav.is-open {
