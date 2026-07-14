@@ -12,6 +12,7 @@
     .page-nav {
         display: none;
         width: 100%;
+        box-sizing: border-box;
         order: 3;
         flex-direction: column;
         align-items: stretch;
@@ -30,6 +31,7 @@
 
     .page-nav-link {
         width: 100%;
+        box-sizing: border-box;
         justify-content: flex-start;
     }
 
