@@ -91,6 +91,44 @@ function setStorageBackendStatus(message, tone = "meta") {
     }
 }
 
+function setStorageBackendDisabledState(disabled) {
+    if (!(storageBackendForm instanceof HTMLFormElement)) {
+        return;
+    }
+
+    const backendInput = storageBackendForm.elements.namedItem("storage_backend");
+    if (backendInput instanceof HTMLSelectElement) {
+        backendInput.disabled = disabled;
+    }
+
+    const customSelect = storageBackendForm.querySelector(".system-custom-select");
+    if (!(customSelect instanceof HTMLElement)) {
+        return;
+    }
+
+    customSelect.classList.toggle("is-disabled", disabled);
+    customSelect.classList.toggle("is-busy", disabled);
+
+    const trigger = customSelect.querySelector(".custom-select-trigger");
+    if (trigger instanceof HTMLButtonElement) {
+        trigger.disabled = disabled;
+        trigger.setAttribute("aria-busy", disabled ? "true" : "false");
+    }
+
+    customSelect.querySelectorAll(".custom-select-option").forEach((option) => {
+        if (option instanceof HTMLButtonElement) {
+            option.disabled = disabled;
+        }
+    });
+
+    if (disabled) {
+        customSelect.classList.remove("is-open");
+        if (trigger instanceof HTMLButtonElement) {
+            trigger.setAttribute("aria-expanded", "false");
+        }
+    }
+}
+
 export async function applyChunkingPresetSelection(
     presetInput,
     resultElement,
@@ -221,6 +259,7 @@ export function initializeStorageBackendControls() {
     }
 
     backendInput.addEventListener("change", async () => {
+        setStorageBackendDisabledState(true);
         setStorageBackendStatus("Applying storage backend and scheduling background reindex...");
 
         try {
@@ -252,6 +291,7 @@ export function initializeStorageBackendControls() {
                 "Storage backend update failed because the server did not respond.",
                 "error",
             );
+            setStorageBackendDisabledState(false);
         }
     });
 }

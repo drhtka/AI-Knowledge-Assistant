@@ -126,6 +126,29 @@
     opacity: 0.6;
 }
 
+.system-runtime-form-row .system-custom-select.is-busy .custom-select-trigger {
+    position: relative;
+    padding-right: 48px;
+}
+
+.system-runtime-form-row .system-custom-select.is-busy .custom-select-arrow {
+    opacity: 0;
+}
+
+.system-runtime-form-row .system-custom-select.is-busy .custom-select-trigger::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    width: 14px;
+    height: 14px;
+    margin-top: -7px;
+    border: 2px solid rgba(134, 239, 172, 0.28);
+    border-top-color: #86efac;
+    border-radius: 999px;
+    animation: system-backend-spinner 0.7s linear infinite;
+}
+
 .system-runtime-form-row .system-custom-select,
 .chunking-custom-form-row .system-custom-select {
     position: relative;
@@ -133,4 +156,10 @@
     flex: 0 0 220px;
     width: 220px;
     max-width: 220px;
+}
+
+@keyframes system-backend-spinner {
+    to {
+        transform: rotate(360deg);
+    }
 }
