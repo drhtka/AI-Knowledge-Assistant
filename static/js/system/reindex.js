@@ -11,6 +11,7 @@ import {
     refreshReindexStatusButton,
     startReindexButton,
 } from "../dom/elements.js";
+import { syncStorageBackendLockByReindexState } from "./config.js";
 
 export function updateReindexBadge(state) {
     if (!(reindexStatusBadge instanceof HTMLElement)) {
@@ -26,7 +27,9 @@ export function renderReindexStatus(payload) {
         return;
     }
 
-    updateReindexBadge(payload.state ?? "idle");
+    const reindexState = payload.state ?? "idle";
+    updateReindexBadge(reindexState);
+    syncStorageBackendLockByReindexState(reindexState);
 
     if (reindexTrigger instanceof HTMLElement) {
         reindexTrigger.textContent = payload.trigger || "unknown";

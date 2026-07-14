@@ -129,6 +129,19 @@ function setStorageBackendDisabledState(disabled) {
     }
 }
 
+export function syncStorageBackendLockByReindexState(reindexState) {
+    if (!(storageBackendForm instanceof HTMLFormElement)) {
+        return;
+    }
+
+    const customSelect = storageBackendForm.querySelector(".system-custom-select");
+    if (!(customSelect instanceof HTMLElement) || customSelect.dataset.authDisabled === "true") {
+        return;
+    }
+
+    setStorageBackendDisabledState(reindexState === "running");
+}
+
 export async function applyChunkingPresetSelection(
     presetInput,
     resultElement,
@@ -253,8 +266,14 @@ export function initializeStorageBackendControls() {
     storageBackendResult.dataset.baseClass = "upload-result compact-control-result-slot system-runtime-result";
 
     const backendInput = storageBackendForm.elements.namedItem("storage_backend");
+    const customSelect = storageBackendForm.querySelector(".system-custom-select");
 
-    if (!(backendInput instanceof HTMLSelectElement)) {
+    if (customSelect instanceof HTMLElement) {
+        customSelect.dataset.authDisabled =
+            backendInput instanceof HTMLSelectElement && backendInput.disabled ? "true" : "false";
+    }
+
+    if (!(backendInput instanceof HTMLSelectElement) || backendInput.disabled) {
         return;
     }
 
@@ -275,6 +294,7 @@ export function initializeStorageBackendControls() {
             if (!response.ok) {
                 const errorMessage = payload.detail ?? "Storage backend update failed.";
                 setStorageBackendStatus(errorMessage, "error");
+                setStorageBackendDisabledState(false);
                 return;
             }
 
@@ -282,7 +302,7 @@ export function initializeStorageBackendControls() {
                 `Active backend=${payload.current_backend}. ${payload.reindex_message}`,
                 "success",
             );
-            void refreshReindexStatus();
+            await refreshReindexStatus();
             window.setTimeout(() => {
                 window.location.reload();
             }, storageBackendReloadDelayMs);
