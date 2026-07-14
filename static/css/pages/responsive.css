@@ -64,6 +64,7 @@
     .ask-question-composer {
         padding: 20px 18px 18px;
         border-radius: 24px;
+        overflow: hidden;
     }
 
     .ask-question-input {

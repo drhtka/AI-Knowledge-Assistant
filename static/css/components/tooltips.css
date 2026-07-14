@@ -48,6 +48,13 @@
     right: auto;
 }
 
+.info-tooltip-open-top-left .info-tooltip-bubble {
+    top: auto;
+    right: 0;
+    bottom: calc(100% + 10px);
+    left: auto;
+}
+
 .info-tooltip:hover .info-tooltip-bubble,
 .info-tooltip:focus-visible .info-tooltip-bubble {
     opacity: 1;
