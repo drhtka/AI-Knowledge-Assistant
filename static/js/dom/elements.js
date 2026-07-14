@@ -14,6 +14,7 @@ export const adminAccessTrigger = document.getElementById("admin-access-trigger"
 export const adminAccessModal = document.getElementById("admin-access-modal");
 export const externalSearchInput = document.getElementById("web_question");
 export const externalSearchClearButton = document.getElementById("external-search-clear-button");
+export const externalSearchSubmitButton = document.getElementById("external-search-submit-button");
 export const uploadDropzone = document.getElementById("upload-dropzone");
 export const uploadSelectedFile = document.getElementById("upload-selected-file");
 export const uploadDropzoneTitle = document.getElementById("upload-dropzone-title");

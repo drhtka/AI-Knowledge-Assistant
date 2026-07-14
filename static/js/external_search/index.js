@@ -1,6 +1,7 @@
 import {
     externalSearchClearButton,
     externalSearchInput,
+    externalSearchSubmitButton,
 } from "../dom/elements.js";
 
 export function initializeExternalSearchPage() {
@@ -8,10 +9,15 @@ export function initializeExternalSearchPage() {
         return;
     }
 
+    const isInputLocked = externalSearchInput.disabled;
+
     const syncExternalSearchClearButton = () => {
         const hasValue = externalSearchInput.value.trim().length > 0;
-        externalSearchClearButton.classList.toggle("is-active", hasValue && !externalSearchInput.disabled);
-        externalSearchClearButton.disabled = !hasValue || externalSearchInput.disabled;
+        externalSearchClearButton.classList.toggle("is-active", hasValue && !isInputLocked);
+        externalSearchClearButton.disabled = !hasValue || isInputLocked;
+        if (externalSearchSubmitButton instanceof HTMLButtonElement) {
+            externalSearchSubmitButton.disabled = !hasValue || isInputLocked;
+        }
     };
 
     externalSearchInput.addEventListener("input", () => {
