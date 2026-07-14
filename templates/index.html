@@ -145,8 +145,8 @@
                         id="question"
                         name="question"
                         class="ask-question-input"
-                        placeholder="{% if admin_auth.is_authenticated %}Як мені оцінювати якість пошуку?{% else %}Оберіть один із demo-запитів вище{% endif %}"
-                        {% if not admin_auth.is_authenticated %}readonly title="Без авторизації доступні тільки demo-запити"{% endif %}
+                        placeholder="{% if admin_auth.is_authenticated %}Як мені оцінювати якість пошуку?{% else %}Оберіть один із демо запитів вище{% endif %}"
+                        {% if not admin_auth.is_authenticated %}readonly title="Без авторизації доступні тільки демо запити"{% endif %}
                         required
                     >{{ question }}</textarea>
                     <div class="ask-question-composer-footer">
@@ -161,10 +161,10 @@
                             <div class="ask-demo-footer-label-group">
                                 <p class="meta ask-demo-footer-label">Демо запити</p>
                                 {% if not admin_auth.is_authenticated %}
-                                <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення по demo-запитах">
+                                <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення по демо запитах">
                                     ?
                                     <span class="info-tooltip-bubble">
-                                        Без авторизації доступні тільки demo-запити.
+                                        Без авторизації доступні тільки демо запити.
                                     </span>
                                 </span>
                                 {% endif %}
