@@ -226,7 +226,7 @@
 </script>
 
 {% if admin_auth.is_authenticated %}
-<section class="json-stack">
+<section class="json-stack external-search-json-stack">
     <article class="content-card json-card">
         <h2>JSON відповіді вебпошуку</h2>
         <pre id="web-search-result-json-content">{{ web_search_result_json | tojson(indent=2) }}</pre>
