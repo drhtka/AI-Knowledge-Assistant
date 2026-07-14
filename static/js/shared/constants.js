@@ -3,3 +3,5 @@ export const chunkingResultBaseClass = "upload-result workflow-result-slot chunk
 export const supportedUploadExtensions = [".txt", ".md", ".pdf"];
 export const uploadErrorResetDelayMs = 3500;
 export const presetStatusResetDelayMs = 3500;
+export const storageBackendStatusResetDelayMs = 3500;
+export const storageBackendReloadDelayMs = 1500;

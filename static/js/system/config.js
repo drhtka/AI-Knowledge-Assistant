@@ -12,10 +12,14 @@ import {
 import {
     chunkingResultBaseClass,
     presetStatusResetDelayMs,
+    storageBackendReloadDelayMs,
+    storageBackendStatusResetDelayMs,
 } from "../shared/constants.js";
 import {
     clearPresetStatusResetTimer,
+    clearStorageBackendStatusResetTimer,
     setPresetStatusResetTimer,
+    setStorageBackendStatusResetTimer,
 } from "../shared/state.js";
 import { refreshReindexStatus } from "./reindex.js";
 
@@ -52,6 +56,37 @@ export function setPresetStatus(resultElement, message, tone = "meta") {
             window.setTimeout(() => {
                 setPresetStatus(resultElement, "", "meta");
             }, presetStatusResetDelayMs),
+        );
+    }
+}
+
+function setStorageBackendStatus(message, tone = "meta") {
+    if (!(storageBackendResult instanceof HTMLElement)) {
+        return;
+    }
+
+    clearStorageBackendStatusResetTimer();
+
+    const baseClass =
+        storageBackendResult.dataset.baseClass ||
+        "upload-result compact-control-result-slot system-runtime-result";
+    storageBackendResult.dataset.baseClass = baseClass;
+
+    if (tone === "error") {
+        storageBackendResult.className = `${baseClass} error-text`;
+    } else if (tone === "success") {
+        storageBackendResult.className = `${baseClass} success-text`;
+    } else {
+        storageBackendResult.className = `${baseClass} meta`;
+    }
+
+    storageBackendResult.textContent = message;
+
+    if (tone !== "meta") {
+        setStorageBackendStatusResetTimer(
+            window.setTimeout(() => {
+                setStorageBackendStatus("", "meta");
+            }, storageBackendStatusResetDelayMs),
         );
     }
 }
@@ -177,6 +212,8 @@ export function initializeStorageBackendControls() {
         return;
     }
 
+    storageBackendResult.dataset.baseClass = "upload-result compact-control-result-slot system-runtime-result";
+
     const backendInput = storageBackendForm.elements.namedItem("storage_backend");
 
     if (!(backendInput instanceof HTMLSelectElement)) {
@@ -184,8 +221,7 @@ export function initializeStorageBackendControls() {
     }
 
     backendInput.addEventListener("change", async () => {
-        storageBackendResult.className = "upload-result meta compact-control-result-slot system-runtime-result";
-        storageBackendResult.textContent = "Applying storage backend and scheduling background reindex...";
+        setStorageBackendStatus("Applying storage backend and scheduling background reindex...");
 
         try {
             const response = await fetch("/storage-config", {
@@ -199,22 +235,23 @@ export function initializeStorageBackendControls() {
 
             if (!response.ok) {
                 const errorMessage = payload.detail ?? "Storage backend update failed.";
-                storageBackendResult.className = "upload-result error-text compact-control-result-slot system-runtime-result";
-                storageBackendResult.textContent = errorMessage;
+                setStorageBackendStatus(errorMessage, "error");
                 return;
             }
 
-            storageBackendResult.className = "upload-result success-text compact-control-result-slot system-runtime-result";
-            storageBackendResult.textContent =
-                `Active backend=${payload.current_backend}. ${payload.reindex_message}`;
+            setStorageBackendStatus(
+                `Active backend=${payload.current_backend}. ${payload.reindex_message}`,
+                "success",
+            );
             void refreshReindexStatus();
             window.setTimeout(() => {
                 window.location.reload();
-            }, 300);
+            }, storageBackendReloadDelayMs);
         } catch {
-            storageBackendResult.className = "upload-result error-text compact-control-result-slot system-runtime-result";
-            storageBackendResult.textContent =
-                "Storage backend update failed because the server did not respond.";
+            setStorageBackendStatus(
+                "Storage backend update failed because the server did not respond.",
+                "error",
+            );
         }
     });
 }

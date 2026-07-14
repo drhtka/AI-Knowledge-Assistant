@@ -108,11 +108,12 @@
 
 .system-runtime-result {
     margin-top: 6px;
-    min-height: 26px;
+    min-height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .system-observability-grid {

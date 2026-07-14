@@ -1,5 +1,6 @@
 let uploadStatusResetTimerId = null;
 let presetStatusResetTimerId = null;
+let storageBackendStatusResetTimerId = null;
 
 export function clearUploadStatusResetTimer() {
     if (uploadStatusResetTimerId !== null) {
@@ -21,4 +22,15 @@ export function clearPresetStatusResetTimer() {
 
 export function setPresetStatusResetTimer(timerId) {
     presetStatusResetTimerId = timerId;
+}
+
+export function clearStorageBackendStatusResetTimer() {
+    if (storageBackendStatusResetTimerId !== null) {
+        window.clearTimeout(storageBackendStatusResetTimerId);
+        storageBackendStatusResetTimerId = null;
+    }
+}
+
+export function setStorageBackendStatusResetTimer(timerId) {
+    storageBackendStatusResetTimerId = timerId;
 }
