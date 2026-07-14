@@ -21,8 +21,64 @@
         grid-template-columns: 1fr;
     }
 
-    .ask-settings-row {
+    .ask-settings-row,
+    .ask-settings-row-in-composer {
         grid-template-columns: 1fr;
+    }
+
+    .ask-question-composer {
+        padding: 20px 18px 18px;
+        border-radius: 24px;
+    }
+
+    .ask-question-input {
+        min-height: 120px;
+        padding: 0 44px 0 0;
+    }
+
+    .ask-question-composer-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 18px;
+        margin-top: 18px;
+        padding-bottom: 76px;
+    }
+
+    .ask-demo-pill-group,
+    .ask-settings-composer-group {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .ask-settings-composer-group {
+        align-items: stretch;
+        gap: 12px;
+        max-width: 100%;
+    }
+
+    .ask-settings-footer-label-group {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .ask-question-submit-button {
+        left: auto;
+        right: 18px;
+        bottom: 18px;
+        width: 56px;
+        min-width: 56px;
+        height: 56px;
+        transform: none;
+    }
+
+    .ask-question-submit-button:not(:disabled):hover {
+        transform: translateY(-1px);
+    }
+
+    .ask-question-submit-icon {
+        border-top-width: 9px;
+        border-bottom-width: 9px;
+        border-left-width: 15px;
     }
 
     .dashboard-stats {
@@ -52,5 +108,67 @@
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+@media (max-width: 520px) {
+    .ask-main-column {
+        gap: 12px;
+    }
+
+    .ask-question-label {
+        width: 100%;
+        font-size: 16px;
+    }
+
+    .ask-question-composer {
+        padding: 18px 14px 14px;
+        border-radius: 20px;
+    }
+
+    .ask-question-clear-button {
+        top: 16px;
+        right: 14px;
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        font-size: 22px;
+    }
+
+    .ask-question-input {
+        min-height: 108px;
+        padding-right: 40px;
+        font-size: 16px;
+        line-height: 1.45;
+    }
+
+    .ask-question-composer-footer {
+        gap: 16px;
+        margin-top: 16px;
+        padding-bottom: 72px;
+    }
+
+    .ask-demo-pill-row {
+        gap: 8px;
+    }
+
+    .ask-demo-pill {
+        width: 100%;
+        min-height: 38px;
+        justify-content: center;
+        text-align: center;
+        padding: 10px 14px;
+    }
+
+    .ask-settings-row-in-composer .ask-settings-control {
+        padding: 6px 0;
+    }
+
+    .ask-question-submit-button {
+        right: 14px;
+        bottom: 14px;
+        width: 52px;
+        min-width: 52px;
+        height: 52px;
     }
 }
