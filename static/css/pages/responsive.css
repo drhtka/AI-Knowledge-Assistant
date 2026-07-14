@@ -1,9 +1,35 @@
 @media (max-width: 860px) {
     .page-header-top {
-        flex-direction: column;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .page-nav-toggle {
+        display: inline-flex;
+        margin-left: auto;
     }
 
     .page-nav {
+        display: none;
+        width: 100%;
+        order: 3;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid rgba(51, 65, 85, 0.7);
+        border-radius: 20px;
+        background: rgba(15, 23, 42, 0.96);
+        box-shadow: 0 16px 34px rgba(2, 6, 23, 0.32);
+    }
+
+    .page-nav.is-open {
+        display: flex;
+    }
+
+    .page-nav-link {
+        width: 100%;
         justify-content: flex-start;
     }
 

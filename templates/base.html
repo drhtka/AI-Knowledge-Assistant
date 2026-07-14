@@ -95,7 +95,19 @@
                         </div>
                     </section>
                     {% endif %}
-                    <nav class="page-nav" aria-label="Primary">
+                    <button
+                        type="button"
+                        class="page-nav-toggle"
+                        id="page-nav-toggle"
+                        aria-label="Відкрити навігацію"
+                        aria-controls="page-nav"
+                        aria-expanded="false"
+                    >
+                        <span class="page-nav-toggle-line" aria-hidden="true"></span>
+                        <span class="page-nav-toggle-line" aria-hidden="true"></span>
+                        <span class="page-nav-toggle-line" aria-hidden="true"></span>
+                    </button>
+                    <nav class="page-nav" id="page-nav" aria-label="Primary">
                         <a
                             href="/"
                             class="page-nav-link {% if active_page == 'assistant' %}is-active{% endif %}"

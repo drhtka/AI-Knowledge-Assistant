@@ -24,6 +24,73 @@ import {
 } from "./system/config.js";
 import { initializeReindexControls } from "./system/reindex.js";
 
+function initializeMobileNavigation() {
+    const pageNav = document.getElementById("page-nav");
+    const pageNavToggle = document.getElementById("page-nav-toggle");
+    const pageHeaderTop = document.querySelector(".page-header-top");
+
+    if (!(pageNav instanceof HTMLElement) || !(pageNavToggle instanceof HTMLButtonElement)) {
+        return;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 860px)");
+    let isOpen = false;
+
+    const syncState = () => {
+        const isMobile = mobileQuery.matches;
+        pageNav.classList.toggle("is-open", isMobile && isOpen);
+        pageNavToggle.classList.toggle("is-open", isMobile && isOpen);
+        pageNavToggle.setAttribute("aria-expanded", isMobile && isOpen ? "true" : "false");
+        pageNavToggle.setAttribute("aria-label", isMobile && isOpen ? "Закрити навігацію" : "Відкрити навігацію");
+        pageNav.setAttribute("aria-hidden", isMobile && !isOpen ? "true" : "false");
+    };
+
+    const closeMenu = () => {
+        isOpen = false;
+        syncState();
+    };
+
+    pageNavToggle.addEventListener("click", () => {
+        if (!mobileQuery.matches) {
+            return;
+        }
+
+        isOpen = !isOpen;
+        syncState();
+    });
+
+    pageNav.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", closeMenu);
+    });
+
+    document.addEventListener("click", (event) => {
+        if (!mobileQuery.matches || !isOpen || !(pageHeaderTop instanceof HTMLElement)) {
+            return;
+        }
+
+        if (pageHeaderTop.contains(event.target instanceof Node ? event.target : null)) {
+            return;
+        }
+
+        closeMenu();
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && isOpen) {
+            closeMenu();
+        }
+    });
+
+    mobileQuery.addEventListener("change", () => {
+        if (!mobileQuery.matches) {
+            isOpen = false;
+        }
+        syncState();
+    });
+
+    syncState();
+}
+
 demoButtons.forEach((button) => {
     button.addEventListener("click", () => {
         fillQuestionInput(button.dataset.demoQuestion ?? "");
@@ -31,6 +98,7 @@ demoButtons.forEach((button) => {
 });
 
 initializeAdminAccess();
+initializeMobileNavigation();
 
 if (questionForm instanceof HTMLFormElement) {
     const questionInput = getQuestionInput();
