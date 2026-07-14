@@ -340,8 +340,6 @@ export function fillQuestionInput(questionText) {
     if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
         questionInput.value = questionText;
         syncQuestionActionState();
-        questionInput.focus();
-        questionInput.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
     }
 
