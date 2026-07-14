@@ -392,6 +392,18 @@
         <h2>Порівняння режимів пошуку</h2>
         <div id="mode-comparison-content">
             {% if mode_comparison %}
+            {% set compare = namespace(shared_top_source=mode_comparison[0].top_source, has_shared_source=true) %}
+            {% for item in mode_comparison %}
+                {% if item.top_source != compare.shared_top_source %}
+                    {% set compare.has_shared_source = false %}
+                {% endif %}
+            {% endfor %}
+            {% if compare.has_shared_source %}
+            <div class="mode-compare-shared-source">
+                <p class="meta mode-compare-shared-source-label">Shared top source across modes</p>
+                <strong class="mode-compare-shared-source-value">{{ compare.shared_top_source }}</strong>
+            </div>
+            {% endif %}
             <div class="mode-compare-grid">
                 {% for item in mode_comparison %}
                 <div class="mode-compare-card">
@@ -406,8 +418,10 @@
                             <strong>{{ item.hit_count }}</strong>
                         </span>
                     </div>
+                    {% if not compare.has_shared_source %}
                     <p class="meta mode-compare-source-label">Top source</p>
                     <p class="mode-compare-source-value">{{ item.top_source }}</p>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

@@ -238,6 +238,11 @@ export function renderModeComparisonContent(payload) {
         return;
     }
 
+    const sharedTopSource =
+        items.length > 0 && items.every((item) => item.top_source === items[0].top_source)
+            ? items[0].top_source
+            : "";
+
     const itemsMarkup = items
         .map(
             (item) => `
@@ -253,14 +258,32 @@ export function renderModeComparisonContent(payload) {
                             <strong>${escapeHtml(item.hit_count)}</strong>
                         </span>
                     </div>
+                    ${
+                        sharedTopSource
+                            ? ""
+                            : `
                     <p class="meta mode-compare-source-label">Top source</p>
                     <p class="mode-compare-source-value">${escapeHtml(item.top_source)}</p>
+                    `
+                    }
                 </div>
             `,
         )
         .join("");
 
-    modeComparisonContent.innerHTML = `<div class="mode-compare-grid">${itemsMarkup}</div>`;
+    modeComparisonContent.innerHTML = `
+        ${
+            sharedTopSource
+                ? `
+            <div class="mode-compare-shared-source">
+                <p class="meta mode-compare-shared-source-label">Shared top source across modes</p>
+                <strong class="mode-compare-shared-source-value">${escapeHtml(sharedTopSource)}</strong>
+            </div>
+        `
+                : ""
+        }
+        <div class="mode-compare-grid">${itemsMarkup}</div>
+    `;
 }
 
 export function renderQuestionLoadingState() {
