@@ -131,8 +131,10 @@
     }
 
     .ask-question-clear-button {
-        top: 16px;
-        right: 14px;
+        top: auto;
+        right: auto;
+        bottom: 14px;
+        left: 14px;
         width: 36px;
         min-width: 36px;
         height: 36px;
