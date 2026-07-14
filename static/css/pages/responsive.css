@@ -113,7 +113,7 @@
 
 @media (max-width: 520px) {
     .ask-main-column {
-        gap: 12px;
+        gap: 10px;
     }
 
     .ask-question-label {
@@ -122,7 +122,7 @@
     }
 
     .ask-question-composer {
-        padding: 18px 14px 14px;
+        padding: 16px 14px 12px;
         border-radius: 20px;
     }
 
@@ -136,16 +136,20 @@
     }
 
     .ask-question-input {
-        min-height: 108px;
+        min-height: 84px;
         padding-right: 40px;
         font-size: 16px;
         line-height: 1.45;
     }
 
     .ask-question-composer-footer {
-        gap: 16px;
-        margin-top: 16px;
-        padding-bottom: 72px;
+        gap: 10px;
+        margin-top: 10px;
+        padding-bottom: 64px;
+    }
+
+    .ask-demo-pill-group {
+        gap: 10px;
     }
 
     .ask-demo-pill-row {
@@ -161,7 +165,25 @@
     }
 
     .ask-settings-row-in-composer .ask-settings-control {
-        padding: 6px 0;
+        padding: 4px 0;
+    }
+
+    .ask-settings-composer-group {
+        flex: 0 1 auto;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+
+    .ask-settings-row-in-composer {
+        gap: 4px;
+    }
+
+    .ask-settings-row-in-composer .label-with-tooltip {
+        margin-bottom: 4px;
+    }
+
+    .ask-settings-footer-label-group {
+        margin-top: 4px;
     }
 
     .ask-question-submit-button {
