@@ -2,6 +2,11 @@
     overflow: hidden;
 }
 
+#ask-result-card:focus-visible {
+    outline: 2px solid rgba(147, 197, 253, 0.58);
+    outline-offset: 3px;
+}
+
 .chat-single-response {
     display: flex;
     flex-direction: column;

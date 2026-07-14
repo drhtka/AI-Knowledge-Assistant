@@ -1,4 +1,5 @@
 import {
+    askResultCard,
     askResultContent,
     askResultJsonContent,
     modeComparisonContent,
@@ -16,6 +17,15 @@ function renderJsonDebugContent(target, payload) {
     }
 
     target.textContent = JSON.stringify(payload ?? {}, null, 2);
+}
+
+function focusAskResultCard() {
+    if (!(askResultCard instanceof HTMLElement)) {
+        return;
+    }
+
+    askResultCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    askResultCard.focus({ preventScroll: true });
 }
 
 export function getQuestionInput() {
@@ -395,10 +405,10 @@ export async function submitQuestionWithFetch(questionValue) {
         renderSearchResultContent(searchPayload);
         renderModeComparisonContent(modeComparisonPayload);
         replaceUrlWithQuestionParams(questionValue, payload.retrieval_mode, String(payload.top_k));
+        focusAskResultCard();
 
         if (questionInput instanceof HTMLInputElement || questionInput instanceof HTMLTextAreaElement) {
             questionInput.value = "";
-            questionInput.focus();
         }
     } catch {
         if (askResultContent instanceof HTMLElement) {

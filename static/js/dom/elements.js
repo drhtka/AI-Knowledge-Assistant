@@ -2,6 +2,7 @@ export const questionForm = document.getElementById("question-form");
 export const clearFormButton = document.getElementById("clear-form");
 export const questionClearButton = document.getElementById("question-clear-button");
 export const demoButtons = document.querySelectorAll("[data-demo-question]");
+export const askResultCard = document.getElementById("ask-result-card");
 export const askResultContent = document.getElementById("ask-result-content");
 export const askResultJsonContent = document.getElementById("ask-result-json-content");
 export const searchResultContent = document.getElementById("search-result-content");
