@@ -251,11 +251,11 @@
             </div>
             <div class="reindex-status-item">
                 <span class="meta">started at</span>
-                <strong id="reindex-started-at">{{ reindex_status.started_at or "not started yet" }}</strong>
+                <strong id="reindex-started-at">{{ reindex_status.started_at | datetime_display if reindex_status.started_at else "not started yet" }}</strong>
             </div>
             <div class="reindex-status-item">
                 <span class="meta">last update</span>
-                <strong id="reindex-finished-at">{{ reindex_status.finished_at or "not finished yet" }}</strong>
+                <strong id="reindex-finished-at">{{ reindex_status.finished_at | datetime_display if reindex_status.finished_at else "not finished yet" }}</strong>
             </div>
         </div>
         <div class="reindex-status-actions">
@@ -275,7 +275,7 @@
             {% if reindex_status.last_error %}
             last_error={{ reindex_status.last_error }}
             {% elif reindex_status.started_at %}
-            started_at={{ reindex_status.started_at }}
+            started_at={{ reindex_status.started_at | datetime_display }}
             {% else %}
             Waiting for the next reindex trigger.
             {% endif %}

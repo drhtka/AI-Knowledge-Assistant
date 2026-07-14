@@ -13,6 +13,25 @@ import {
 } from "../dom/elements.js";
 import { syncStorageBackendLockByReindexState } from "./config.js";
 
+function formatReindexTimestamp(value) {
+    if (typeof value !== "string" || !value.trim()) {
+        return "";
+    }
+
+    const timestamp = new Date(value);
+    if (Number.isNaN(timestamp.getTime())) {
+        return value;
+    }
+
+    return timestamp.toLocaleString("uk-UA", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
 export function updateReindexBadge(state) {
     if (!(reindexStatusBadge instanceof HTMLElement)) {
         return;
@@ -46,11 +65,13 @@ export function renderReindexStatus(payload) {
     if (reindexElapsedMs instanceof HTMLElement) {
         reindexElapsedMs.textContent = String(payload.elapsed_ms ?? 0);
     }
+    const formattedStartedAt = formatReindexTimestamp(payload.started_at);
+    const formattedFinishedAt = formatReindexTimestamp(payload.finished_at);
     if (reindexStartedAt instanceof HTMLElement) {
-        reindexStartedAt.textContent = payload.started_at || "not started yet";
+        reindexStartedAt.textContent = formattedStartedAt || "not started yet";
     }
     if (reindexFinishedAt instanceof HTMLElement) {
-        reindexFinishedAt.textContent = payload.finished_at || "not finished yet";
+        reindexFinishedAt.textContent = formattedFinishedAt || "not finished yet";
     }
     if (reindexStatusMessage instanceof HTMLElement) {
         reindexStatusMessage.classList.toggle("reindex-status-error", Boolean(payload.last_error));
@@ -58,9 +79,9 @@ export function renderReindexStatus(payload) {
             reindexStatusMessage.textContent = `last_error=${payload.last_error}`;
         } else if (payload.rerun_requested && payload.rerun_trigger) {
             reindexStatusMessage.textContent =
-                `rerun_trigger=${payload.rerun_trigger} | started_at=${payload.started_at || "pending"}`;
+                `rerun_trigger=${payload.rerun_trigger} | started_at=${formattedStartedAt || "pending"}`;
         } else if (payload.started_at) {
-            reindexStatusMessage.textContent = `started_at=${payload.started_at}`;
+            reindexStatusMessage.textContent = `started_at=${formattedStartedAt}`;
         } else {
             reindexStatusMessage.textContent = "Waiting for the next reindex trigger.";
         }

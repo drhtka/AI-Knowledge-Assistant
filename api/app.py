@@ -109,6 +109,21 @@ app.add_middleware(
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+
+def _format_display_datetime(value: str | None) -> str:
+    if not value:
+        return ""
+
+    try:
+        parsed_datetime = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return value
+
+    return parsed_datetime.strftime("%d.%m.%Y, %H:%M")
+
+
+templates.env.filters["datetime_display"] = _format_display_datetime
+
 DEMO_PROMPTS = [
     {
         "label": "Architecture",
@@ -703,7 +718,7 @@ def index(request: Request) -> HTMLResponse:
             "active_page": "assistant",
             "admin_access_note_text": (
                 "Документи, система і вебпошук доступні тільки "
-                "після авторизації, пароль по запиту. Також без авторизації доступні тільки demo-запити."
+                "після авторизації, пароль по запиту. Також без авторизації доступні тільки демо запити."
             ),
         },
     )
