@@ -28,6 +28,20 @@ function focusAskResultCard() {
     askResultCard.focus({ preventScroll: true });
 }
 
+function setQuestionComposerLoadingState(isLoading) {
+    if (!(questionForm instanceof HTMLFormElement)) {
+        return;
+    }
+
+    const composer = questionForm.querySelector(".ask-question-composer");
+    if (!(composer instanceof HTMLElement)) {
+        return;
+    }
+
+    composer.classList.toggle("is-loading", isLoading);
+    composer.setAttribute("aria-busy", isLoading ? "true" : "false");
+}
+
 export function getQuestionInput() {
     if (!(questionForm instanceof HTMLFormElement)) {
         return null;
@@ -367,6 +381,7 @@ export async function submitQuestionWithFetch(questionValue) {
     if (clearButton instanceof HTMLButtonElement) {
         clearButton.disabled = true;
     }
+    setQuestionComposerLoadingState(true);
 
     renderQuestionLoadingState();
 
@@ -422,6 +437,7 @@ export async function submitQuestionWithFetch(questionValue) {
                 '<p class="error-text">Не вдалося оновити порівняння режимів.</p>';
         }
     } finally {
+        setQuestionComposerLoadingState(false);
         syncQuestionActionState();
     }
 }

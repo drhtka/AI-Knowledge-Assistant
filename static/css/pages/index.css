@@ -135,6 +135,52 @@
     transform: translateX(2px);
 }
 
+.ask-question-loading-dots {
+    position: absolute;
+    right: 28px;
+    bottom: 54px;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.ask-question-composer.is-loading .ask-question-loading-dots {
+    display: inline-flex;
+}
+
+.ask-question-loading-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(226, 232, 240, 0.9);
+    box-shadow: 0 0 12px rgba(148, 163, 184, 0.28);
+    animation: ask-question-loading-dot 0.9s ease-in-out infinite;
+}
+
+.ask-question-loading-dots span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.ask-question-loading-dots span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes ask-question-loading-dot {
+    0%,
+    80%,
+    100% {
+        opacity: 0.3;
+        transform: translateY(0);
+    }
+
+    40% {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
+}
+
 .ask-question-submit-button:not(:disabled) {
     border-color: rgba(34, 197, 94, 0.45);
     background: rgba(21, 128, 61, 0.2);

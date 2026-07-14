@@ -85,6 +85,11 @@
         border-left-width: 15px;
     }
 
+    .ask-question-loading-dots {
+        right: 86px;
+        bottom: 38px;
+    }
+
     .dashboard-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -198,5 +203,18 @@
         width: 52px;
         min-width: 52px;
         height: 52px;
+    }
+
+    .ask-question-loading-dots {
+        left: 50%;
+        right: auto;
+        bottom: 28px;
+        transform: translateX(-50%);
+        gap: 5px;
+    }
+
+    .ask-question-loading-dots span {
+        width: 6px;
+        height: 6px;
     }
 }
