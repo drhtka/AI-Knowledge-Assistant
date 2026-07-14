@@ -54,3 +54,13 @@
     visibility: visible;
     transform: translateY(0);
 }
+
+@media (max-width: 520px) {
+    .info-tooltip-bubble,
+    .info-tooltip-open-right .info-tooltip-bubble {
+        left: auto;
+        right: 0;
+        width: min(260px, calc(100vw - 32px));
+        max-width: calc(100vw - 32px);
+    }
+}
