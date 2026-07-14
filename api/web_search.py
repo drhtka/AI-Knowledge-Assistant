@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
+import ssl
 from time import perf_counter
 from urllib import error, parse, request
+
+import certifi
 
 from api.web_search_history_store import (
     WebSearchHistoryEntry,
@@ -26,6 +29,7 @@ from api.settings import (
 
 SERPAPI_ENDPOINT = "https://serpapi.com/search.json"
 logger = logging.getLogger("ai_knowledge_assistant.web_search")
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 
 def _utc_now_iso() -> str:
@@ -122,7 +126,7 @@ def _openai_web_search(question: str, top_k: int) -> WebSearchResponse:
         },
         method="POST",
     )
-    with request.urlopen(req, timeout=WEB_SEARCH_OPENAI_TIMEOUT_SEC) as response:
+    with request.urlopen(req, timeout=WEB_SEARCH_OPENAI_TIMEOUT_SEC, context=_SSL_CONTEXT) as response:
         body = response.read().decode("utf-8")
     data = json.loads(body)
     content = data["choices"][0]["message"]["content"]
@@ -162,7 +166,7 @@ def _serpapi_web_search(question: str, top_k: int) -> WebSearchResponse:
     )
     url = f"{SERPAPI_ENDPOINT}?{query}"
 
-    with request.urlopen(url, timeout=SERPAPI_TIMEOUT_SEC) as response:
+    with request.urlopen(url, timeout=SERPAPI_TIMEOUT_SEC, context=_SSL_CONTEXT) as response:
         body = response.read().decode("utf-8")
 
     payload = json.loads(body)

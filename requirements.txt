@@ -9,4 +9,5 @@ numpy<2
 packaging>=24,<26
 pypdf==5.9.0
 psycopg[binary]==3.2.9
+certifi
 pip==26.1.2
