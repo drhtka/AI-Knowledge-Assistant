@@ -5,6 +5,7 @@ import {
     externalSearchForm,
     externalSearchInitialState,
     externalSearchInput,
+    externalSearchResultsCard,
     externalSearchResultsContent,
     externalSearchSessionContent,
     externalSearchSubmitButton,
@@ -34,6 +35,15 @@ function renderExternalSearchJsonDebug(payload) {
     }
 
     webSearchResultJsonContent.textContent = JSON.stringify(payload ?? {}, null, 2);
+}
+
+function focusExternalSearchResultsCard() {
+    if (!(externalSearchResultsCard instanceof HTMLElement)) {
+        return;
+    }
+
+    externalSearchResultsCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    externalSearchResultsCard.focus({ preventScroll: true });
 }
 
 function getExternalSearchTopKInputs() {
@@ -610,10 +620,10 @@ async function submitExternalSearchWithFetch(questionValue) {
         externalSearchState.error = "";
         externalSearchState.status = "success";
         renderExternalSearchWorkspace();
+        focusExternalSearchResultsCard();
 
         if (externalSearchInput instanceof HTMLTextAreaElement) {
             externalSearchInput.value = "";
-            externalSearchInput.focus();
         }
 
         setExternalSearchPendingState(false);

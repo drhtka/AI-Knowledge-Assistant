@@ -10,6 +10,10 @@
     align-items: start;
 }
 
+.external-search-activity-section {
+    margin-top: 20px;
+}
+
 .external-search-top-k-row {
     display: flex;
     justify-content: flex-start;
@@ -93,6 +97,11 @@
 .external-search-results-card,
 .external-search-activity-card {
     height: 100%;
+}
+
+.external-search-results-card:focus-visible {
+    outline: 2px solid rgba(147, 197, 253, 0.58);
+    outline-offset: 3px;
 }
 
 .external-search-session-shell {

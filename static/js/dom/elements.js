@@ -19,6 +19,7 @@ export const externalSearchForm = document.getElementById("external-search-form"
 export const externalSearchInput = document.getElementById("web_question");
 export const externalSearchClearButton = document.getElementById("external-search-clear-button");
 export const externalSearchSubmitButton = document.getElementById("external-search-submit-button");
+export const externalSearchResultsCard = document.getElementById("external-search-results-card");
 export const externalSearchSessionContent = document.getElementById("external-search-session-content");
 export const externalSearchResultsContent = document.getElementById("external-search-results-content");
 export const externalSearchActionsContent = document.getElementById("external-search-actions-content");
