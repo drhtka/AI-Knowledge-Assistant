@@ -455,6 +455,9 @@ class PgvectorChunkStorage:
             should_rebuild=False,
         )
 
+    def _is_storage_stale(self, connection: object) -> bool:
+        return self._evaluate_metadata_contract(connection).should_rebuild
+
     def get_readiness_status(self) -> dict[str, object]:
         embedding_stack_ready = embedding_stack_available()
         embedding_model_ready = bool(get_embedding_model()) if embedding_stack_ready else False
