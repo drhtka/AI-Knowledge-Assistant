@@ -33,13 +33,13 @@ services:
       dockerfile: Dockerfile
       args:
         INSTALL_EMBEDDING_STACK: ${INSTALL_EMBEDDING_STACK:-0}
-        INSTALL_CELERY_STACK: ${INSTALL_CELERY_STACK:-0}
+        INSTALL_CELERY_STACK: ${INSTALL_CELERY_STACK:-1}
     container_name: ai_knowledge_assistant_app
     restart: unless-stopped
     env_file:
       - .env
     environment:
-      CELERY_ENABLED: ${CELERY_ENABLED:-false}
+      CELERY_ENABLED: ${CELERY_ENABLED:-true}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
       CELERY_REINDEX_QUEUE: ${CELERY_REINDEX_QUEUE:-reindex}
@@ -86,7 +86,6 @@ services:
     image: redis:7-alpine
     container_name: ai_knowledge_assistant_redis
     restart: unless-stopped
-    profiles: ["celery"]
     networks:
       - assistant_internal
 
@@ -99,7 +98,6 @@ services:
         INSTALL_CELERY_STACK: ${INSTALL_CELERY_STACK:-1}
     container_name: ai_knowledge_assistant_worker
     restart: unless-stopped
-    profiles: ["celery"]
     env_file:
       - .env
     environment:
