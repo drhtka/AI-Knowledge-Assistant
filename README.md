@@ -2,6 +2,20 @@
 
 Portfolio-ready `RAG` project with local document ingestion, configurable retrieval, grounded answering, evaluation scripts, and a lightweight demo UI.
 
+## Quick Links
+
+- [What It Does](#what-it-does)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Key Features](#key-features)
+- [What I Implemented Myself](#what-i-implemented-myself)
+- [Project Structure](#project-structure)
+- [Endpoints](#endpoints)
+- [Local Run](#local-run)
+- [Docker Swarm Run](#docker-swarm-run)
+- [Optional LLM Mode](#optional-llm-mode)
+- [Optional SerpAPI Web Search](#optional-serpapi-web-search)
+
 ## What It Does
 
 This project shows a compact but realistic knowledge assistant workflow:
@@ -12,6 +26,51 @@ This project shows a compact but realistic knowledge assistant workflow:
 - generates grounded answers from retrieved context;
 - exposes retrieval controls through API and UI;
 - evaluates retrieval quality and stores experiment reports.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[Local txt / md documents] --> B[Ingestion and chunking pipeline]
+    B --> C[Processed chunk artifacts]
+    B --> D{Active storage backend}
+    D -->|file| E[Local chunk cache / JSONL artifacts]
+    D -->|pgvector| F[PostgreSQL + pgvector]
+    E --> G[Retrieval runtime]
+    F --> G[Retrieval runtime]
+    G --> H[TF-IDF / embeddings / auto mode]
+    H --> I[Grounded answer generation]
+    I --> J[FastAPI API]
+    J --> K[Jinja2 demo UI]
+    J --> L[JSON endpoints]
+    B --> M[Reindex status and runtime state]
+    G --> N[Retrieval history and diagnostics]
+```
+
+This repository is organized as a compact production-like `RAG` system with four main layers:
+
+1. `Ingestion`  
+   Local `txt` and `md` files are parsed, cleaned, and split into configurable chunks.
+
+2. `Storage and indexing`  
+   Chunks can be served from the default `file` backend or persisted into `PostgreSQL + pgvector` for database-first retrieval experiments.
+
+3. `Retrieval and answer generation`  
+   The runtime supports `TF-IDF`, embeddings, and automatic retrieval mode selection, then builds grounded answers from the selected evidence.
+
+4. `Delivery and observability`  
+   The system exposes both a portfolio UI and API endpoints, while also tracking reindex status, runtime state, retrieval history, and evaluation outputs.
+
+Runtime view:
+
+```text
+Raw documents
+  -> chunking pipeline
+    -> file backend or pgvector backend
+      -> retrieval runtime
+        -> grounded answer / search results
+          -> FastAPI API and demo UI
+```
 
 ## Tech Stack
 
