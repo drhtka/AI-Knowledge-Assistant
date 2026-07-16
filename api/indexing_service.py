@@ -24,6 +24,7 @@ from api.runtime_state_store import (
     load_runtime_state,
     save_runtime_state,
 )
+from api.settings import CELERY_ENABLED, CELERY_REINDEX_QUEUE
 from api.storage import (
     get_active_storage_backend,
     get_chunk_storage,
@@ -630,6 +631,68 @@ def start_source_update_job() -> ReindexStartResult:
         else "upload"
     )
     return start_reindex_job(trigger=trigger)
+
+
+def run_reindex_job_loop(trigger: str, started_at: str | None) -> None:
+    # Shared reindex loop used by both the in-process FastAPI background task
+    # path and the optional Celery worker task, so behavior stays identical
+    # regardless of which execution path dispatched the job.
+    current_trigger = trigger
+    current_started_at = started_at
+    assume_running = True
+    while True:
+        rebuild_index(
+            trigger=current_trigger,
+            started_at_iso=current_started_at,
+            assume_running=assume_running,
+        )
+        rerun_trigger = consume_rerun_request()
+        if not rerun_trigger:
+            return
+        current_trigger = rerun_trigger
+        current_started_at = None
+        assume_running = False
+
+
+def try_dispatch_reindex_via_celery(trigger: str, started_at: str | None) -> bool:
+    # Optional offload path: if Celery is enabled and reachable, hand the heavy
+    # reindex loop off to a worker process so the web process's event loop is
+    # never blocked by embeddings/DB work. Any failure here falls back to the
+    # in-process FastAPI background task, which is the pre-existing behavior.
+    if not CELERY_ENABLED:
+        return False
+
+    try:
+        from api.celery_app import get_celery_app
+    except Exception:
+        logger.warning(
+            "Celery app is unavailable; falling back to in-process background reindex.",
+            extra={"event": "celery_reindex_dispatch_unavailable"},
+        )
+        return False
+
+    celery_app = get_celery_app()
+    if celery_app is None:
+        return False
+
+    try:
+        celery_app.send_task(
+            "ai_knowledge_assistant.reindex_task",
+            args=[trigger, started_at],
+            queue=CELERY_REINDEX_QUEUE,
+        )
+    except Exception:
+        logger.warning(
+            "Failed to dispatch reindex job to Celery; falling back to in-process background reindex.",
+            extra={"event": "celery_reindex_dispatch_failed", "context": {"trigger": trigger}},
+        )
+        return False
+
+    logger.info(
+        "Dispatched reindex job to Celery worker.",
+        extra={"event": "celery_reindex_dispatched", "context": {"trigger": trigger}},
+    )
+    return True
 
 
 def ensure_index_loaded() -> tuple:

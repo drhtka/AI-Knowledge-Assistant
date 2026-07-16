@@ -16,14 +16,14 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunking_preset
 from api.indexing_service import (
-    consume_rerun_request,
     ensure_index_loaded,
     get_reindex_history,
     get_reindex_status,
     prepare_uploaded_document,
-    rebuild_index,
+    run_reindex_job_loop,
     start_reindex_job,
     start_source_update_job,
+    try_dispatch_reindex_via_celery,
 )
 from api.ingestion import build_document_preview
 from api.logging_utils import configure_logging
@@ -326,21 +326,9 @@ def _build_web_search_history_response(limit: int) -> WebSearchHistoryResponse:
 
 
 def _run_reindex_background_job(trigger: str, started_at: str | None) -> None:
-    current_trigger = trigger
-    current_started_at = started_at
-    assume_running = True
-    while True:
-        rebuild_index(
-            trigger=current_trigger,
-            started_at_iso=current_started_at,
-            assume_running=assume_running,
-        )
-        rerun_trigger = consume_rerun_request()
-        if not rerun_trigger:
-            return
-        current_trigger = rerun_trigger
-        current_started_at = None
-        assume_running = False
+    # Fallback path when Celery is disabled/unavailable: runs the reindex loop
+    # in-process via FastAPI BackgroundTasks, same as before.
+    run_reindex_job_loop(trigger, started_at)
 
 
 def _build_reindex_start_response(trigger: str = "manual") -> ReindexStartResponse:
@@ -451,17 +439,27 @@ def _build_storage_config_response(
     )
 
 
+def _dispatch_reindex_job(background_tasks: BackgroundTasks, response: ReindexStartResponse) -> None:
+    if not response.accepted:
+        return
+    # Prefer the Celery worker offload path when enabled/available so the web
+    # process never runs the heavy reindex loop itself; fall back to the
+    # existing in-process FastAPI background task otherwise.
+    if try_dispatch_reindex_via_celery(response.trigger, response.started_at):
+        return
+    background_tasks.add_task(
+        _run_reindex_background_job,
+        response.trigger,
+        response.started_at,
+    )
+
+
 def _start_reindex_background_job(
     background_tasks: BackgroundTasks,
     trigger: str,
 ) -> ReindexStartResponse:
     response = _build_reindex_start_response(trigger=trigger)
-    if response.accepted:
-        background_tasks.add_task(
-            _run_reindex_background_job,
-            response.trigger,
-            response.started_at,
-        )
+    _dispatch_reindex_job(background_tasks, response)
     return response
 
 
@@ -478,12 +476,7 @@ async def _ingest_uploaded_file(file: UploadFile, background_tasks: BackgroundTa
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     reindex_start = _build_source_update_reindex_start_response()
-    if reindex_start.accepted:
-        background_tasks.add_task(
-            _run_reindex_background_job,
-            reindex_start.trigger,
-            reindex_start.started_at,
-        )
+    _dispatch_reindex_job(background_tasks, reindex_start)
 
     return IngestResponse(
         status="ok",

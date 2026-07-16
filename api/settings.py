@@ -91,6 +91,11 @@ REINDEX_HISTORY_TABLE = _env_str("POSTGRES_REINDEX_HISTORY_TABLE", "reindex_hist
 RETRIEVAL_HISTORY_TABLE = _env_str("POSTGRES_RETRIEVAL_HISTORY_TABLE", "retrieval_history")
 WEB_SEARCH_HISTORY_TABLE = _env_str("POSTGRES_WEB_SEARCH_HISTORY_TABLE", "web_search_history")
 PGVECTOR_EMBEDDING_DIM = _env_int("PGVECTOR_EMBEDDING_DIM", 384)
+PGVECTOR_REINDEX_EMBEDDING_BATCH_SIZE = _env_int("PGVECTOR_REINDEX_EMBEDDING_BATCH_SIZE", 64)
+PGVECTOR_REINDEX_DB_BATCH_SIZE = _env_int("PGVECTOR_REINDEX_DB_BATCH_SIZE", 200)
+PGVECTOR_REINDEX_BATCH_SLEEP_SECONDS = float(
+    _env_str("PGVECTOR_REINDEX_BATCH_SLEEP_SECONDS", "0")
+)
 PGVECTOR_DATABASE_URL = _env_str(
     "PGVECTOR_DATABASE_URL",
     (
@@ -120,6 +125,15 @@ SERPAPI_API_KEY = _env_str("SERPAPI_API_KEY", "")
 SERPAPI_ENGINE = _env_str("SERPAPI_ENGINE", "google")
 SERPAPI_NUM_RESULTS = int(_env_str("SERPAPI_NUM_RESULTS", "5"))
 SERPAPI_TIMEOUT_SEC = float(_env_str("SERPAPI_TIMEOUT_SEC", "15"))
+
+# Celery is an optional offload path for heavy reindex jobs so the web process
+# does not have to run CPU-heavy embeddings/DB work in its own event loop.
+# When disabled (default) or unavailable, reindex keeps running as an
+# in-process FastAPI background task, exactly as before.
+CELERY_ENABLED = _env_flag("CELERY_ENABLED", default=False)
+CELERY_BROKER_URL = _env_str("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = _env_str("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_REINDEX_QUEUE = _env_str("CELERY_REINDEX_QUEUE", "reindex")
 
 ADMIN_USERNAME = _env_str("ADMIN_USERNAME", "owner")
 ADMIN_PASSWORD = _env_str("ADMIN_PASSWORD", "")

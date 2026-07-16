@@ -6,7 +6,8 @@ import hashlib
 import logging
 from pathlib import Path
 import re
-from time import perf_counter
+from threading import Lock
+from time import perf_counter, sleep
 
 from api.chunking_config import get_chunking_config
 from api.embeddings import (
@@ -29,12 +30,20 @@ from api.settings import (
     RAW_DATA_DIR,
     PGVECTOR_DATABASE_URL,
     PGVECTOR_EMBEDDING_DIM,
+    PGVECTOR_REINDEX_BATCH_SLEEP_SECONDS,
+    PGVECTOR_REINDEX_DB_BATCH_SIZE,
+    PGVECTOR_REINDEX_EMBEDDING_BATCH_SIZE,
     PGVECTOR_SCHEMA,
     PGVECTOR_TABLE,
 )
 from api.storage_runtime import RankedChunkResult, StorageWarmupResult
 
 logger = logging.getLogger("ai_knowledge_assistant.pgvector_storage")
+
+# Ensuring schema (DDL + lexical backfill) is expensive; it should run once per
+# process per target table instead of on every connection/request.
+_schema_ready_tables: set[str] = set()
+_schema_ready_lock = Lock()
 
 
 class PgvectorRetrievalUnavailableError(RuntimeError):
@@ -628,6 +637,18 @@ class PgvectorChunkStorage:
         )
 
     def _ensure_schema(self, connection: object) -> None:
+        # DDL statements and the lexical backfill UPDATE are expensive and only
+        # ever need to run once per table per process lifetime.
+        cache_key = f"{self.config.schema_name}.{self.config.table_name}"
+        if cache_key in _schema_ready_tables:
+            return
+        with _schema_ready_lock:
+            if cache_key in _schema_ready_tables:
+                return
+            self._ensure_schema_uncached(connection)
+            _schema_ready_tables.add(cache_key)
+
+    def _ensure_schema_uncached(self, connection: object) -> None:
         chunks_table = self._chunks_table_name()
         schema_name = self._validate_identifier(self.config.schema_name)
         table_name = self._validate_identifier(self.config.table_name)
@@ -848,12 +869,11 @@ class PgvectorChunkStorage:
         return True
 
     def load_chunks(self) -> tuple[LoadedChunk, ...]:
+        # Do not trigger a heavy rebuild here: staleness is surfaced through
+        # readiness/reindex status instead of blocking a read-path call with a
+        # full CPU-heavy reindex. Callers get whatever is currently persisted.
         with self._connect() as connection:
             self._ensure_schema(connection)
-            metadata_verdict = self._evaluate_metadata_contract(connection)
-            if metadata_verdict.should_rebuild:
-                return self.rebuild_chunks()
-
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"""
@@ -878,82 +898,141 @@ class PgvectorChunkStorage:
         )
 
     def prepare_runtime(self) -> StorageWarmupResult:
-        with self._connect() as connection:
-            self._ensure_schema(connection)
-            metadata_verdict = self._evaluate_metadata_contract(connection)
-            if metadata_verdict.should_rebuild:
-                chunks = self.rebuild_chunks()
-                return StorageWarmupResult(
-                    chunk_count=len(chunks),
-                    loaded_into_memory=False,
-                )
+        # Startup/background warmup must stay cheap: never trigger a full
+        # embeddings + DB rebuild here. If the index is stale or the DB is
+        # unreachable, that is reported through readiness/reindex status
+        # instead of blocking or slowing down application startup.
+        try:
+            with self._connect() as connection:
+                self._ensure_schema(connection)
+                metadata_verdict = self._evaluate_metadata_contract(connection)
+        except Exception:
+            logger.warning(
+                "pgvector warmup could not evaluate metadata contract; "
+                "backend readiness will report the connection issue instead.",
+                extra={"event": "pgvector_warmup_connection_failed"},
+            )
+            return StorageWarmupResult(chunk_count=0, loaded_into_memory=False)
 
-            return StorageWarmupResult(
-                chunk_count=(
-                    0 if metadata_verdict.snapshot is None else metadata_verdict.snapshot.chunk_count
-                ),
-                loaded_into_memory=False,
+        if metadata_verdict.should_rebuild:
+            logger.info(
+                "pgvector metadata is stale at warmup; skipping automatic rebuild. "
+                "Trigger a reindex explicitly to refresh the index.",
+                extra={
+                    "event": "pgvector_warmup_stale_skipped",
+                    "context": {"issue": metadata_verdict.issue},
+                },
+            )
+
+        return StorageWarmupResult(
+            chunk_count=(
+                0 if metadata_verdict.snapshot is None else metadata_verdict.snapshot.chunk_count
+            ),
+            loaded_into_memory=False,
+        )
+
+    def _encode_chunks_in_batches(
+        self,
+        chunks: tuple[LoadedChunk, ...],
+    ) -> list[str | None]:
+        # Encoding the whole corpus in a single model.encode() call creates a
+        # long, uninterruptible CPU spike. Splitting into smaller batches keeps
+        # each call short, allows optional throttling, and bounds peak memory.
+        batch_size = max(1, PGVECTOR_REINDEX_EMBEDDING_BATCH_SIZE)
+        vector_literals: list[str | None] = []
+        embedding_unavailable = False
+
+        for batch_start in range(0, len(chunks), batch_size):
+            batch = chunks[batch_start : batch_start + batch_size]
+            if embedding_unavailable:
+                vector_literals.extend([None] * len(batch))
+                continue
+
+            batch_embeddings = encode_texts(
+                tuple(compose_embedding_text(chunk.title, chunk.content) for chunk in batch)
+            )
+            if batch_embeddings is None:
+                # Embedding stack became unavailable mid-run; keep going so the
+                # reindex still completes with lexical-only rows instead of failing.
+                embedding_unavailable = True
+                vector_literals.extend([None] * len(batch))
+                continue
+
+            if len(batch_embeddings[0]) != self.config.embedding_dim:
+                raise ValueError(
+                    "Configured PGVECTOR_EMBEDDING_DIM does not match the active embedding model output size."
+                )
+            vector_literals.extend(vector_to_pgvector_literal(row) for row in batch_embeddings)
+
+            if PGVECTOR_REINDEX_BATCH_SLEEP_SECONDS > 0 and batch_start + batch_size < len(chunks):
+                sleep(PGVECTOR_REINDEX_BATCH_SLEEP_SECONDS)
+
+        return vector_literals
+
+    def _insert_chunks_in_batches(
+        self,
+        cursor: object,
+        chunks: tuple[LoadedChunk, ...],
+        vector_literals: list[str | None],
+    ) -> None:
+        # Insert rows in bounded batches instead of one monolithic executemany
+        # call so a single reindex does not hold a huge parameter set in memory
+        # or block for the entire corpus in one uninterruptible statement.
+        insert_sql = f"""
+            INSERT INTO {self._chunks_table_name()} (
+                document_id,
+                title,
+                content,
+                source_path,
+                file_type,
+                chunk_index,
+                chunk_size_words,
+                chunk_overlap_words,
+                lexical_document,
+                embedding,
+                indexed_at
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s,
+           to_tsvector('simple', COALESCE(%s, '') || ' ' || COALESCE(%s, '')),
+                %s::vector,
+                NOW()
+            )
+        """
+        batch_size = max(1, PGVECTOR_REINDEX_DB_BATCH_SIZE)
+        paired_rows = list(zip(chunks, vector_literals, strict=False))
+        for batch_start in range(0, len(paired_rows), batch_size):
+            batch = paired_rows[batch_start : batch_start + batch_size]
+            cursor.executemany(
+                insert_sql,
+                [
+                    (
+                        chunk.document_id,
+                        chunk.title,
+                        chunk.content,
+                        chunk.source_path,
+                        chunk.file_type,
+                        chunk.chunk_index,
+                        chunk.chunk_size_words,
+                        chunk.chunk_overlap_words,
+                     chunk.title,
+                        chunk.content,
+                        vector_literal,
+                    )
+                    for chunk, vector_literal in batch
+                ],
             )
 
     def rebuild_chunks(self) -> tuple[LoadedChunk, ...]:
         config = get_chunking_config()
         source_snapshot = self._build_source_snapshot(self._iter_supported_raw_files())
         chunks = build_experiment_chunks()
-        embedding_rows = encode_texts(
-            tuple(compose_embedding_text(chunk.title, chunk.content) for chunk in chunks)
-        )
-        vector_literals: list[str | None]
-        if embedding_rows is None:
-            vector_literals = [None] * len(chunks)
-        else:
-            vector_literals = [vector_to_pgvector_literal(row) for row in embedding_rows]
-            if vector_literals and len(embedding_rows[0]) != self.config.embedding_dim:
-                raise ValueError(
-                    "Configured PGVECTOR_EMBEDDING_DIM does not match the active embedding model output size."
-                )
+        vector_literals = self._encode_chunks_in_batches(chunks)
         embedding_document_count = sum(1 for literal in vector_literals if literal is not None)
         with self._connect() as connection:
             self._ensure_schema(connection)
             with connection.cursor() as cursor:
                 cursor.execute(f"TRUNCATE TABLE {self._chunks_table_name()}")
-                cursor.executemany(
-                    f"""
-                    INSERT INTO {self._chunks_table_name()} (
-                        document_id,
-                        title,
-                        content,
-                        source_path,
-                        file_type,
-                        chunk_index,
-                        chunk_size_words,
-                        chunk_overlap_words,
-                        lexical_document,
-                        embedding,
-                        indexed_at
-                    ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s,
-                        to_tsvector('simple', COALESCE(%s, '') || ' ' || COALESCE(%s, '')),
-                        %s::vector,
-                        NOW()
-                    )
-                    """,
-                    [
-                        (
-                            chunk.document_id,
-                            chunk.title,
-                            chunk.content,
-                            chunk.source_path,
-                            chunk.file_type,
-                            chunk.chunk_index,
-                            chunk.chunk_size_words,
-                            chunk.chunk_overlap_words,
-                            chunk.title,
-                            chunk.content,
-                            vector_literal,
-                        )
-                        for chunk, vector_literal in zip(chunks, vector_literals, strict=False)
-                    ],
-                )
+                self._insert_chunks_in_batches(cursor, chunks, vector_literals)
                 cursor.execute(
                     f"""
                     INSERT INTO {self._meta_table_name()} (
@@ -1031,8 +1110,9 @@ class PgvectorChunkStorage:
         query_vector = vector_to_pgvector_literal(query_embedding)
         with self._connect() as connection:
             self._ensure_schema(connection)
-            if self._is_storage_stale(connection):
-                self.rebuild_chunks()
+            # Do not trigger a heavy rebuild on the retrieval hot path; staleness
+            # is surfaced via readiness/reindex status and repaired only through
+            # an explicit reindex job so a single search request cannot spike CPU.
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"""
@@ -1106,8 +1186,9 @@ class PgvectorChunkStorage:
 
         with self._connect() as connection:
             self._ensure_schema(connection)
-            if self._is_storage_stale(connection):
-                self.rebuild_chunks()
+            # Do not trigger a heavy rebuild on the retrieval hot path; staleness
+            # is surfaced via readiness/reindex status and repaired only through
+            # an explicit reindex job so a single search request cannot spike CPU.
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"""

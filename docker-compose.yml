@@ -33,11 +33,16 @@ services:
       dockerfile: Dockerfile
       args:
         INSTALL_EMBEDDING_STACK: ${INSTALL_EMBEDDING_STACK:-0}
+        INSTALL_CELERY_STACK: ${INSTALL_CELERY_STACK:-0}
     container_name: ai_knowledge_assistant_app
     restart: unless-stopped
     env_file:
       - .env
     environment:
+      CELERY_ENABLED: ${CELERY_ENABLED:-false}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+      CELERY_REINDEX_QUEUE: ${CELERY_REINDEX_QUEUE:-reindex}
       LLM_ENABLED: ${LLM_ENABLED:-true}
       LLM_CHAT_COMPLETIONS_URL: ${LLM_CHAT_COMPLETIONS_URL:-https://3xanny-secureapi.hf.space/v1/chat/completions}
       LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
@@ -76,6 +81,53 @@ services:
       proxy_net:
         aliases:
           - assistant_app
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai_knowledge_assistant_redis
+    restart: unless-stopped
+    profiles: ["celery"]
+    networks:
+      - assistant_internal
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_EMBEDDING_STACK: ${INSTALL_EMBEDDING_STACK:-0}
+        INSTALL_CELERY_STACK: ${INSTALL_CELERY_STACK:-1}
+    container_name: ai_knowledge_assistant_worker
+    restart: unless-stopped
+    profiles: ["celery"]
+    env_file:
+      - .env
+    environment:
+      CHUNK_STORAGE_BACKEND: ${CHUNK_STORAGE_BACKEND:-file}
+      CELERY_ENABLED: ${CELERY_ENABLED:-true}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+      CELERY_REINDEX_QUEUE: ${CELERY_REINDEX_QUEUE:-reindex}
+    command:
+      [
+        "celery",
+        "-A",
+        "api.celery_app:celery_app",
+        "worker",
+        "--loglevel=INFO",
+        "-Q",
+        "${CELERY_REINDEX_QUEUE:-reindex}",
+      ]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./data:/app/data
+      - ./docs:/app/docs
+    networks:
+      - assistant_internal
 
 networks:
   assistant_internal:
