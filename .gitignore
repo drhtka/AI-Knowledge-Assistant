@@ -1,0 +1,17 @@
+.trae/project_rules.md
+.vscode/*
+.env
+.env.swarm
+docs/*
+!docs/screenshots/
+!docs/screenshots/**
+.venv/
+data/*
+data/README.md
+data/raw/
+data/raw/*
+data/raw/README.md
+.cache/
+*.duckdb
+__pycache__/
+.DS_Store
