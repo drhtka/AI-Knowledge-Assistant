@@ -16,8 +16,17 @@ Portfolio-ready `RAG` project with local document ingestion, configurable retrie
   <img src="docs/screenshots/desktop/01-home-hero.png" alt="AI Knowledge Assistant home screen" width="100%">
 </p>
 
+## Why This Project Matters
+
+This project is designed as a compact but engineering-focused `RAG` system rather than a simple chat demo. It shows how local ingestion, configurable retrieval, grounded answering, runtime visibility, and operator-friendly UI can work together as one coherent product surface.
+
+- configurable `RAG` pipeline with ingestion, chunking, retrieval mode switching, and grounded answers backed by explicit evidence
+- observability-oriented runtime with reindex lifecycle, retrieval history, diagnostics, and transparent system status
+- `PostgreSQL + pgvector` support and a production-like delivery surface through `FastAPI`, `Jinja2`, API endpoints, and Docker Compose
+
 ## Quick Links
 
+- [Why This Project Matters](#why-this-project-matters)
 - [Screenshots](#screenshots)
 - [What It Does](#what-it-does)
 - [Architecture](#architecture)
