@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="uk">
+<html lang="{{ lang }}">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,7 +20,7 @@
                             type="submit"
                             class="admin-access-trigger is-authenticated"
                             id="admin-access-trigger"
-                            aria-label="Admin logout"
+                            aria-label="{{ t('base.admin.logout_aria') }}"
                         >
                             <span class="admin-access-trigger-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" role="presentation" focusable="false">
@@ -36,7 +36,7 @@
                         type="button"
                         class="admin-access-trigger"
                         id="admin-access-trigger"
-                        aria-label="Admin login"
+                        aria-label="{{ t('base.admin.login_aria') }}"
                         aria-haspopup="dialog"
                         aria-controls="admin-access-modal"
                     >
@@ -59,16 +59,15 @@
                                 type="button"
                                 class="button-link admin-access-modal-close"
                                 data-close-admin-access-modal="true"
-                                aria-label="Закрити admin access"
+                                aria-label="{{ t('base.admin.modal_close_aria') }}"
                             >
                                 ×
                             </button>
                             <div class="admin-access-modal-body">
-                                <p class="stat-label" id="admin-access-modal-title">Admin Access</p>
+                                <p class="stat-label" id="admin-access-modal-title">{{ t("base.admin.modal_title") }}</p>
                                 {% if admin_auth.using_fallback_session_secret %}
                                 <p class="meta">
-                                    Для production обов'язково задайте
-                                    <code>ADMIN_SESSION_SECRET</code>.
+                                    {{ t("base.admin.fallback_secret_help") | safe }}
                                 </p>
                                 {% endif %}
                                 {% if admin_auth.enabled %}
@@ -77,18 +76,16 @@
                                         id="admin_password_input"
                                         type="password"
                                         name="password"
-                                        placeholder="Введіть admin password"
+                                        placeholder="{{ t('base.admin.password_placeholder') }}"
                                         autocomplete="current-password"
                                         required
                                     />
                                     <input type="hidden" name="next" value="{{ admin_auth.current_path }}" />
-                                    <button type="submit">Увійти</button>
+                                    <button type="submit">{{ t("base.admin.sign_in") }}</button>
                                 </form>
                                 {% else %}
                                 <p class="meta">
-                                    Задайте <code>ADMIN_PASSWORD</code> у <code>.env</code>,
-                                    щоб увімкнути admin-доступ. Після цього просто
-                                    перезапустіть сервер.
+                                    {{ t("base.admin.configure_help") | safe }}
                                 </p>
                                 {% endif %}
                             </div>
@@ -99,7 +96,7 @@
                         type="button"
                         class="page-nav-toggle"
                         id="page-nav-toggle"
-                        aria-label="Відкрити навігацію"
+                        aria-label="{{ t('base.admin.open_navigation') }}"
                         aria-controls="page-nav"
                         aria-expanded="false"
                     >
@@ -107,33 +104,47 @@
                         <span class="page-nav-toggle-line" aria-hidden="true"></span>
                         <span class="page-nav-toggle-line" aria-hidden="true"></span>
                     </button>
-                    <nav class="page-nav" id="page-nav" aria-label="Primary">
+                    <nav class="page-nav" id="page-nav" aria-label="{{ t('base.admin.navigation_aria') }}">
                         <a
-                            href="/"
+                            href="{{ page_urls.assistant }}"
                             class="page-nav-link {% if active_page == 'assistant' %}is-active{% endif %}"
                         >
-                            Асистент
+                            {{ t("base.nav.assistant") }}
                         </a>
                         <a
-                            href="/documents"
+                            href="{{ page_urls.documents }}"
                             class="page-nav-link {% if active_page == 'documents' %}is-active{% endif %}"
                         >
-                            Документ
+                            {{ t("base.nav.documents") }}
                         </a>
                         <a
-                            href="/external-search"
+                            href="{{ page_urls.external_search }}"
                             class="page-nav-link {% if active_page == 'external_search' %}is-active{% endif %}"
                         >
-                            Вебпошук
+                            {{ t("base.nav.external_search") }}
                         </a>
                         <a
-                            href="/system"
+                            href="{{ page_urls.system }}"
                             class="page-nav-link {% if active_page == 'system' %}is-active{% endif %}"
                         >
-                            Система
+                            {{ t("base.nav.system") }}
                         </a>
+                        <div class="language-switcher page-nav-language-switcher" aria-label="{{ t('base.language.label') }}">
+                            <a
+                                href="{{ lang_switch_urls.en }}"
+                                class="language-switch-link {% if lang == 'en' %}is-active{% endif %}"
+                            >
+                                {{ t("base.language.en") }}
+                            </a>
+                            <a
+                                href="{{ lang_switch_urls.uk }}"
+                                class="language-switch-link {% if lang == 'uk' %}is-active{% endif %}"
+                            >
+                                {{ t("base.language.uk") }}
+                            </a>
+                        </div>
                         {% if admin_auth.is_authenticated %}
-                        <a href="/docs" class="page-nav-link">API Docs</a>
+                        <a href="{{ page_urls.api_docs }}" class="page-nav-link">{{ t("base.nav.api_docs") }}</a>
                         {% endif %}
                     </nav>
                 </div>
@@ -141,7 +152,7 @@
                     <div class="section-kicker-row">
                         <p class="section-kicker">{{ page_kicker }}</p>
                         {% if page_intro_tooltip %}
-                        <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення розділу">
+                        <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="{{ t('base.admin.page_tooltip_aria') }}">
                             ?
                             <span class="info-tooltip-bubble">
                                 {{ page_intro_tooltip }}
@@ -152,7 +163,7 @@
                     <h1>{{ page_heading }}</h1>
                     {% if admin_access_note_text and not admin_auth.is_authenticated %}
                     <div class="admin-access-note">
-                        <span class="admin-access-note-label">Admin Access</span>
+                        <span class="admin-access-note-label">{{ t("base.admin.access_note_label") }}</span>
                         <p class="admin-access-note-text">
                             {{ admin_access_note_text }}
                         </p>
@@ -166,6 +177,7 @@
 
             {% block content %}{% endblock %}
         </main>
+        <script id="app-i18n" type="application/json">{{ frontend_i18n | tojson }}</script>
         <script
             type="module"
             src="{{ request.url_for('static', path='js/index.js') }}"
