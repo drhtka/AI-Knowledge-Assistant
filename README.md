@@ -2,8 +2,23 @@
 
 Portfolio-ready `RAG` project with local document ingestion, configurable retrieval, grounded answering, evaluation scripts, and a lightweight demo UI.
 
+<p align="center">
+  <a href="https://assistant.fsprojects.pp.ua/">Live Demo</a>
+  ·
+  <a href="#screenshots">Screenshots</a>
+  ·
+  <a href="#architecture">Architecture</a>
+  ·
+  <a href="#docker-compose-run">Docker Compose</a>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/desktop/01-home-hero.png" alt="AI Knowledge Assistant home screen" width="100%">
+</p>
+
 ## Quick Links
 
+- [Screenshots](#screenshots)
 - [What It Does](#what-it-does)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
@@ -126,6 +141,50 @@ Raw documents
 ## Live Demo
 
 - Public demo: [https://assistant.fsprojects.pp.ua/](https://assistant.fsprojects.pp.ua/)
+
+## Screenshots
+
+### Main Experience
+
+<p align="center">
+  <img src="docs/screenshots/desktop/02-rag-answer.png" alt="Grounded answer with source cards and retrieval details" width="48%">
+  <img src="docs/screenshots/desktop/03-comparison-or-sources.png" alt="Retrieval transparency, grouped sources, and comparison view" width="48%">
+</p>
+
+<p align="center">
+  <em>Grounded answer flow, evidence transparency, and retrieval-side explainability.</em>
+</p>
+
+### Runtime And Operations
+
+<p align="center">
+  <img src="docs/screenshots/desktop/04-system-runtime.png" alt="System runtime status and observability view" width="48%">
+  <img src="docs/screenshots/desktop/05-documents-or-indexing.png" alt="Documents and indexing management view" width="48%">
+</p>
+
+<p align="center">
+  <em>Operational surface for runtime health, indexing lifecycle, and document management.</em>
+</p>
+
+### External Retrieval Workspace
+
+<p align="center">
+  <img src="docs/screenshots/desktop/06-external-search.png" alt="External search workspace with activity log and JSON diagnostics" width="82%">
+</p>
+
+<p align="center">
+  <em>Separate external retrieval workspace with activity log and debug-friendly output.</em>
+</p>
+
+### Mobile Preview
+
+<p align="center">
+  <img src="docs/screenshots/mobile/07-mobile-home.png" alt="Mobile home screen preview" width="32%">
+</p>
+
+<p align="center">
+  <em>Responsive mobile layout for the main ask flow.</em>
+</p>
 
 ## Local Run
 
