@@ -23,6 +23,7 @@ import {
     initializeStorageBackendControls,
 } from "./system/config.js";
 import { initializeReindexControls } from "./system/reindex.js";
+import { t } from "./shared/i18n.js";
 
 function initializeMobileNavigation() {
     const pageNav = document.getElementById("page-nav");
@@ -41,7 +42,10 @@ function initializeMobileNavigation() {
         pageNav.classList.toggle("is-open", isMobile && isOpen);
         pageNavToggle.classList.toggle("is-open", isMobile && isOpen);
         pageNavToggle.setAttribute("aria-expanded", isMobile && isOpen ? "true" : "false");
-        pageNavToggle.setAttribute("aria-label", isMobile && isOpen ? "Закрити навігацію" : "Відкрити навігацію");
+        pageNavToggle.setAttribute(
+            "aria-label",
+            isMobile && isOpen ? t("navigation.close") : t("navigation.open"),
+        );
         pageNav.setAttribute("aria-hidden", isMobile && !isOpen ? "true" : "false");
     };
 

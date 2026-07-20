@@ -32,7 +32,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        INSTALL_EMBEDDING_STACK: ${INSTALL_EMBEDDING_STACK:-0}
+        INSTALL_EMBEDDING_STACK: ${INSTALL_EMBEDDING_STACK:-1}
         INSTALL_CELERY_STACK: ${INSTALL_CELERY_STACK:-1}
     container_name: ai_knowledge_assistant_app
     restart: unless-stopped

@@ -11,6 +11,7 @@ import {
     refreshReindexStatusButton,
     startReindexButton,
 } from "../dom/elements.js";
+import { getCurrentLocale, t } from "../shared/i18n.js";
 import { syncStorageBackendLockByReindexState } from "./config.js";
 
 function formatReindexTimestamp(value) {
@@ -23,7 +24,7 @@ function formatReindexTimestamp(value) {
         return value;
     }
 
-    return timestamp.toLocaleString("uk-UA", {
+    return timestamp.toLocaleString(getCurrentLocale(), {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -68,10 +69,10 @@ export function renderReindexStatus(payload) {
     const formattedStartedAt = formatReindexTimestamp(payload.started_at);
     const formattedFinishedAt = formatReindexTimestamp(payload.finished_at);
     if (reindexStartedAt instanceof HTMLElement) {
-        reindexStartedAt.textContent = formattedStartedAt || "not started yet";
+        reindexStartedAt.textContent = formattedStartedAt || t("reindex.not_started_yet");
     }
     if (reindexFinishedAt instanceof HTMLElement) {
-        reindexFinishedAt.textContent = formattedFinishedAt || "not finished yet";
+        reindexFinishedAt.textContent = formattedFinishedAt || t("reindex.not_finished_yet");
     }
     if (reindexStatusMessage instanceof HTMLElement) {
         reindexStatusMessage.classList.toggle("reindex-status-error", Boolean(payload.last_error));
@@ -79,11 +80,11 @@ export function renderReindexStatus(payload) {
             reindexStatusMessage.textContent = `last_error=${payload.last_error}`;
         } else if (payload.rerun_requested && payload.rerun_trigger) {
             reindexStatusMessage.textContent =
-                `rerun_trigger=${payload.rerun_trigger} | started_at=${formattedStartedAt || "pending"}`;
+                `rerun_trigger=${payload.rerun_trigger} | started_at=${formattedStartedAt || t("reindex.pending")}`;
         } else if (payload.started_at) {
             reindexStatusMessage.textContent = `started_at=${formattedStartedAt}`;
         } else {
-            reindexStatusMessage.textContent = "Waiting for the next reindex trigger.";
+            reindexStatusMessage.textContent = t("reindex.waiting");
         }
     }
 }
@@ -120,22 +121,22 @@ export async function startReindexFromUi() {
     }
 
     startReindexButton.disabled = true;
-    renderReindexMessage("Starting background reindex...");
+    renderReindexMessage(t("reindex.starting"));
 
     try {
         const response = await fetch("/reindex", { method: "POST" });
         const payload = await response.json();
 
         if (!response.ok) {
-            const errorMessage = payload.detail ?? "Failed to start reindex.";
+            const errorMessage = payload.detail ?? t("reindex.failed_start");
             renderReindexMessage(errorMessage, true);
             return;
         }
 
-        renderReindexMessage(payload.message || "Background reindex request accepted.");
+        renderReindexMessage(payload.message || t("reindex.accepted"));
         await refreshReindexStatus();
     } catch {
-        renderReindexMessage("Failed to start reindex because the server did not respond.", true);
+        renderReindexMessage(t("reindex.failed_start_no_response"), true);
     } finally {
         startReindexButton.disabled = false;
     }

@@ -21,6 +21,7 @@ import {
     setPresetStatusResetTimer,
     setStorageBackendStatusResetTimer,
 } from "../shared/state.js";
+import { t } from "../shared/i18n.js";
 import { refreshReindexStatus } from "./reindex.js";
 
 export function getPresetLabel(presetValue) {
@@ -152,7 +153,7 @@ export async function applyChunkingPresetSelection(
     }
 
     presetInput.disabled = true;
-    setPresetStatus(resultElement, "Applying chunking preset and scheduling background reindex...");
+    setPresetStatus(resultElement, t("system.applying_chunking"));
 
     try {
         const response = await fetch("/chunking-config", {
@@ -165,7 +166,7 @@ export async function applyChunkingPresetSelection(
         const payload = await response.json();
 
         if (!response.ok) {
-            const errorMessage = payload.detail ?? "Chunking preset update failed.";
+            const errorMessage = payload.detail ?? t("system.chunking_update_failed");
             setPresetStatus(resultElement, errorMessage, "error");
             return;
         }
@@ -178,7 +179,10 @@ export async function applyChunkingPresetSelection(
         const successMessage =
             typeof buildSuccessMessage === "function"
                 ? buildSuccessMessage(payload, presetLabel)
-                : `Preset updated: ${presetLabel}. ${payload.reindex_message}`;
+                : t("system.preset_updated", {
+                    preset: presetLabel,
+                    message: payload.reindex_message,
+                });
 
         setPresetStatus(resultElement, successMessage, "success");
         void refreshReindexStatus();
@@ -191,7 +195,7 @@ export async function applyChunkingPresetSelection(
     } catch {
         setPresetStatus(
             resultElement,
-            "Preset update failed because the server did not respond.",
+            t("system.preset_update_no_response"),
             "error",
         );
     } finally {
@@ -229,7 +233,11 @@ export function initializeChunkingControls() {
                 void applyChunkingPresetSelection(presetInput, chunkingResult, {
                     reloadOnSuccess: true,
                     buildSuccessMessage: (payload) =>
-                        `Preset updated: ${payload.chunk_size_words}/${payload.chunk_overlap_words}. ${payload.reindex_message}`,
+                        t("system.preset_dimensions_updated", {
+                            chunk_size_words: payload.chunk_size_words,
+                            chunk_overlap_words: payload.chunk_overlap_words,
+                            message: payload.reindex_message,
+                        }),
                 });
             });
         }
@@ -279,7 +287,7 @@ export function initializeStorageBackendControls() {
 
     backendInput.addEventListener("change", async () => {
         setStorageBackendDisabledState(true);
-        setStorageBackendStatus("Applying storage backend and scheduling background reindex...");
+        setStorageBackendStatus(t("system.applying_storage"));
 
         try {
             const response = await fetch("/storage-config", {
@@ -292,14 +300,17 @@ export function initializeStorageBackendControls() {
             const payload = await response.json();
 
             if (!response.ok) {
-                const errorMessage = payload.detail ?? "Storage backend update failed.";
+                const errorMessage = payload.detail ?? t("system.storage_update_failed");
                 setStorageBackendStatus(errorMessage, "error");
                 setStorageBackendDisabledState(false);
                 return;
             }
 
             setStorageBackendStatus(
-                `Active backend=${payload.current_backend}. ${payload.reindex_message}`,
+                t("system.active_backend", {
+                    backend: payload.current_backend,
+                    message: payload.reindex_message,
+                }),
                 "success",
             );
             await refreshReindexStatus();
@@ -308,7 +319,7 @@ export function initializeStorageBackendControls() {
             }, storageBackendReloadDelayMs);
         } catch {
             setStorageBackendStatus(
-                "Storage backend update failed because the server did not respond.",
+                t("system.storage_update_no_response"),
                 "error",
             );
             setStorageBackendDisabledState(false);

@@ -11,6 +11,7 @@ import {
     externalSearchSubmitButton,
     webSearchResultJsonContent,
 } from "../dom/elements.js";
+import { getCurrentLocale, t } from "../shared/i18n.js";
 import { escapeHtml } from "../shared/utils.js";
 
 const minimumExternalSearchLength = 3;
@@ -113,7 +114,7 @@ function formatExternalSearchTimestamp(value) {
     }
 
     const timestamp = new Date(value);
-    return Number.isNaN(timestamp.getTime()) ? value : timestamp.toLocaleString();
+    return Number.isNaN(timestamp.getTime()) ? value : timestamp.toLocaleString(getCurrentLocale());
 }
 
 function replaceUrlWithExternalSearchParams(questionValue, topKValue) {
@@ -138,16 +139,16 @@ function buildExternalSearchFollowUps(questionValue) {
 
     return [
         {
-            label: "Official source",
-            query: `official source for ${normalizedQuestion}`,
+            label: t("external_search.official_source_label"),
+            query: t("external_search.official_source_query", { question: normalizedQuestion }),
         },
         {
-            label: "Latest updates",
-            query: `latest updates about ${normalizedQuestion}`,
+            label: t("external_search.latest_updates_label"),
+            query: t("external_search.latest_updates_query", { question: normalizedQuestion }),
         },
         {
-            label: "Technical overview",
-            query: `technical overview of ${normalizedQuestion}`,
+            label: t("external_search.technical_overview_label"),
+            query: t("external_search.technical_overview_query", { question: normalizedQuestion }),
         },
     ];
 }
@@ -161,7 +162,7 @@ function renderExternalSearchActions(questionValue) {
     if (followUps.length === 0) {
         externalSearchActionsContent.innerHTML = `
             <p class="meta">
-                Після першого запиту тут з'являться швидкі follow-up дії.
+                ${t("external_search.empty_followups")}
             </p>
         `;
         return;
@@ -191,12 +192,12 @@ function renderExternalSearchSession() {
             <div class="external-search-session-shell is-loading">
                 <div class="external-search-session-header">
                     <div>
-                        <p class="meta external-search-session-caption">Current search</p>
+                        <p class="meta external-search-session-caption">${t("external_search.current_search")}</p>
                         <h3 class="external-search-session-query">
                             ${escapeHtml(externalSearchState.question)}
                         </h3>
                     </div>
-                    <span class="dashboard-badge external-search-status-badge is-loading">searching</span>
+                    <span class="dashboard-badge external-search-status-badge is-loading">${t("external_search.searching")}</span>
                 </div>
                 <div class="pill-row external-search-session-pills">
                     <span class="mode-pill">top_k=${escapeHtml(externalSearchState.topK)}</span>
@@ -207,7 +208,7 @@ function renderExternalSearchSession() {
                     <span class="external-search-loader-dots" aria-hidden="true">
                         <span></span><span></span><span></span>
                     </span>
-                    <span class="meta">Виконуємо зовнішній пошук і оновлюємо джерела.</span>
+                    <span class="meta">${t("external_search.loading_session")}</span>
                 </div>
             </div>
         `;
@@ -219,12 +220,12 @@ function renderExternalSearchSession() {
             <div class="external-search-session-shell is-error">
                 <div class="external-search-session-header">
                     <div>
-                        <p class="meta external-search-session-caption">Current search</p>
+                        <p class="meta external-search-session-caption">${t("external_search.current_search")}</p>
                         <h3 class="external-search-session-query">
                             ${escapeHtml(externalSearchState.question)}
                         </h3>
                     </div>
-                    <span class="dashboard-badge external-search-status-badge is-error">failed</span>
+                    <span class="dashboard-badge external-search-status-badge is-error">${t("external_search.failed")}</span>
                 </div>
                 <div class="pill-row external-search-session-pills">
                     <span class="mode-pill">top_k=${escapeHtml(externalSearchState.topK)}</span>
@@ -245,21 +246,21 @@ function renderExternalSearchSession() {
             : 0;
         const latencyLine = Number.isInteger(externalSearchState.latencyMs)
             ? `latency_ms=${externalSearchState.latencyMs}`
-            : "latency tracked in activity log";
+            : t("external_search.latency_tracked");
         const updatedAtLine = externalSearchState.updatedAt
-            ? ` | updated=${escapeHtml(formatExternalSearchTimestamp(externalSearchState.updatedAt))}`
+            ? ` | ${t("external_search.updated", { value: escapeHtml(formatExternalSearchTimestamp(externalSearchState.updatedAt)) })}`
             : "";
 
         externalSearchSessionContent.innerHTML = `
             <div class="external-search-session-shell is-success">
                 <div class="external-search-session-header">
                     <div>
-                        <p class="meta external-search-session-caption">Current search</p>
+                        <p class="meta external-search-session-caption">${t("external_search.current_search")}</p>
                         <h3 class="external-search-session-query">
                             ${escapeHtml(externalSearchState.result.question || externalSearchState.question)}
                         </h3>
                     </div>
-                    <span class="dashboard-badge external-search-status-badge is-success">completed</span>
+                    <span class="dashboard-badge external-search-status-badge is-success">${t("external_search.completed")}</span>
                 </div>
                 <div class="pill-row external-search-session-pills">
                     <span class="mode-pill">
@@ -280,14 +281,13 @@ function renderExternalSearchSession() {
         <div class="external-search-session-shell">
             <div class="external-search-session-header">
                 <div>
-                    <p class="meta external-search-session-caption">Current search</p>
-                    <h3 class="external-search-session-query">Search workspace is ready</h3>
+                    <p class="meta external-search-session-caption">${t("external_search.current_search")}</p>
+                    <h3 class="external-search-session-query">${t("external_search.idle_title")}</h3>
                 </div>
-                <span class="dashboard-badge external-search-status-badge">idle</span>
+                <span class="dashboard-badge external-search-status-badge">${t("external_search.idle")}</span>
             </div>
             <p class="meta external-search-session-message">
-                Введіть запит вище, щоб побачити engine, top_k, hit count і
-                результати без перезавантаження сторінки.
+                ${t("external_search.idle_message")}
             </p>
         </div>
     `;
@@ -305,7 +305,7 @@ function renderExternalSearchResults() {
                     <span class="external-search-loader-dots" aria-hidden="true">
                         <span></span><span></span><span></span>
                     </span>
-                    <span class="meta">Шукаємо релевантні зовнішні джерела.</span>
+                    <span class="meta">${t("external_search.loading_results")}</span>
                 </div>
             </div>
         `;
@@ -328,7 +328,7 @@ function renderExternalSearchResults() {
         externalSearchResultsContent.innerHTML = `
             <div class="external-search-results-empty">
                 <p class="meta">
-                    Запустіть зовнішній вебпошук, щоб переглянути тут результати.
+                    ${t("external_search.empty_results")}
                 </p>
             </div>
         `;
@@ -344,7 +344,7 @@ function renderExternalSearchResults() {
                             <div class="external-search-result-header">
                                 <div>
                                     <p class="meta external-search-result-position">
-                                        result #${escapeHtml(hit.position)}
+                                        ${t("external_search.result_position", { position: escapeHtml(hit.position) })}
                                     </p>
                                     <h3 class="external-search-result-title">
                                         ${escapeHtml(hit.title)}
@@ -363,7 +363,7 @@ function renderExternalSearchResults() {
                                 ${escapeHtml(hit.link)}
                             </a>
                             <p class="external-search-result-snippet">
-                                ${escapeHtml(hit.snippet || "Snippet unavailable.")}
+                                ${escapeHtml(hit.snippet || t("external_search.snippet_unavailable"))}
                             </p>
                         </article>
                     `,
@@ -385,7 +385,7 @@ function renderExternalSearchActivity(entries, options = {}) {
                     <span class="external-search-loader-dots" aria-hidden="true">
                         <span></span><span></span><span></span>
                     </span>
-                    <span class="meta">Оновлюємо технічний журнал вебпошуку.</span>
+                    <span class="meta">${t("external_search.loading_activity")}</span>
                 </div>
             </div>
         `;
@@ -396,7 +396,7 @@ function renderExternalSearchActivity(entries, options = {}) {
         externalSearchActivityContent.innerHTML = `
             <div class="external-search-activity-empty">
                 <p class="meta">
-                    Activity log тимчасово недоступний: ${escapeHtml(options.error)}
+                    ${t("external_search.activity_unavailable", { error: escapeHtml(options.error) })}
                 </p>
             </div>
         `;
@@ -407,8 +407,7 @@ function renderExternalSearchActivity(entries, options = {}) {
         externalSearchActivityContent.innerHTML = `
             <div class="external-search-activity-empty">
                 <p class="meta">
-                    Історія ще порожня. Після запиту тут з'являться status, engine,
-                    top_k, hit count і latency.
+                    ${t("external_search.activity_empty")}
                 </p>
             </div>
         `;
@@ -425,7 +424,7 @@ function renderExternalSearchActivity(entries, options = {}) {
                             <div class="external-search-activity-item-header">
                                 <div>
                                     <p class="meta external-search-activity-item-caption">
-                                        request #${escapeHtml(entry.history_entry_id)}
+                                        ${t("external_search.request_caption", { id: escapeHtml(entry.history_entry_id) })}
                                     </p>
                                     <strong class="external-search-activity-item-title">
                                         ${escapeHtml(entry.engine)}
@@ -485,8 +484,8 @@ function syncExternalSearchActionState() {
             isSearching ? "true" : "false",
         );
         externalSearchSubmitButton.title = isSearching
-            ? "Пошук виконується"
-            : "Надіслати запит";
+            ? t("external_search.search_in_progress")
+            : t("external_search.submit_query");
     }
 }
 
@@ -528,7 +527,7 @@ function resetExternalSearchState() {
 async function refreshExternalSearchActivity(options = {}) {
     if (!externalSearchState.isAuthenticated) {
         renderExternalSearchActivity([], {
-            error: "доступно тільки після admin authorization",
+            error: t("external_search.auth_required"),
         });
         return [];
     }
@@ -611,7 +610,7 @@ async function submitExternalSearchWithFetch(questionValue) {
             const message =
                 typeof payload.detail === "string" && payload.detail.trim()
                     ? payload.detail
-                    : `Web search failed with status ${response.status}.`;
+                    : t("external_search.web_search_failed", { status: response.status });
             throw new Error(message);
         }
 
@@ -632,7 +631,7 @@ async function submitExternalSearchWithFetch(questionValue) {
     } catch (error) {
         externalSearchState.result = null;
         externalSearchState.error =
-            error instanceof Error ? error.message : "Failed to fetch web search results.";
+            error instanceof Error ? error.message : t("external_search.failed_fetch");
         externalSearchState.status = "error";
         renderExternalSearchWorkspace();
         setExternalSearchPendingState(false);

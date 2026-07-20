@@ -4,17 +4,16 @@
 <section class="documents-workflow-grid">
     <article class="feature-block feature-panel">
         <div class="section-kicker-row">
-            <p class="section-kicker">Ingestion</p>
-            <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Пояснення про завантаження документів">
+            <p class="section-kicker">{{ t("documents.upload.kicker") }}</p>
+            <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="{{ t('documents.upload.tooltip_aria') }}">
                 ?
                 <span class="info-tooltip-bubble">
-                    Додавайте нові документи в локальний корпус, щоб оновити
-                    локальну базу знань і одразу запустити фоновий reindex.
+                    {{ t("documents.upload.tooltip") }}
                 </span>
             </span>
         </div>
         <div class="feature-panel-header">
-            <h2>Завантаження документів</h2>
+            <h2>{{ t("documents.upload.title") }}</h2>
         </div>
         <form
             id="upload-form"
@@ -22,7 +21,6 @@
             action="/upload"
             enctype="multipart/form-data"
         >
-            <!-- <label for="upload_file">Документ</label>s -->
             <div class="upload-file-row">
                 <label
                     for="upload_file"
@@ -32,22 +30,22 @@
                     <span class="upload-dropzone-main">
                         <span class="upload-dropzone-icon" aria-hidden="true">⇪</span>
                         <span class="upload-dropzone-copy">
-                            <strong id="upload-dropzone-title">Перетягніть файл сюди</strong>
-                            <span id="upload-dropzone-subtitle">або натисніть, щоб вибрати документ</span>
+                            <strong id="upload-dropzone-title">{{ t("documents.upload.dropzone_title") }}</strong>
+                            <span id="upload-dropzone-subtitle">{{ t("documents.upload.dropzone_subtitle") }}</span>
                         </span>
                     </span>
                     <span class="upload-dropzone-footer">
                         <span class="upload-dropzone-meta">TXT, MD, PDF</span>
                         <span class="upload-selected-file" id="upload-selected-file">
-                            Файл ще не вибрано.
+                            {{ t("documents.upload.selected_file_empty") }}
                         </span>
                     </span>
                     <button
                         type="button"
                         id="clear-upload-file-button"
                         class="upload-clear-button upload-clear-button-inside"
-                        aria-label="Очистити вибраний файл"
-                        title="Очистити вибраний файл"
+                        aria-label="{{ t('documents.upload.clear_selected_file') }}"
+                        title="{{ t('documents.upload.clear_selected_file') }}"
                         {% if not admin_auth.is_authenticated %}disabled{% endif %}
                         hidden
                     >
@@ -65,8 +63,7 @@
                 </label>
             </div>
             <p class="meta">
-                Підтримувані формати: <code>.txt</code>, <code>.md</code> та
-                <code>.pdf</code>
+                {{ t("documents.upload.supported_formats") }} <code>.txt</code>, <code>.md</code>, <code>.pdf</code>
             </p>
             <div class="actions">
                 <button
@@ -74,18 +71,18 @@
                     id="upload-button"
                     {% if not admin_auth.is_authenticated %}disabled{% endif %}
                 >
-                    Завантажити документ
+                    {{ t("documents.upload.upload_button") }}
                 </button>
             </div>
         </form>
         <div id="upload-result" class="upload-result meta workflow-result-slot">
             {% if upload_feedback and upload_feedback.status == "ok" %}
             <div class="upload-result upload-result-card success-text">
-                <strong>Документ успішно завантажено</strong>
-                <p class="meta">Деталі відкрилися в модальному вікні.</p>
+                <strong>{{ t("documents.upload.success_title") }}</strong>
+                <p class="meta">{{ t("documents.upload.success_message") }}</p>
                 <div class="actions upload-result-actions">
                     <button type="button" id="open-upload-success-modal-button">
-                        Переглянути деталі
+                        {{ t("documents.upload.view_details") }}
                     </button>
                 </div>
             </div>
@@ -101,24 +98,22 @@
                     <button
                         type="button"
                         class="upload-success-modal-close"
-                        aria-label="Закрити модальне вікно"
+                        aria-label="{{ t('documents.upload.close_modal') }}"
                         data-close-upload-modal
                     >
                         ×
                     </button>
                     <div class="upload-success-modal-body">
-                        <strong id="upload-success-modal-title">Документ успішно завантажено</strong>
+                        <strong id="upload-success-modal-title">{{ t("documents.upload.success_title") }}</strong>
                         <p class="meta">
-                            файл={{ upload_feedback.source_name }} |
-                            тип={{ upload_feedback.file_type }} |
-                            очікуваних_фрагментів={{ upload_feedback.estimated_chunks }}
+                            {{ t("documents.upload.details_line", source_name=upload_feedback.source_name, file_type=upload_feedback.file_type, estimated_chunks=upload_feedback.estimated_chunks) }}
                         </p>
                         <p class="meta">
-                            {{ upload_feedback.reindex_message or "Фоновий reindex для документа вже запущено." }}
+                            {{ upload_feedback.reindex_message or t("documents.upload.reindex_fallback") }}
                         </p>
                         {% if upload_feedback.preview_text %}
                         <div class="upload-preview">
-                            <p class="meta"><strong>Попередній перегляд документа</strong></p>
+                            <p class="meta"><strong>{{ t("documents.upload.preview_title") }}</strong></p>
                             <p class="upload-preview-text">
                                 {{ upload_feedback.preview_text }}
                             </p>
@@ -127,21 +122,21 @@
                         <div class="actions upload-result-actions">
                             <button
                                 type="button"
-                                data-demo-question="Про що документ {{ upload_feedback.source_name }}?"
+                                data-demo-question="{{ t('documents.upload.followup_about_query', source_name=upload_feedback.source_name) }}"
                             >
-                                Про що цей документ?
+                                {{ t("documents.upload.followup_about_label") }}
                             </button>
                             <button
                                 type="button"
-                                data-demo-question="Які ключові моменти в {{ upload_feedback.source_name }}?"
+                                data-demo-question="{{ t('documents.upload.followup_points_query', source_name=upload_feedback.source_name) }}"
                             >
-                                Ключові моменти
+                                {{ t("documents.upload.followup_points_label") }}
                             </button>
                             <button
                                 type="button"
-                                data-demo-question="Поясни простими словами зміст {{ upload_feedback.source_name }}."
+                                data-demo-question="{{ t('documents.upload.followup_summary_query', source_name=upload_feedback.source_name) }}"
                             >
-                                Простий підсумок
+                                {{ t("documents.upload.followup_summary_label") }}
                             </button>
                         </div>
                     </div>
@@ -158,40 +153,38 @@
 
     <article class="content-card dashboard-card feature-subsection">
         <div class="section-kicker-row">
-            <p class="section-kicker">Indexing Setup</p>
-            <span class="info-tooltip" tabindex="0" aria-label="Пояснення про chunking">
+            <p class="section-kicker">{{ t("documents.chunking.kicker") }}</p>
+            <span class="info-tooltip" tabindex="0" aria-label="{{ t('documents.chunking.tooltip_aria') }}">
                 ?
                 <span class="info-tooltip-bubble">
-                    Це налаштування визначає, як документи діляться на фрагменти
-                    для індексації та пошуку. Зміна пресету перебудує індекс з
-                    новою конфігурацією.
+                    {{ t("documents.chunking.tooltip") }}
                 </span>
             </span>
         </div>
         <div class="feature-subsection-header">
-            <h3 class="feature-subsection-title hero-card-title">Розбиття документів (chunking)</h3>
+            <h3 class="feature-subsection-title hero-card-title">{{ t("documents.chunking.title") }}</h3>
         </div>
         <div class="chunking-summary-shell">
-            <span class="chunking-summary-caption">Поточна конфігурація</span>
+            <span class="chunking-summary-caption">{{ t("documents.chunking.current_config") }}</span>
             <div class="pill-row chunking-summary-row">
                 <span class="mode-pill chunking-summary-pill chunking-summary-pill-accent">
-                    <span class="chunking-summary-label">Preset</span>
+                    <span class="chunking-summary-label">{{ t("documents.chunking.preset") }}</span>
                     <strong>{{ system_config.current_preset_label }}</strong>
                 </span>
                 <span class="mode-pill chunking-summary-pill">
-                    <span class="chunking-summary-label">Chunk size</span>
-                    <strong>{{ system_config.chunk_size_words }} слів</strong>
+                    <span class="chunking-summary-label">{{ t("documents.chunking.chunk_size") }}</span>
+                    <strong>{{ t("documents.chunking.words_count", count=system_config.chunk_size_words) }}</strong>
                 </span>
                 <span class="mode-pill chunking-summary-pill">
-                    <span class="chunking-summary-label">Overlap</span>
-                    <strong>{{ system_config.chunk_overlap_words }} слів</strong>
+                    <span class="chunking-summary-label">{{ t("documents.chunking.overlap") }}</span>
+                    <strong>{{ t("documents.chunking.words_count", count=system_config.chunk_overlap_words) }}</strong>
                 </span>
             </div>
         </div>
         <form id="chunking-preset-form" class="inline-form chunking-custom-form">
             <div class="label-with-tooltip">
-                <label for="chunking_preset_button">Оберіть пресет</label>
-                <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="Підказка по preset">
+                <label for="chunking_preset_button">{{ t("documents.chunking.select_preset") }}</label>
+                <span class="info-tooltip info-tooltip-open-right" tabindex="0" aria-label="{{ t('documents.chunking.preset_tooltip_aria') }}">
                     ?
                     <span class="info-tooltip-bubble">
                         {% for preset in system_config.preset_display_options %}
@@ -254,14 +247,14 @@
 
 <section class="overview-grid">
     <article class="content-card overview-card">
-        <p class="section-kicker">Corpus</p>
-        <h2 class="hero-card-title">Поточний корпус</h2>
+        <p class="section-kicker">{{ t("documents.corpus.kicker") }}</p>
+        <h2 class="hero-card-title">{{ t("documents.corpus.title") }}</h2>
         <p class="meta">
-            У корпусі зараз {{ document_count }} документів.
+            {{ t("documents.corpus.count", count=document_count) }}
         </p>
         {% if not admin_auth.is_authenticated %}
         <p class="meta">
-            Список файлів і майбутнє видалення документів доступні тільки адміну.
+            {{ t("documents.corpus.admin_only") }}
         </p>
         {% elif document_entries %}
         <ul class="list-reset document-list document-list-scroll">
@@ -269,22 +262,21 @@
             <li class="document-list-item">
                 <strong>{{ item.name }}</strong>
                 <span class="meta">
-                    тип={{ item.extension }} | розмір={{ item.size_kb }} KB |
-                    оновлено={{ item.modified_at }}
+                    {{ t("documents.corpus.type") }}={{ item.extension }} |
+                    {{ t("documents.corpus.size") }}={{ item.size_kb }} KB |
+                    {{ t("documents.corpus.updated") }}={{ item.modified_at }}
                 </span>
             </li>
             {% endfor %}
         </ul>
         {% if document_count > 5 %}
         <p class="meta">
-            Показано прокручуваний список корпусу, щоб блок не розтягував
-            сторінку.
+            {{ t("documents.corpus.scroll_hint") }}
         </p>
         {% endif %}
         {% else %}
         <p class="meta">
-            Поки що корпус порожній. Для портфоліо варто тримати хоча б невеликий
-            demo corpus.
+            {{ t("documents.corpus.empty") }}
         </p>
         {% endif %}
     </article>
@@ -294,8 +286,8 @@
     <article class="content-card dashboard-card">
         <div class="reindex-status-header">
             <div>
-                <p class="section-kicker">Index Lifecycle</p>
-                <h2>Статус reindex</h2>
+                <p class="section-kicker">{{ t("documents.reindex.kicker") }}</p>
+                <h2>{{ t("documents.reindex.title") }}</h2>
             </div>
             <span
                 id="reindex-status-badge"
@@ -306,38 +298,38 @@
         </div>
         <div class="reindex-status-grid">
             <div class="reindex-status-item">
-                <span class="meta">trigger</span>
+                <span class="meta">{{ t("documents.reindex.trigger") }}</span>
                 <strong id="reindex-trigger">{{ reindex_status.trigger }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">documents</span>
+                <span class="meta">{{ t("documents.reindex.documents") }}</span>
                 <strong id="reindex-document-count">{{ reindex_status.document_count }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">chunks</span>
+                <span class="meta">{{ t("documents.reindex.chunks") }}</span>
                 <strong id="reindex-chunk-count">{{ reindex_status.chunk_count }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">latency ms</span>
+                <span class="meta">{{ t("documents.reindex.latency_ms") }}</span>
                 <strong id="reindex-elapsed-ms">{{ reindex_status.elapsed_ms }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">started at</span>
-                <strong id="reindex-started-at">{{ reindex_status.started_at | datetime_display if reindex_status.started_at else "not started yet" }}</strong>
+                <span class="meta">{{ t("documents.reindex.started_at") }}</span>
+                <strong id="reindex-started-at">{{ reindex_status.started_at | datetime_display if reindex_status.started_at else t("documents.reindex.not_started_yet") }}</strong>
             </div>
             <div class="reindex-status-item">
-                <span class="meta">last update</span>
-                <strong id="reindex-finished-at">{{ reindex_status.finished_at | datetime_display if reindex_status.finished_at else "not finished yet" }}</strong>
+                <span class="meta">{{ t("documents.reindex.last_update") }}</span>
+                <strong id="reindex-finished-at">{{ reindex_status.finished_at | datetime_display if reindex_status.finished_at else t("documents.reindex.not_finished_yet") }}</strong>
             </div>
         </div>
         <div class="reindex-status-actions">
-            <button type="button" id="refresh-reindex-status-button">Refresh</button>
+            <button type="button" id="refresh-reindex-status-button">{{ t("documents.reindex.refresh") }}</button>
             <button
                 type="button"
                 id="start-reindex-button"
                 {% if not admin_auth.is_authenticated %}disabled{% endif %}
             >
-                Start Reindex
+                {{ t("documents.reindex.start") }}
             </button>
         </div>
         <p
@@ -349,7 +341,7 @@
             {% elif reindex_status.started_at %}
             started_at={{ reindex_status.started_at | datetime_display }}
             {% else %}
-            Waiting for the next reindex trigger.
+            {{ t("documents.reindex.waiting") }}
             {% endif %}
         </p>
     </article>

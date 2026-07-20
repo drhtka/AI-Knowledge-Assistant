@@ -16,6 +16,7 @@ import {
     clearUploadStatusResetTimer,
     setUploadStatusResetTimer,
 } from "../shared/state.js";
+import { t } from "../shared/i18n.js";
 import { fillQuestionInput } from "../ask/index.js";
 import { refreshReindexStatus } from "../system/reindex.js";
 
@@ -83,19 +84,19 @@ export function syncUploadDropzoneState(fileInput) {
     }
 
     if (uploadDropzoneTitle instanceof HTMLElement) {
-        uploadDropzoneTitle.textContent = selectedFileName || "Перетягніть файл сюди";
+        uploadDropzoneTitle.textContent = selectedFileName || t("upload.dropzone_title");
     }
 
     if (uploadDropzoneSubtitle instanceof HTMLElement) {
         uploadDropzoneSubtitle.textContent = selectedFileName
-            ? "Файл готовий до завантаження"
-            : "або натисніть, щоб вибрати документ";
+            ? t("upload.dropzone_ready")
+            : t("upload.dropzone_subtitle");
     }
 
     if (uploadSelectedFile instanceof HTMLElement) {
         uploadSelectedFile.textContent = selectedFileName
-            ? `Вибрано файл: ${selectedFileName}`
-            : "Файл ще не вибрано.";
+            ? t("upload.selected_prefix", { name: selectedFileName })
+            : t("upload.selected_empty");
     }
 }
 
@@ -108,18 +109,18 @@ export function renderUploadSuccess(payload) {
     uploadResult.replaceChildren();
 
     const title = document.createElement("strong");
-    title.textContent = "Document uploaded successfully";
+    title.textContent = t("upload.success_title");
 
     const message = document.createElement("p");
     message.className = "meta";
-    message.textContent = "Details are available in the modal window.";
+    message.textContent = t("upload.success_message");
 
     const actions = document.createElement("div");
     actions.className = "actions upload-result-actions";
 
     const openButton = document.createElement("button");
     openButton.type = "button";
-    openButton.textContent = "View Details";
+    openButton.textContent = t("upload.view_details");
 
     const modal = document.createElement("div");
     modal.id = "upload-success-modal";
@@ -138,7 +139,7 @@ export function renderUploadSuccess(payload) {
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.className = "upload-success-modal-close";
-    closeButton.setAttribute("aria-label", "Close modal");
+    closeButton.setAttribute("aria-label", t("upload.close_modal"));
     closeButton.dataset.closeUploadModal = "true";
     closeButton.textContent = "×";
 
@@ -147,16 +148,19 @@ export function renderUploadSuccess(payload) {
 
     const modalTitle = document.createElement("strong");
     modalTitle.id = "upload-success-modal-title";
-    modalTitle.textContent = "Document uploaded successfully";
+    modalTitle.textContent = t("upload.success_title");
 
     const details = document.createElement("p");
     details.className = "meta";
-    details.textContent =
-        `file=${payload.source_name} | type=${payload.file_type} | estimated_chunks=${payload.estimated_chunks}`;
+    details.textContent = t("upload.details_line", {
+        source_name: payload.source_name,
+        file_type: payload.file_type,
+        estimated_chunks: payload.estimated_chunks,
+    });
 
     const followUp = document.createElement("p");
     followUp.className = "meta";
-    followUp.textContent = payload.reindex_message || "Background reindex status updated.";
+    followUp.textContent = payload.reindex_message || t("upload.fallback_reindex");
 
     let previewBlock = null;
     if (typeof payload.preview_text === "string" && payload.preview_text.trim()) {
@@ -166,7 +170,7 @@ export function renderUploadSuccess(payload) {
         const previewTitle = document.createElement("p");
         previewTitle.className = "meta";
         const previewTitleStrong = document.createElement("strong");
-        previewTitleStrong.textContent = "Document Preview";
+        previewTitleStrong.textContent = t("upload.preview_title");
         previewTitle.append(previewTitleStrong);
 
         const previewText = document.createElement("p");
@@ -180,9 +184,9 @@ export function renderUploadSuccess(payload) {
     quickPromptActions.className = "actions upload-result-actions";
 
     const quickPrompts = [
-        `What is ${payload.source_name} about?`,
-        `What are the key points in ${payload.source_name}?`,
-        `Summarize ${payload.source_name} in simple terms.`,
+        t("upload.prompt_about", { source_name: payload.source_name }),
+        t("upload.prompt_key_points", { source_name: payload.source_name }),
+        t("upload.prompt_summary", { source_name: payload.source_name }),
     ];
 
     quickPrompts.forEach((promptText) => {
@@ -260,7 +264,7 @@ export function initializeUploadPage() {
 
             if (!isSupportedUploadFile(fileInput)) {
                 renderUploadStatus(
-                    "Only .txt, .md, and .pdf files are supported.",
+                    t("upload.only_supported"),
                     `${uploadResultBaseClass} error-text`,
                 );
                 return;
@@ -330,7 +334,7 @@ export function initializeUploadPage() {
 
         if (!(fileInput instanceof HTMLInputElement) || !fileInput.files || fileInput.files.length === 0) {
             renderUploadStatus(
-                "Choose a .txt, .md, or .pdf file first.",
+                t("upload.choose_file_first"),
                 `${uploadResultBaseClass} error-text`,
             );
             return;
@@ -338,7 +342,7 @@ export function initializeUploadPage() {
 
         if (!isSupportedUploadFile(fileInput)) {
             renderUploadStatus(
-                "Only .txt, .md, and .pdf files are supported.",
+                t("upload.only_supported"),
                 `${uploadResultBaseClass} error-text`,
             );
             return;
@@ -348,7 +352,7 @@ export function initializeUploadPage() {
         formData.append("file", fileInput.files[0]);
 
         renderUploadStatus(
-            "Uploading document and scheduling background reindex...",
+            t("upload.uploading"),
             uploadResultBaseClass,
         );
 
@@ -360,7 +364,7 @@ export function initializeUploadPage() {
             const payload = await response.json();
 
             if (!response.ok) {
-                const errorMessage = payload.detail ?? "Upload failed.";
+                const errorMessage = payload.detail ?? t("upload.upload_failed");
                 renderUploadStatus(errorMessage, `${uploadResultBaseClass} error-text`);
                 return;
             }
@@ -372,7 +376,7 @@ export function initializeUploadPage() {
             syncUploadDropzoneState(fileInput);
         } catch {
             renderUploadStatus(
-                "Upload failed because the server did not respond.",
+                t("upload.upload_failed_no_response"),
                 `${uploadResultBaseClass} error-text`,
             );
         }

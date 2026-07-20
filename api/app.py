@@ -15,6 +15,14 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunking_preset
+from api.i18n import (
+    build_demo_prompts,
+    build_frontend_i18n,
+    build_language_switch_urls,
+    build_page_urls,
+    get_request_language,
+    translate,
+)
 from api.indexing_service import (
     ensure_index_loaded,
     get_reindex_history,
@@ -124,21 +132,6 @@ def _format_display_datetime(value: str | None) -> str:
 
 templates.env.filters["datetime_display"] = _format_display_datetime
 
-DEMO_PROMPTS = [
-    {
-        "label": "Architecture",
-        "question": "What layers should a production-like RAG system have?",
-    },
-    {
-        "label": "Evaluation",
-        "question": "How should I evaluate retrieval quality in a RAG system?",
-    },
-    {
-        "label": "Hybrid Search",
-        "question": "Why does hybrid retrieval help compared to embeddings only?",
-    },
-]
-
 RETRIEVAL_MODE_OPTIONS = ("auto", "tfidf", "embeddings")
 TOP_K_OPTIONS = (1, 2, 3)
 WEB_TOP_K_OPTIONS = (1, 2, 3)
@@ -173,34 +166,34 @@ def _require_admin(request: Request, *, action_label: str) -> None:
         raise HTTPException(status_code=403, detail=f"Admin authorization required for {action_label}.")
 
 
-def _build_admin_auth_context(request: Request) -> dict[str, object]:
+def _build_admin_auth_context(request: Request, *, lang: str) -> dict[str, object]:
     status = request.query_params.get("admin_status", "")
     required = request.query_params.get("admin_required", "")
     flash_message = ""
     flash_tone = "info"
 
     if status == "granted":
-        flash_message = "Admin access enabled."
+        flash_message = translate(lang, "base.admin.flash.granted")
         flash_tone = "success"
     elif status == "signed_out":
-        flash_message = "Admin session closed."
+        flash_message = translate(lang, "base.admin.flash.signed_out")
     elif status == "invalid":
-        flash_message = "Невірний admin пароль."
+        flash_message = translate(lang, "base.admin.flash.invalid")
         flash_tone = "error"
     elif status == "not_configured":
-        flash_message = "Admin auth ще не налаштований. Додайте ADMIN_PASSWORD у .env."
+        flash_message = translate(lang, "base.admin.flash.not_configured")
         flash_tone = "error"
     elif status == "required":
         if required == "documents":
-            flash_message = "Сторінка документів доступна тільки після авторизації"
+            flash_message = translate(lang, "base.admin.flash.required_documents")
         elif required == "external_search":
-            flash_message = "Сторінка зовнішнього вебпошуку доступна тільки після авторизації"
+            flash_message = translate(lang, "base.admin.flash.required_external_search")
         elif required == "system":
-            flash_message = "Системні інструменти доступні тільки після авторизації"
+            flash_message = translate(lang, "base.admin.flash.required_system")
         elif required == "api_docs":
-            flash_message = "API docs доступні тільки після авторизації"
+            flash_message = translate(lang, "base.admin.flash.required_api_docs")
         else:
-            flash_message = "Для цієї дії потрібен admin доступ."
+            flash_message = translate(lang, "base.admin.flash.required_default")
 
     return {
         "enabled": ADMIN_AUTH_ENABLED,
@@ -583,8 +576,9 @@ def _build_page_context(
     include_question_results: bool,
     include_web_results: bool,
 ) -> dict[str, object]:
+    lang = get_request_language(request)
     is_admin = _is_admin_authenticated(request)
-    admin_auth = _build_admin_auth_context(request)
+    admin_auth = _build_admin_auth_context(request, lang=lang)
     chunk_size_options = sorted(
         {config["chunk_size_words"] for config in CHUNKING_PRESETS.values()},
         reverse=True,
@@ -638,7 +632,7 @@ def _build_page_context(
     web_search_result = None
     web_search_error = ""
     if include_web_results and raw_web_question and not is_admin:
-        web_search_error = "Зовнішній вебпошук доступний тільки після авторизації"
+        web_search_error = translate(lang, "pages.external_search.admin_access_note")
     elif web_question:
         try:
             web_search_result = web_search(question=web_question, top_k=web_top_k)
@@ -667,7 +661,7 @@ def _build_page_context(
         "web_question": web_question,
         "web_top_k": web_top_k,
         "web_top_k_options": WEB_TOP_K_OPTIONS,
-        "demo_prompts": DEMO_PROMPTS,
+        "demo_prompts": build_demo_prompts(lang),
         "search_result": search_result,
         "ask_result": ask_result,
         "mode_comparison": mode_comparison,
@@ -686,11 +680,17 @@ def _build_page_context(
         "has_documents": bool(document_entries),
         "admin_auth": admin_auth,
         "is_admin": is_admin,
+        "lang": lang,
+        "page_urls": build_page_urls(lang),
+        "lang_switch_urls": build_language_switch_urls(request),
+        "frontend_i18n": build_frontend_i18n(lang),
+        "t": lambda key, **kwargs: translate(lang, key, **kwargs),
     }
 
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
+    lang = get_request_language(request)
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -700,19 +700,13 @@ def index(request: Request) -> HTMLResponse:
                 include_question_results=True,
                 include_web_results=False,
             ),
-            "page_title": "AI Knowledge Assistant",
-            "page_heading": "AI Асистент Знань",
+            "page_title": translate(lang, "pages.index.title"),
+            "page_heading": translate(lang, "pages.index.heading"),
             "page_intro": "",
-            "page_intro_tooltip": (
-                "Ставте запитання до локальної бази знань і одразу "
-                "перевіряйте, на яких фрагментах документів побудована відповідь."
-            ),
-            "page_kicker": "Assistant",
+            "page_intro_tooltip": translate(lang, "pages.index.tooltip"),
+            "page_kicker": translate(lang, "pages.index.kicker"),
             "active_page": "assistant",
-            "admin_access_note_text": (
-                "Документи, система і вебпошук доступні тільки "
-                "після авторизації, пароль по запиту. Також без авторизації доступні тільки демо запити."
-            ),
+            "admin_access_note_text": translate(lang, "pages.index.admin_access_note"),
         },
     )
 
@@ -722,12 +716,15 @@ async def admin_login(request: Request) -> RedirectResponse:
     form = await request.form()
     password = str(form.get("password", ""))
     next_path = _normalize_admin_next_path(str(form.get("next", "/")))
+    current_lang = request.session.get("lang")
 
     if not ADMIN_AUTH_ENABLED:
         return _redirect_with_status(next_path, admin_status="not_configured")
 
     if hmac.compare_digest(password, ADMIN_PASSWORD):
         request.session.clear()
+        if current_lang:
+            request.session["lang"] = current_lang
         request.session["is_admin"] = True
         request.session["admin_username"] = ADMIN_USERNAME
         return _redirect_with_status(next_path, admin_status="granted")
@@ -739,7 +736,10 @@ async def admin_login(request: Request) -> RedirectResponse:
 async def admin_logout(request: Request) -> RedirectResponse:
     form = await request.form()
     next_path = _normalize_admin_next_path(str(form.get("next", "/")))
+    current_lang = request.session.get("lang")
     request.session.clear()
+    if current_lang:
+        request.session["lang"] = current_lang
     return _redirect_with_status(next_path, admin_status="signed_out")
 
 
@@ -763,6 +763,7 @@ def protected_openapi_schema(request: Request) -> JSONResponse:
 
 @app.get("/documents", response_class=HTMLResponse)
 def documents_page(request: Request) -> HTMLResponse:
+    lang = get_request_language(request)
     return templates.TemplateResponse(
         request=request,
         name="documents.html",
@@ -772,26 +773,21 @@ def documents_page(request: Request) -> HTMLResponse:
                 include_question_results=False,
                 include_web_results=False,
             ),
-            "page_title": "Add Document | AI Knowledge Assistant",
-            "page_heading": "Додати документ",
+            "page_title": translate(lang, "pages.documents.title"),
+            "page_heading": translate(lang, "pages.documents.heading"),
             "page_intro": "",
-            "page_intro_tooltip": (
-                "Тут можна завантажити нові файли в локальний корпус, "
-                "перевірити наявні документи та керувати chunking для індексації."
-            ),
-            "page_kicker": "Documents",
+            "page_intro_tooltip": translate(lang, "pages.documents.tooltip"),
+            "page_kicker": translate(lang, "pages.documents.kicker"),
             "active_page": "documents",
             "admin_required_area": "documents",
-            "admin_access_note_text": (
-                "Керування документами, upload, chunking і reindex доступні "
-                "тільки після авторизації"
-            ),
+            "admin_access_note_text": translate(lang, "pages.documents.admin_access_note"),
         },
     )
 
 
 @app.get("/external-search", response_class=HTMLResponse)
 def external_search_page(request: Request) -> HTMLResponse:
+    lang = get_request_language(request)
     return templates.TemplateResponse(
         request=request,
         name="external_search.html",
@@ -801,25 +797,21 @@ def external_search_page(request: Request) -> HTMLResponse:
                 include_question_results=False,
                 include_web_results=True,
             ),
-            "page_title": "External Search | AI Knowledge Assistant",
-            "page_heading": "Зовнішній вебпошук",
+            "page_title": translate(lang, "pages.external_search.title"),
+            "page_heading": translate(lang, "pages.external_search.heading"),
             "page_intro": "",
-            "page_intro_tooltip": (
-                "Окремий екран для пошуку по зовнішніх джерелах: запускайте "
-                "web search і переглядайте результати без змішування з локальним корпусом."
-            ),
-            "page_kicker": "External Search",
+            "page_intro_tooltip": translate(lang, "pages.external_search.tooltip"),
+            "page_kicker": translate(lang, "pages.external_search.kicker"),
             "active_page": "external_search",
             "admin_required_area": "external_search",
-            "admin_access_note_text": (
-                "Зовнішній вебпошук доступний тільки після авторизації"
-            ),
+            "admin_access_note_text": translate(lang, "pages.external_search.admin_access_note"),
         },
     )
 
 
 @app.get("/system", response_class=HTMLResponse)
 def system_page(request: Request) -> HTMLResponse:
+    lang = get_request_language(request)
     return templates.TemplateResponse(
         request=request,
         name="system.html",
@@ -829,20 +821,14 @@ def system_page(request: Request) -> HTMLResponse:
                 include_question_results=False,
                 include_web_results=False,
             ),
-            "page_title": "System | AI Knowledge Assistant",
-            "page_heading": "Система та діагностика",
+            "page_title": translate(lang, "pages.system.title"),
+            "page_heading": translate(lang, "pages.system.heading"),
             "page_intro": "",
-            "page_intro_tooltip": (
-                "Технічний контур проєкту: активний backend, reindex, "
-                "runtime observability та JSON для демонстрації інженерної глибини."
-            ),
-            "page_kicker": "System",
+            "page_intro_tooltip": translate(lang, "pages.system.tooltip"),
+            "page_kicker": translate(lang, "pages.system.kicker"),
             "active_page": "system",
             "admin_required_area": "system",
-            "admin_access_note_text": (
-                "Storage backend, reindex, diagnostics і JSON доступні "
-                "тільки після авторизації"
-            ),
+            "admin_access_note_text": translate(lang, "pages.system.admin_access_note"),
         },
     )
 

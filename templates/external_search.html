@@ -3,8 +3,8 @@
 {% block content %}
 <section class="overview-grid">
     <article class="content-card ask-card external-search-card">
-        <p class="section-kicker">External Search</p>
-        <h2 class="hero-card-title">Зовнішній вебпошук</h2>
+        <p class="section-kicker">{{ t("external_search.search.kicker") }}</p>
+        <h2 class="hero-card-title">{{ t("external_search.search.title") }}</h2>
         <form
             id="external-search-form"
             method="get"
@@ -12,14 +12,14 @@
             class="external-search-form"
         >
             <div class="ask-main-column external-search-main-column">
-                <label for="web_question" class="ask-question-label">Поставте запитання</label>
+                <label for="web_question" class="ask-question-label">{{ t("external_search.search.question_label") }}</label>
                 <div class="ask-question-composer">
                     <button
                         type="button"
                         id="external-search-clear-button"
                         class="ask-question-clear-button"
-                        aria-label="Очистити запит"
-                        title="Очистити запит"
+                        aria-label="{{ t('external_search.search.clear') }}"
+                        title="{{ t('external_search.search.clear') }}"
                         {% if not admin_auth.is_authenticated %}disabled{% endif %}
                     >
                         ×
@@ -28,8 +28,8 @@
                         type="submit"
                         id="external-search-submit-button"
                         class="ask-question-submit-button"
-                        aria-label="Надіслати запит"
-                        title="Надіслати запит"
+                        aria-label="{{ t('external_search.search.submit') }}"
+                        title="{{ t('external_search.search.submit') }}"
                         {% if not admin_auth.is_authenticated %}disabled{% endif %}
                     >
                         <span class="ask-question-submit-icon" aria-hidden="true"></span>
@@ -38,7 +38,7 @@
                         id="web_question"
                         name="web_question"
                         class="ask-question-input"
-                        placeholder="Задайте питання"
+                        placeholder="{{ t('external_search.search.placeholder') }}"
                         minlength="3"
                         maxlength="220"
                         required
@@ -46,7 +46,7 @@
                     >{{ web_question }}</textarea>
                     <div class="ask-question-composer-footer">
                         <div class="ask-demo-pill-group">
-                            <div class="external-search-top-k-row" role="radiogroup" aria-label="Ліміт результатів">
+                            <div class="external-search-top-k-row" role="radiogroup" aria-label="{{ t('external_search.search.top_k_aria') }}">
                                 {% for value in web_top_k_options %}
                                 <label class="external-search-top-k-pill">
                                     <input
@@ -60,7 +60,7 @@
                                 </label>
                                 {% endfor %}
                             </div>
-                            <p class="meta ask-demo-footer-label">Ліміт результатів</p>
+                            <p class="meta ask-demo-footer-label">{{ t("external_search.search.top_k_label") }}</p>
                         </div>
                     </div>
                 </div>
@@ -71,17 +71,17 @@
 
 <section class="feature-grid external-search-workspace-grid">
     <article class="content-card dashboard-card external-search-session-card">
-        <p class="section-kicker">Search Session</p>
-        <h2 class="hero-card-title">Поточний запит</h2>
+        <p class="section-kicker">{{ t("external_search.session.kicker") }}</p>
+        <h2 class="hero-card-title">{{ t("external_search.session.title") }}</h2>
         <div id="external-search-session-content">
             {% if web_search_error %}
             <div class="external-search-session-shell is-error">
                 <div class="external-search-session-header">
                     <div>
-                        <p class="meta external-search-session-caption">Current search</p>
+                        <p class="meta external-search-session-caption">{{ t("external_search.session.current_search") }}</p>
                         <h3 class="external-search-session-query">{{ web_question }}</h3>
                     </div>
-                    <span class="dashboard-badge external-search-status-badge is-error">failed</span>
+                    <span class="dashboard-badge external-search-status-badge is-error">{{ t("external_search.session.failed") }}</span>
                 </div>
                 <div class="pill-row external-search-session-pills">
                     <span class="mode-pill">top_k={{ web_top_k }}</span>
@@ -94,10 +94,10 @@
             <div class="external-search-session-shell is-success">
                 <div class="external-search-session-header">
                     <div>
-                        <p class="meta external-search-session-caption">Current search</p>
+                        <p class="meta external-search-session-caption">{{ t("external_search.session.current_search") }}</p>
                         <h3 class="external-search-session-query">{{ web_search_result.question }}</h3>
                     </div>
-                    <span class="dashboard-badge external-search-status-badge is-success">completed</span>
+                    <span class="dashboard-badge external-search-status-badge is-success">{{ t("external_search.session.completed") }}</span>
                 </div>
                 <div class="pill-row external-search-session-pills">
                     <span class="mode-pill">engine={{ web_search_result.engine }}</span>
@@ -105,42 +105,40 @@
                     <span class="mode-pill">hits={{ web_search_result.hits | length }}</span>
                 </div>
                 <p class="meta external-search-session-message">
-                    Результати нижче оновлені для поточного запиту. Технічний
-                    лог із latency з'явиться в блоці activity.
+                    {{ t("external_search.session.success_message") }}
                 </p>
             </div>
             {% else %}
             <div class="external-search-session-shell">
                 <div class="external-search-session-header">
                     <div>
-                        <p class="meta external-search-session-caption">Current search</p>
-                        <h3 class="external-search-session-query">Search workspace is ready</h3>
+                        <p class="meta external-search-session-caption">{{ t("external_search.session.current_search") }}</p>
+                        <h3 class="external-search-session-query">{{ t("external_search.session.idle_title") }}</h3>
                     </div>
-                    <span class="dashboard-badge external-search-status-badge">idle</span>
+                    <span class="dashboard-badge external-search-status-badge">{{ t("external_search.session.idle") }}</span>
                 </div>
                 <p class="meta external-search-session-message">
-                    Введіть запит вище, щоб побачити engine, top_k, hit count і
-                    результати без перезавантаження сторінки.
+                    {{ t("external_search.session.idle_message") }}
                 </p>
             </div>
             {% endif %}
         </div>
         <div class="external-search-actions-shell">
-            <p class="meta external-search-actions-caption">Research next steps</p>
+            <p class="meta external-search-actions-caption">{{ t("external_search.actions.title") }}</p>
             <div id="external-search-actions-content" class="actions external-search-actions-row">
                 {% if web_question %}
-                <button type="button" data-external-search-followup="official source for {{ web_question }}">
-                    Official source
+                <button type="button" data-external-search-followup="{{ t('external_search.actions.official_source_query', question=web_question) }}">
+                    {{ t("external_search.actions.official_source_label") }}
                 </button>
-                <button type="button" data-external-search-followup="latest updates about {{ web_question }}">
-                    Latest updates
+                <button type="button" data-external-search-followup="{{ t('external_search.actions.latest_updates_query', question=web_question) }}">
+                    {{ t("external_search.actions.latest_updates_label") }}
                 </button>
-                <button type="button" data-external-search-followup="technical overview of {{ web_question }}">
-                    Technical overview
+                <button type="button" data-external-search-followup="{{ t('external_search.actions.technical_overview_query', question=web_question) }}">
+                    {{ t("external_search.actions.technical_overview_label") }}
                 </button>
                 {% else %}
                 <p class="meta">
-                    Після першого запиту тут з'являться швидкі follow-up дії.
+                    {{ t("external_search.actions.empty") }}
                 </p>
                 {% endif %}
             </div>
@@ -152,8 +150,8 @@
         id="external-search-results-card"
         tabindex="-1"
     >
-        <p class="section-kicker">Web Results</p>
-        <h2 class="hero-card-title">Результати з вебу</h2>
+        <p class="section-kicker">{{ t("external_search.results.kicker") }}</p>
+        <h2 class="hero-card-title">{{ t("external_search.results.title") }}</h2>
         <div id="external-search-results-content">
             {% if web_search_error %}
             <div class="external-search-results-empty">
@@ -165,7 +163,7 @@
                 <article class="external-search-result-item">
                     <div class="external-search-result-header">
                         <div>
-                            <p class="meta external-search-result-position">result #{{ hit.position }}</p>
+                            <p class="meta external-search-result-position">{{ t("external_search.results.position", position=hit.position) }}</p>
                             <h3 class="external-search-result-title">{{ hit.title }}</h3>
                         </div>
                         <span class="mode-pill external-search-source-pill">{{ hit.source }}</span>
@@ -185,7 +183,7 @@
             {% else %}
             <div class="external-search-results-empty">
                 <p class="meta">
-                    Запустіть зовнішній вебпошук, щоб переглянути тут результати.
+                    {{ t("external_search.results.empty") }}
                 </p>
             </div>
             {% endif %}
@@ -195,12 +193,11 @@
 
 <section class="overview-grid external-search-activity-section">
     <article class="content-card overview-card external-search-activity-card">
-        <p class="section-kicker">Activity Log</p>
-        <h2 class="hero-card-title">Остання активність пошуку</h2>
+        <p class="section-kicker">{{ t("external_search.activity.kicker") }}</p>
+        <h2 class="hero-card-title">{{ t("external_search.activity.title") }}</h2>
         <div id="external-search-activity-content">
             <p class="meta">
-                Журнал останніх запитів завантажиться після ініціалізації
-                сторінки.
+                {{ t("external_search.activity.initializing") }}
             </p>
         </div>
     </article>
@@ -219,7 +216,7 @@
 {% if admin_auth.is_authenticated %}
 <section class="json-stack external-search-json-stack">
     <article class="content-card json-card">
-        <h2>JSON відповіді вебпошуку</h2>
+        <h2>{{ t("external_search.results.json") }}</h2>
         <pre id="web-search-result-json-content">{{ web_search_result_json | tojson(indent=2) }}</pre>
     </article>
 </section>

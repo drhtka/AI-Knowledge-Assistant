@@ -9,6 +9,7 @@ import {
     searchResultJsonContent,
     clearFormButton,
 } from "../dom/elements.js";
+import { t } from "../shared/i18n.js";
 import { escapeHtml } from "../shared/utils.js";
 
 function renderJsonDebugContent(target, payload) {
@@ -129,8 +130,7 @@ export function renderAskResultContent(payload) {
     if (!payload) {
         askResultContent.innerHTML = `
             <p class="meta">
-                Поставте запитання, щоб переглянути обґрунтовану відповідь із посиланнями
-                на контекст.
+                ${t("ask.empty_answer")}
             </p>
         `;
         return;
@@ -147,25 +147,25 @@ export function renderAskResultContent(payload) {
                     <span class="chat-single-response-avatar">A</span>
                     <div class="chat-single-response-meta-group">
                         <p class="chat-single-response-name">Assistant</p>
-                        <p class="meta chat-single-response-meta">Single-turn grounded answer</p>
+                        <p class="meta chat-single-response-meta">${t("ask.assistant_meta")}</p>
                     </div>
                 </div>
             </div>
             <div class="pill-row answer-metric-row">
                 <span class="mode-pill answer-metric-pill">
-                    <span class="answer-metric-label">Confidence</span>
+                    <span class="answer-metric-label">${t("ask.confidence")}</span>
                     <strong>${escapeHtml(payload.confidence)}</strong>
                 </span>
                 <span class="mode-pill answer-metric-pill">
-                    <span class="answer-metric-label">Latency</span>
+                    <span class="answer-metric-label">${t("ask.latency")}</span>
                     <strong>${escapeHtml(payload.latency_ms)} ms</strong>
                 </span>
                 <span class="mode-pill answer-metric-pill">
-                    <span class="answer-metric-label">Answer mode</span>
+                    <span class="answer-metric-label">${t("ask.answer_mode")}</span>
                     <strong>${escapeHtml(payload.answer_mode)}</strong>
                 </span>
                 <span class="mode-pill answer-metric-pill">
-                    <span class="answer-metric-label">Retrieval</span>
+                    <span class="answer-metric-label">${t("ask.retrieval")}</span>
                     <strong>${escapeHtml(payload.retrieval_mode)}</strong>
                 </span>
             </div>
@@ -173,7 +173,7 @@ export function renderAskResultContent(payload) {
                 <p class="chat-single-response-text">${escapeHtml(payload.answer)}</p>
             </div>
             <div class="chat-single-response-sources">
-                <p class="chat-single-response-sources-title">Sources</p>
+                <p class="chat-single-response-sources-title">${t("ask.sources")}</p>
                 <ul class="list-reset chat-single-response-sources-list">${sourcesMarkup}</ul>
             </div>
         </div>
@@ -189,12 +189,12 @@ export function renderSearchResultContent(payload) {
 
     if (!payload || !Array.isArray(payload.hits) || payload.hits.length === 0) {
         const retrievalModeLine = payload
-            ? `<p class="meta">режим_пошуку=${escapeHtml(payload.retrieval_mode)}</p>`
+            ? `<p class="meta">${t("ask.search_mode_line", { value: escapeHtml(payload.retrieval_mode) })}</p>`
             : "";
         searchResultContent.innerHTML = `
             ${retrievalModeLine}
             <p class="meta">
-                Поставте запитання, щоб переглянути знайдений контекст.
+                ${t("ask.empty_search")}
             </p>
         `;
         return;
@@ -206,22 +206,22 @@ export function renderSearchResultContent(payload) {
                 <article class="search-context-card">
                     <div class="search-context-card-head">
                         <div>
-                            <p class="meta search-context-card-kicker">Retrieved source</p>
+                            <p class="meta search-context-card-kicker">${t("ask.result_kicker")}</p>
                             <h3 class="search-context-card-title">${escapeHtml(hit.title)}</h3>
                         </div>
                         <span class="mode-pill search-context-score-pill">${escapeHtml(hit.score)}</span>
                     </div>
                     <div class="pill-row search-context-meta-row">
                         <span class="mode-pill search-context-meta-pill">
-                            <span class="search-context-meta-label">File</span>
+                            <span class="search-context-meta-label">${t("ask.file")}</span>
                             <strong>${escapeHtml(hit.source_name)}</strong>
                         </span>
                         <span class="mode-pill search-context-meta-pill">
-                            <span class="search-context-meta-label">Chunk</span>
+                            <span class="search-context-meta-label">${t("ask.chunk")}</span>
                             <strong>${escapeHtml(hit.chunk_index)}</strong>
                         </span>
                         <span class="mode-pill search-context-meta-pill">
-                            <span class="search-context-meta-label">Type</span>
+                            <span class="search-context-meta-label">${t("ask.type")}</span>
                             <strong>${escapeHtml(hit.file_type)}</strong>
                         </span>
                     </div>
@@ -234,11 +234,11 @@ export function renderSearchResultContent(payload) {
     searchResultContent.innerHTML = `
         <div class="pill-row context-summary-row">
             <span class="mode-pill context-summary-pill">
-                <span class="context-summary-label">Search mode</span>
+                <span class="context-summary-label">${t("ask.search_mode")}</span>
                 <strong>${escapeHtml(payload.retrieval_mode)}</strong>
             </span>
             <span class="mode-pill context-summary-pill">
-                <span class="context-summary-label">Hits</span>
+                <span class="context-summary-label">${t("ask.hits")}</span>
                 <strong>${escapeHtml(payload.hits.length)}</strong>
             </span>
         </div>
@@ -255,8 +255,7 @@ export function renderModeComparisonContent(payload) {
     if (!Array.isArray(items) || items.length === 0) {
         modeComparisonContent.innerHTML = `
             <p class="meta">
-                Поставте запитання, щоб порівняти \`auto\`, \`tfidf\` та \`embeddings\`
-                поруч.
+                ${t("ask.empty_compare")}
             </p>
         `;
         return;
@@ -274,11 +273,11 @@ export function renderModeComparisonContent(payload) {
                     <h3>${escapeHtml(item.mode)}</h3>
                     <div class="pill-row mode-compare-pill-row">
                         <span class="mode-pill mode-compare-pill">
-                            <span class="mode-compare-pill-label">Top score</span>
+                            <span class="mode-compare-pill-label">${t("ask.top_score")}</span>
                             <strong>${escapeHtml(item.top_score)}</strong>
                         </span>
                         <span class="mode-pill mode-compare-pill">
-                            <span class="mode-compare-pill-label">Hits</span>
+                            <span class="mode-compare-pill-label">${t("ask.hits")}</span>
                             <strong>${escapeHtml(item.hit_count)}</strong>
                         </span>
                     </div>
@@ -286,7 +285,7 @@ export function renderModeComparisonContent(payload) {
                         sharedTopSource
                             ? ""
                             : `
-                    <p class="meta mode-compare-source-label">Top source</p>
+                    <p class="meta mode-compare-source-label">${t("ask.top_source")}</p>
                     <p class="mode-compare-source-value">${escapeHtml(item.top_source)}</p>
                     `
                     }
@@ -300,7 +299,7 @@ export function renderModeComparisonContent(payload) {
             sharedTopSource
                 ? `
             <div class="mode-compare-shared-source">
-                <p class="meta mode-compare-shared-source-label">Shared top source across modes</p>
+                <p class="meta mode-compare-shared-source-label">${t("ask.shared_top_source")}</p>
                 <strong class="mode-compare-shared-source-value">${escapeHtml(sharedTopSource)}</strong>
             </div>
         `
@@ -312,13 +311,13 @@ export function renderModeComparisonContent(payload) {
 
 export function renderQuestionLoadingState() {
     if (askResultContent instanceof HTMLElement) {
-        askResultContent.innerHTML = '<p class="meta">Готуємо відповідь...</p>';
+        askResultContent.innerHTML = `<p class="meta">${t("ask.loading_answer")}</p>`;
     }
     if (searchResultContent instanceof HTMLElement) {
-        searchResultContent.innerHTML = '<p class="meta">Шукаємо релевантний контекст...</p>';
+        searchResultContent.innerHTML = `<p class="meta">${t("ask.loading_search")}</p>`;
     }
     if (modeComparisonContent instanceof HTMLElement) {
-        modeComparisonContent.innerHTML = '<p class="meta">Порівнюємо режими пошуку...</p>';
+        modeComparisonContent.innerHTML = `<p class="meta">${t("ask.loading_compare")}</p>`;
     }
 }
 
@@ -425,16 +424,13 @@ export async function submitQuestionWithFetch(questionValue) {
         }
     } catch {
         if (askResultContent instanceof HTMLElement) {
-            askResultContent.innerHTML =
-                '<p class="error-text">Не вдалося отримати відповідь. Спробуйте ще раз.</p>';
+            askResultContent.innerHTML = `<p class="error-text">${t("ask.error_answer")}</p>`;
         }
         if (searchResultContent instanceof HTMLElement) {
-            searchResultContent.innerHTML =
-                '<p class="error-text">Не вдалося оновити знайдений контекст.</p>';
+            searchResultContent.innerHTML = `<p class="error-text">${t("ask.error_search")}</p>`;
         }
         if (modeComparisonContent instanceof HTMLElement) {
-            modeComparisonContent.innerHTML =
-                '<p class="error-text">Не вдалося оновити порівняння режимів.</p>';
+            modeComparisonContent.innerHTML = `<p class="error-text">${t("ask.error_compare")}</p>`;
         }
     } finally {
         setQuestionComposerLoadingState(false);

@@ -11,8 +11,9 @@ Portfolio-ready `RAG` project with local document ingestion, configurable retrie
 - [What I Implemented Myself](#what-i-implemented-myself)
 - [Project Structure](#project-structure)
 - [Endpoints](#endpoints)
+- [Live Demo](#live-demo)
 - [Local Run](#local-run)
-- [Docker Swarm Run](#docker-swarm-run)
+- [Docker Compose Run](#docker-compose-run)
 - [Optional LLM Mode](#optional-llm-mode)
 - [Optional SerpAPI Web Search](#optional-serpapi-web-search)
 
@@ -122,6 +123,10 @@ Raw documents
 - `GET /chunking-config`
 - `POST /chunking-config`
 
+## Live Demo
+
+- Public demo: [https://assistant.fsprojects.pp.ua/](https://assistant.fsprojects.pp.ua/)
+
 ## Local Run
 
 ```bash
@@ -152,63 +157,45 @@ ADMIN_SESSION_SECRET=change_me_session_secret
 
 Without `ADMIN_PASSWORD`, the assistant stays public, but `Documents` and `System` remain read-only preview areas and protected actions stay disabled.
 
-## Docker Swarm Run
+## Docker Compose Run
 
-This repository now includes a more production-like swarm-compatible stack for the `FastAPI` app and `PostgreSQL + pgvector`.
+This repository includes a Docker Compose setup for the `FastAPI` app, `PostgreSQL + pgvector`, `Redis`, and a background worker.
 
 Files:
 
 - `Dockerfile`
-- `docker-stack.yml`
-- `.env.swarm.example`
+- `docker-compose.yml`
+- `.env`
 - `docker/app/entrypoint.sh`
 - `docker/postgres/init/01-init.sql`
 
-Prepare the swarm environment file:
+Prepare the environment file:
 
 ```bash
-cp .env.swarm.example .env.swarm
+cp .env.example .env
 set -a
-source .env.swarm
+source .env
 set +a
 ```
 
-Create the required Docker secret for the database password:
+Build and start the stack:
 
 ```bash
-printf 'change_me_super_secret_password' | docker secret create "${POSTGRES_PASSWORD_SECRET}" -
-```
-
-Build the application image first:
-
-```bash
-docker build -t ai-knowledge-assistant:local .
-```
-
-Initialize swarm on the local machine if needed:
-
-```bash
-docker swarm init
-```
-
-Deploy the stack:
-
-```bash
-docker stack deploy -c docker-stack.yml ai-knowledge-assistant
+docker compose up --build -d
 ```
 
 Check services:
 
 ```bash
-docker stack services ai-knowledge-assistant
-docker stack ps ai-knowledge-assistant
+docker compose ps
 ```
 
 Inspect logs:
 
 ```bash
-docker service logs -f ai-knowledge-assistant_app
-docker service logs -f ai-knowledge-assistant_db
+docker compose logs -f app
+docker compose logs -f db
+docker compose logs -f worker
 ```
 
 Open the app:
@@ -217,54 +204,30 @@ Open the app:
 http://localhost:8000
 ```
 
-Remove the stack:
+Stop the stack:
 
 ```bash
-docker stack rm ai-knowledge-assistant
+docker compose down
 ```
 
 Notes:
 
-- the stack runs the app with `CHUNK_STORAGE_BACKEND=pgvector`;
-- the database service uses a `pgvector`-enabled Postgres image and creates `EXTENSION vector` on first initialization;
-- the app reads database credentials through `POSTGRES_PASSWORD_FILE` and supports `*_FILE` secrets for app settings as well;
-- the app waits for the database before starting `uvicorn`;
-- `deploy.resources` and `deploy.restart_policy` are already set with conservative defaults;
-- `APP_REPLICAS=1` is the safe default because uploads currently write to local app data volume; raise replicas only if you move uploads/raw corpus to shared storage;
-- `DB_REPLICAS=1` should stay as-is unless you introduce a real HA/replication strategy for PostgreSQL;
-- Docker daemon must be running before `docker build` or `docker stack deploy`.
+- `db` uses a `pgvector`-enabled Postgres image and initializes `EXTENSION vector`;
+- `app` and `worker` are built from the local `Dockerfile`;
+- `redis` is used for background jobs when Celery is enabled;
+- the app exposes port `8000` internally and can be attached to an external proxy network through `proxy_net`;
+- Docker daemon must be running before `docker compose up --build`.
 
-Recommended production-like knobs in `.env.swarm`:
+Minimal `.env` values for the compose setup:
 
 ```bash
-APP_IMAGE=ai-knowledge-assistant:local
-APP_PORT=8000
-APP_REPLICAS=1
-APP_CPU_RESERVATION=0.25
-APP_CPU_LIMIT=1.00
-APP_MEMORY_RESERVATION=256M
-APP_MEMORY_LIMIT=1G
-UVICORN_WORKERS=1
-
-DB_IMAGE=pgvector/pgvector:pg16
-DB_REPLICAS=1
-DB_CPU_RESERVATION=0.25
-DB_CPU_LIMIT=1.00
-DB_MEMORY_RESERVATION=256M
-DB_MEMORY_LIMIT=1G
-
 POSTGRES_DB=ai_knowledge_assistant
 POSTGRES_USER=postgres
-POSTGRES_SSL_MODE=disable
-POSTGRES_PASSWORD_SECRET=ai_knowledge_assistant_postgres_password
+POSTGRES_PASSWORD=change-me-postgres-password
+CELERY_ENABLED=true
+LLM_ENABLED=true
+SERPAPI_ENABLED=false
 ```
-
-Optional application secrets:
-
-- `LLM_API_KEY_FILE`
-- `SERPAPI_API_KEY_FILE`
-
-The app now supports the `*_FILE` pattern in settings, so these values can come from Docker secrets if you later extend the stack with provider-specific secrets.
 
 ## Optional LLM Mode
 
