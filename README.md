@@ -210,10 +210,16 @@ The UI and JSON endpoints use the same retrieval and runtime contract, so the br
 
 ### Runtime And Operations
 
-<p align="center">
-  <img src="docs/screenshots/desktop/04-system-runtime.png" alt="System runtime status and observability view" width="48%">
-  <img src="docs/screenshots/desktop/05-documents-or-indexing.png" alt="Documents and indexing management view" width="48%">
-</p>
+<table>
+  <tr>
+    <td width="54%" valign="top">
+      <img src="docs/screenshots/desktop/04-system-runtime.png" alt="System runtime status and observability view" width="100%">
+    </td>
+    <td width="42%" valign="top">
+      <img src="docs/screenshots/desktop/05-documents-or-indexing.png" alt="Documents and indexing management view" width="100%">
+    </td>
+  </tr>
+</table>
 
 <p align="center">
   <em>Operational surface for runtime health, indexing lifecycle, and document management.</em>
