@@ -24,9 +24,16 @@ This project is designed as a compact but engineering-focused `RAG` system rathe
 - observability-oriented runtime with reindex lifecycle, retrieval history, diagnostics, and transparent system status
 - `PostgreSQL + pgvector` support and a production-like delivery surface through `FastAPI`, `Jinja2`, API endpoints, and Docker Compose
 
+## Engineering Focus
+
+- retrieval architecture with `file`, `TF-IDF`, embeddings, and `pgvector` paths for realistic experimentation rather than a single hardcoded flow
+- transparent runtime surface that exposes sources, retrieval decisions, reindex state, and diagnostics instead of hiding system behavior behind a minimal chat UI
+- production-minded delivery through API-first design, operator-visible status pages, protected admin actions, and containerized local deployment
+
 ## Quick Links
 
 - [Why This Project Matters](#why-this-project-matters)
+- [Engineering Focus](#engineering-focus)
 - [Screenshots](#screenshots)
 - [What It Does](#what-it-does)
 - [Architecture](#architecture)
@@ -45,7 +52,7 @@ This project is designed as a compact but engineering-focused `RAG` system rathe
 
 ## What It Does
 
-This project shows a compact but realistic knowledge assistant workflow:
+This project implements an end-to-end knowledge assistant workflow:
 
 - loads local `txt` and `md` documents;
 - splits them into chunks and stores processed artifacts;
