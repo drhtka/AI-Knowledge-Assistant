@@ -39,12 +39,15 @@ This project is designed as a compact but engineering-focused `RAG` system rathe
 - [Architecture](#architecture)
 - [System Design Decisions](#system-design-decisions)
 - [Operational Capabilities](#operational-capabilities)
+- [Evaluation And Quality Signals](#evaluation-and-quality-signals)
 - [Tech Stack](#tech-stack)
 - [Key Features](#key-features)
 - [What I Implemented Myself](#what-i-implemented-myself)
 - [Project Structure](#project-structure)
+- [API Surface](#api-surface)
 - [Endpoints](#endpoints)
 - [Live Demo](#live-demo)
+- [Deployment Notes](#deployment-notes)
 - [Local Run](#local-run)
 - [Docker Compose Run](#docker-compose-run)
 - [Optional LLM Mode](#optional-llm-mode)
@@ -121,6 +124,13 @@ Raw documents
 - protected admin actions separate public demo access from operational controls such as document management and system actions
 - runtime status surfaces expose reindex state, retrieval history, lifecycle metadata, and system visibility directly in the UI
 
+## Evaluation And Quality Signals
+
+- retrieval metrics and evaluation scripts make relevance quality measurable instead of relying only on subjective answer quality
+- saved reports preserve experiment outputs so retrieval changes can be reviewed over time rather than judged from a single run
+- experiment comparison supports side-by-side inspection of retrieval and chunking outcomes across multiple report snapshots
+- chunking evaluation keeps ingestion decisions explicit by showing how chunk size and overlap affect downstream retrieval behavior
+
 ## Tech Stack
 
 - `Python`
@@ -160,6 +170,10 @@ Raw documents
 - `static/` - CSS and JavaScript
 - `src/` - reserved for future pipeline modules
 
+## API Surface
+
+The UI and JSON endpoints use the same retrieval and runtime contract, so the browser demo and API surface expose the same chunking, retrieval, answer-generation, and observability behavior.
+
 ## Endpoints
 
 - `GET /`
@@ -174,6 +188,12 @@ Raw documents
 ## Live Demo
 
 - Public demo: [https://assistant.fsprojects.pp.ua/](https://assistant.fsprojects.pp.ua/)
+
+## Deployment Notes
+
+- the public demo is intended to sit behind a reverse proxy, while the application itself stays env-driven and container-friendly
+- runtime behavior is configured through environment variables so retrieval, storage, LLM, and external search settings can change without code edits
+- admin access and protected operational actions are gated separately from the public demo surface through credentials and session controls
 
 ## Screenshots
 
