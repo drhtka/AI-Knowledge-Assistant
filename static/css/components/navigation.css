@@ -11,8 +11,8 @@
     align-items: center;
     gap: 6px;
     padding: 6px;
-    border: 1px solid #334155;
-    border-radius: 999px;
+    /* border: 1px solid #334155;
+    border-radius: 999px; */
     background: rgba(15, 23, 42, 0.92);
 }
 
@@ -48,6 +48,8 @@
 .language-switch-link.is-active {
     background: rgba(37, 99, 235, 0.2);
     color: #dbeafe;
+    border: 1px solid #334155;
+    border-color: rgba(233, 42, 78, 0.5);
 }
 
 .page-nav-toggle {
