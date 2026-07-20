@@ -3,6 +3,17 @@
 Portfolio-ready `RAG` project with local document ingestion, configurable retrieval, grounded answering, evaluation scripts, and a lightweight demo UI.
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/RAG-Grounded%20Retrieval-5B5BD6" alt="RAG">
+  <img src="https://img.shields.io/badge/pgvector-PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="pgvector PostgreSQL">
+  <img src="https://img.shields.io/badge/TF--IDF-Retrieval-6A5ACD" alt="TF-IDF Retrieval">
+  <img src="https://img.shields.io/badge/Observability-Runtime%20Visible-4C9A2A" alt="Observability">
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose">
+  <img src="https://img.shields.io/badge/Live-Demo-2EA44F" alt="Live Demo">
+</p>
+
+<p align="center">
   <a href="https://assistant.fsprojects.pp.ua/">Live Demo</a>
   ·
   <a href="#screenshots">Screenshots</a>
