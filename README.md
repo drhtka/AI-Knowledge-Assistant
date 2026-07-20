@@ -30,6 +30,8 @@ This project is designed as a compact but engineering-focused `RAG` system rathe
 - [Screenshots](#screenshots)
 - [What It Does](#what-it-does)
 - [Architecture](#architecture)
+- [System Design Decisions](#system-design-decisions)
+- [Operational Capabilities](#operational-capabilities)
 - [Tech Stack](#tech-stack)
 - [Key Features](#key-features)
 - [What I Implemented Myself](#what-i-implemented-myself)
@@ -96,6 +98,21 @@ Raw documents
         -> grounded answer / search results
           -> FastAPI API and demo UI
 ```
+
+## System Design Decisions
+
+- `file` and `pgvector` both exist to keep the system useful in two modes: a low-friction local baseline for fast iteration and a database-backed retrieval path for realistic indexing, filtering, and retrieval experiments.
+- external search stays separate from local corpus retrieval so the project can demonstrate a clear boundary between trusted internal knowledge and optional web-sourced context.
+- retrieval history and reindex lifecycle are persisted because retrieval quality is easier to improve when the system exposes what was indexed, when it changed, and how each query was resolved.
+- the UI is intentionally transparent and debug-friendly so the same interface works as both a demo surface and an operator surface for inspecting sources, retrieval choices, runtime state, and diagnostics.
+
+## Operational Capabilities
+
+- health checks for application and database readiness support predictable startup and easier deployment debugging
+- `Docker Compose` packages the app, `PostgreSQL + pgvector`, `Redis`, and worker processes into one reproducible local stack
+- background worker support allows longer-running indexing and maintenance flows to move outside the request-response path
+- protected admin actions separate public demo access from operational controls such as document management and system actions
+- runtime status surfaces expose reindex state, retrieval history, lifecycle metadata, and system visibility directly in the UI
 
 ## Tech Stack
 
