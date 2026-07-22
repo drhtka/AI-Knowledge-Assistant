@@ -16,6 +16,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from api.chunking_config import CHUNKING_PRESETS, get_chunking_config, set_chunking_preset
 from api.i18n import (
+    LANGUAGE_ALIASES,
     build_demo_prompts,
     build_frontend_i18n,
     build_language_switch_urls,
@@ -716,7 +717,7 @@ async def admin_login(request: Request) -> RedirectResponse:
     form = await request.form()
     password = str(form.get("password", ""))
     next_path = _normalize_admin_next_path(str(form.get("next", "/")))
-    current_lang = request.session.get("lang")
+    current_lang = LANGUAGE_ALIASES.get(request.session.get("lang"), request.session.get("lang"))
 
     if not ADMIN_AUTH_ENABLED:
         return _redirect_with_status(next_path, admin_status="not_configured")
@@ -736,7 +737,7 @@ async def admin_login(request: Request) -> RedirectResponse:
 async def admin_logout(request: Request) -> RedirectResponse:
     form = await request.form()
     next_path = _normalize_admin_next_path(str(form.get("next", "/")))
-    current_lang = request.session.get("lang")
+    current_lang = LANGUAGE_ALIASES.get(request.session.get("lang"), request.session.get("lang"))
     request.session.clear()
     if current_lang:
         request.session["lang"] = current_lang
