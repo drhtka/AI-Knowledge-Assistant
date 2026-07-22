@@ -1,0 +1,40 @@
+name: Deploy to prod server
+
+on:
+  push:
+    branches:
+      - prod
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+      REMOTE_DIR: /home/drhtka/projects/ai_knowledge_assistant
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/fsprojects-aiknowledge-github
+          chmod 600 ~/.ssh/fsprojects-aiknowledge-github
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Update code and restart services on server
+        run: |
+          ssh -i ~/.ssh/fsprojects-aiknowledge-github -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << 'EOF'
+          set -euo pipefail
+          cd /home/drhtka/projects/ai_knowledge_assistant
+          git fetch origin
+          git checkout prod
+          git pull --ff-only origin prod
+          sudo docker compose build --no-cache app worker
+          sudo docker compose up -d --force-recreate app worker
+          EOF
