@@ -4,12 +4,15 @@ from urllib.parse import urlencode
 
 from fastapi import Request
 
-SUPPORTED_LANGUAGES = ("en", "uk")
+SUPPORTED_LANGUAGES = ("en", "ua")
+LANGUAGE_ALIASES = {
+    "uk": "ua",
+}
 DEFAULT_LANGUAGE = "en"
 
 LOCALE_BY_LANGUAGE = {
     "en": "en-US",
-    "uk": "uk-UA",
+    "ua": "uk-UA",
 }
 
 TRANSLATIONS: dict[str, dict[str, object]] = {
@@ -25,7 +28,7 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
             "language": {
                 "label": "Language",
                 "en": "EN",
-                "uk": "UK",
+                "ua": "UA",
             },
             "admin": {
                 "login_aria": "Admin login",
@@ -487,7 +490,7 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
             },
         },
     },
-    "uk": {
+    "ua": {
         "base": {
             "nav": {
                 "assistant": "Асистент",
@@ -499,7 +502,7 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
             "language": {
                 "label": "Мова",
                 "en": "EN",
-                "uk": "UK",
+                "ua": "UA",
             },
             "admin": {
                 "login_aria": "Admin вхід",
@@ -850,7 +853,7 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
         },
         "frontend": {
             "meta": {
-                "lang": "uk",
+                "lang": "ua",
                 "locale": "uk-UA",
             },
             "navigation": {
@@ -974,7 +977,8 @@ def _get_nested_value(container: dict[str, object], dotted_key: str) -> object |
 
 
 def translate(lang: str, key: str, **kwargs: object) -> str:
-    normalized_lang = lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
+    normalized_lang = LANGUAGE_ALIASES.get(lang, lang)
+    normalized_lang = normalized_lang if normalized_lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
     value = _get_nested_value(TRANSLATIONS.get(normalized_lang, {}), key)
     if value is None and normalized_lang != DEFAULT_LANGUAGE:
         value = _get_nested_value(TRANSLATIONS[DEFAULT_LANGUAGE], key)
@@ -984,14 +988,15 @@ def translate(lang: str, key: str, **kwargs: object) -> str:
 
 
 def get_request_language(request: Request) -> str:
-    query_lang = (request.query_params.get("lang", "") or "").strip().lower()
-    session_lang = request.session.get("lang")
+    query_lang = LANGUAGE_ALIASES.get((request.query_params.get("lang", "") or "").strip().lower(), (request.query_params.get("lang", "") or "").strip().lower())
+    session_lang = LANGUAGE_ALIASES.get(request.session.get("lang"), request.session.get("lang"))
 
     if query_lang in SUPPORTED_LANGUAGES:
         request.session["lang"] = query_lang
         return query_lang
 
     if session_lang in SUPPORTED_LANGUAGES:
+        request.session["lang"] = session_lang
         return session_lang
 
     request.session["lang"] = DEFAULT_LANGUAGE
@@ -1034,6 +1039,7 @@ def build_language_switch_urls(request: Request) -> dict[str, str]:
 
 
 def build_frontend_i18n(lang: str) -> dict[str, object]:
-    normalized_lang = lang if lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
+    normalized_lang = LANGUAGE_ALIASES.get(lang, lang)
+    normalized_lang = normalized_lang if normalized_lang in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
     frontend = TRANSLATIONS.get(normalized_lang, {}).get("frontend", {})
     return frontend if isinstance(frontend, dict) else {}
