@@ -62,7 +62,7 @@ This project is designed as a compact but engineering-focused `RAG` system rathe
 - [Local Run](#local-run)
 - [Docker Compose Run](#docker-compose-run)
 - [Optional LLM Mode](#optional-llm-mode)
-- [Optional SerpAPI Web Search](#optional-serpapi-web-search)
+- [Optional Web Search AI](#optional-web-search-ai)
 
 ## What It Does
 
@@ -159,7 +159,7 @@ Raw documents
 - retrieval modes: `auto`, `tfidf`, `embeddings`
 - grounded answer generation with safe fallback behavior
 - optional OpenAI-compatible LLM integration
-- separate external web search via `SerpAPI`
+- separate `Web Search AI` flow with OpenAI-compatible search and `SerpAPI` fallback
 - evaluation dataset, metrics, report history, and report comparison
 - demo UI with retrieval mode switch, chunking preset switch, document upload, and mode comparison
 
@@ -230,14 +230,14 @@ The UI and JSON endpoints use the same retrieval and runtime contract, so the br
   <em>Operational surface for runtime health, indexing lifecycle, and document management.</em>
 </p>
 
-### External Retrieval Workspace
+### Web Search AI Workspace
 
 <p align="center">
   <img src="docs/screenshots/desktop/06-external-search.png" alt="External search workspace with activity log and JSON diagnostics" width="82%">
 </p>
 
 <p align="center">
-  <em>Separate external retrieval workspace with activity log and debug-friendly output.</em>
+  <em>Dedicated Web Search AI workspace with activity log and debug-friendly output.</em>
 </p>
 
 ### Mobile Preview
@@ -358,9 +358,9 @@ The project supports OpenAI-compatible grounded answer generation through enviro
 
 If LLM settings are missing or a request fails, the app falls back to the local grounded extractive answer.
 
-## Optional SerpAPI Web Search
+## Optional Web Search AI
 
-Use `SerpAPI` as a separate external retrieval source:
+Use `Web Search AI` as a separate external retrieval flow. When configured, it prefers an OpenAI-compatible web-search route and falls back to `SerpAPI`:
 
 ```bash
 SERPAPI_ENABLED=true
@@ -370,4 +370,4 @@ SERPAPI_NUM_RESULTS=5
 SERPAPI_TIMEOUT_SEC=15
 ```
 
-This integration is intentionally separate from local retrieval and can be demonstrated through `POST /web-search` and the UI web search block.
+This integration is intentionally separate from local retrieval and can be demonstrated through `POST /web-search` and the `Web Search AI` UI workspace.

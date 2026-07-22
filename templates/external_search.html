@@ -2,6 +2,41 @@
 
 {% block content %}
 <section class="overview-grid">
+    <article class="content-card overview-card external-search-explainer-card">
+        <p class="section-kicker">{{ t("external_search.search.explainer_kicker") }}</p>
+        <h2 class="hero-card-title">{{ t("external_search.search.explainer_title") }}</h2>
+        <p class="meta external-search-explainer-intro">
+            {{ t("external_search.search.explainer_intro") }}
+        </p>
+        <div class="pill-row external-search-explainer-pills">
+            <span class="mode-pill">LLM-assisted search</span>
+            <span class="mode-pill">OpenAI-compatible API</span>
+            <span class="mode-pill">SerpAPI fallback</span>
+        </div>
+        <div class="external-search-explainer-grid">
+            <article class="mini-summary-card external-search-explainer-item">
+                <span class="stat-label">Primary path</span>
+                <strong>OpenAI-compatible web search</strong>
+                <p class="meta">
+                    The app can call a web-search capable LLM endpoint through the configured OpenAI-style URL, model, API key, and timeout settings.
+                </p>
+            </article>
+            <article class="mini-summary-card external-search-explainer-item">
+                <span class="stat-label">Fallback</span>
+                <strong>SerpAPI results</strong>
+                <p class="meta">
+                    If the OpenAI-compatible route is disabled or fails, the search falls back to SerpAPI and returns external search hits from that provider.
+                </p>
+            </article>
+            <article class="mini-summary-card external-search-explainer-item">
+                <span class="stat-label">Boundary</span>
+                <strong>Separate from local RAG</strong>
+                <p class="meta">
+                    This page searches the public web only. It does not query the local document corpus used by the main RAG assistant flow.
+                </p>
+            </article>
+        </div>
+    </article>
     <article class="content-card ask-card external-search-card">
         <p class="section-kicker">{{ t("external_search.search.kicker") }}</p>
         <h2 class="hero-card-title">{{ t("external_search.search.title") }}</h2>

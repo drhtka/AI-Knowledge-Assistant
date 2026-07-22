@@ -21,7 +21,7 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
             "nav": {
                 "assistant": "Assistant",
                 "documents": "Documents",
-                "external_search": "Web Search",
+                "external_search": "Web Search AI",
                 "system": "System",
                 "api_docs": "API Docs",
             },
@@ -73,8 +73,8 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
                 "admin_access_note": "Document management, upload, chunking, and reindex are available only after authorization.",
             },
             "external_search": {
-                "title": "External Search | AI Knowledge Assistant",
-                "heading": "External Web Search",
+                "title": "External Search AI | AI Knowledge Assistant",
+                "heading": "External Web Search AI",
                 "tooltip": "A dedicated screen for external sources: run web search and inspect results without mixing them with the local corpus.",
                 "kicker": "External Search",
                 "admin_access_note": "External web search is available only after authorization.",
@@ -260,6 +260,9 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
             "search": {
                 "kicker": "External Search",
                 "title": "External web search",
+                "explainer_kicker": "Search stack",
+                "explainer_title": "How this web search works",
+                "explainer_intro": "This workspace uses an OpenAI-compatible web-search API when it is configured, and falls back to SerpAPI when the OpenAI route is unavailable.",
                 "question_label": "Ask a question",
                 "clear": "Clear query",
                 "submit": "Submit query",
@@ -495,7 +498,7 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
             "nav": {
                 "assistant": "Асистент",
                 "documents": "Документи",
-                "external_search": "Вебпошук",
+                "external_search": "Вебпошук AI",
                 "system": "Система",
                 "api_docs": "API Docs",
             },
@@ -547,8 +550,8 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
                 "admin_access_note": "Керування документами, upload, chunking і reindex доступні тільки після авторизації.",
             },
             "external_search": {
-                "title": "Зовнішній вебпошук | AI Асистент Знань",
-                "heading": "Зовнішній вебпошук",
+                "title": "Зовнішній вебпошук AI | AI Асистент Знань",
+                "heading": "Зовнішній вебпошук AI",
                 "tooltip": "Окремий екран для пошуку по зовнішніх джерелах: запускайте web search і переглядайте результати без змішування з локальним корпусом.",
                 "kicker": "Вебпошук",
                 "admin_access_note": "Зовнішній вебпошук доступний тільки після авторизації.",
@@ -734,6 +737,9 @@ TRANSLATIONS: dict[str, dict[str, object]] = {
             "search": {
                 "kicker": "External Search",
                 "title": "Зовнішній вебпошук",
+                "explainer_kicker": "Search stack",
+                "explainer_title": "Як працює цей вебпошук",
+                "explainer_intro": "Цей workspace використовує OpenAI-compatible web-search API, якщо він налаштований, і переключається на SerpAPI, якщо OpenAI route недоступний.",
                 "question_label": "Поставте запитання",
                 "clear": "Очистити запит",
                 "submit": "Надіслати запит",
