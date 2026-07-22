@@ -15,24 +15,24 @@
         </div>
         <div class="external-search-explainer-grid">
             <article class="mini-summary-card external-search-explainer-item">
-                <span class="stat-label">Primary path</span>
-                <strong>OpenAI-compatible web search</strong>
+                <span class="stat-label">{{ t("external_search.search.explainer_primary_label") }}</span>
+                <strong>{{ t("external_search.search.explainer_primary_title") }}</strong>
                 <p class="meta">
-                    The app can call a web-search capable LLM endpoint through the configured OpenAI-style URL, model, API key, and timeout settings.
+                    {{ t("external_search.search.explainer_primary_body") }}
                 </p>
             </article>
             <article class="mini-summary-card external-search-explainer-item">
-                <span class="stat-label">Fallback</span>
-                <strong>SerpAPI results</strong>
+                <span class="stat-label">{{ t("external_search.search.explainer_fallback_label") }}</span>
+                <strong>{{ t("external_search.search.explainer_fallback_title") }}</strong>
                 <p class="meta">
-                    If the OpenAI-compatible route is disabled or fails, the search falls back to SerpAPI and returns external search hits from that provider.
+                    {{ t("external_search.search.explainer_fallback_body") }}
                 </p>
             </article>
             <article class="mini-summary-card external-search-explainer-item">
-                <span class="stat-label">Boundary</span>
-                <strong>Separate from local RAG</strong>
+                <span class="stat-label">{{ t("external_search.search.explainer_boundary_label") }}</span>
+                <strong>{{ t("external_search.search.explainer_boundary_title") }}</strong>
                 <p class="meta">
-                    This page searches the public web only. It does not query the local document corpus used by the main RAG assistant flow.
+                    {{ t("external_search.search.explainer_boundary_body") }}
                 </p>
             </article>
         </div>
