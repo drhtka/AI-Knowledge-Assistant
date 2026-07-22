@@ -2,6 +2,36 @@
     margin-top: 18px;
 }
 
+.external-search-card .ask-question-composer {
+    padding: 24px 24px 40px;
+}
+
+.external-search-explainer-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.external-search-explainer-intro {
+    margin: 0;
+    max-width: 820px;
+    line-height: 1.6;
+}
+
+.external-search-explainer-pills {
+    margin-top: 0;
+}
+
+.external-search-explainer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.external-search-explainer-item {
+    gap: 10px;
+}
+
 .external-search-main-column {
     margin-top: 0;
     padding-bottom: 56px;
@@ -330,6 +360,10 @@
 }
 
 @media (max-width: 900px) {
+    .external-search-explainer-grid {
+        grid-template-columns: 1fr;
+    }
+
     .external-search-session-header,
     .external-search-result-header,
     .external-search-activity-item-header {
