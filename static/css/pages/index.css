@@ -68,12 +68,12 @@
 .ask-question-composer {
     position: relative;
     width: min(100%, 860px);
-    min-height: 164px;
+    min-height: 188px;
     align-self: center;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    padding: 24px;
+    padding: 24px 24px 104px;
     border: 1px solid rgba(148, 163, 184, 0.22);
     border-radius: 30px;
     background: linear-gradient(180deg, rgba(51, 65, 85, 0.92), rgba(30, 41, 59, 0.96));
@@ -137,13 +137,14 @@
 
 .ask-question-loading-dots {
     position: absolute;
-    right: 28px;
-    bottom: 54px;
+    left: 50%;
+    bottom: 108px;
     display: none;
     align-items: center;
     gap: 6px;
     z-index: 2;
     pointer-events: none;
+    transform: translateX(-50%);
 }
 
 .ask-question-composer.is-loading .ask-question-loading-dots {
