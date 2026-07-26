@@ -533,6 +533,14 @@ def _set_reindex_status(**changes: object) -> ReindexStatusSnapshot:
 
 def get_reindex_status() -> ReindexStatusSnapshot:
     _ensure_reindex_status_initialized()
+    persisted_state = load_runtime_state(REINDEX_STATUS_STATE_KEY)
+    if isinstance(persisted_state, dict):
+        persisted_snapshot = _coerce_reindex_status_snapshot(persisted_state)
+        with _reindex_status_lock:
+            global _reindex_status
+            if persisted_snapshot != _reindex_status:
+                _reindex_status = persisted_snapshot
+            return ReindexStatusSnapshot(**_reindex_status.__dict__)
     with _reindex_status_lock:
         return ReindexStatusSnapshot(**_reindex_status.__dict__)
 
