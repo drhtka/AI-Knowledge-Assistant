@@ -17,6 +17,8 @@ SOURCE_UPDATE_JOB_STATE_KEY = "source_update_job"
 
 _schema_lock = Lock()
 _schema_ready = False
+_runtime_state_cache_lock = Lock()
+_runtime_state_cache: dict[str, dict[str, Any]] = {}
 
 
 def _validate_identifier(value: str) -> str:
@@ -91,20 +93,28 @@ def load_runtime_state(state_key: str) -> dict[str, Any] | None:
             },
             exc_info=True,
         )
-        return None
+        with _runtime_state_cache_lock:
+            cached_payload = _runtime_state_cache.get(state_key)
+            if cached_payload is None:
+                return None
+            return dict(cached_payload)
 
     if row is None:
+        with _runtime_state_cache_lock:
+            _runtime_state_cache.pop(state_key, None)
         return None
 
     try:
         payload = row[0]
         if isinstance(payload, dict):
-            return dict(payload)
-        if isinstance(payload, str):
+            normalized_payload = dict(payload)
+        elif isinstance(payload, str):
             loaded_payload = json.loads(payload)
-            if isinstance(loaded_payload, dict):
-                return dict(loaded_payload)
-        raise ValueError(f"Runtime state payload for key {state_key!r} is not a JSON object.")
+            if not isinstance(loaded_payload, dict):
+                raise ValueError(f"Runtime state payload for key {state_key!r} is not a JSON object.")
+            normalized_payload = dict(loaded_payload)
+        else:
+            raise ValueError(f"Runtime state payload for key {state_key!r} is not a JSON object.")
     except Exception as exc:
         logger.warning(
             "Runtime state payload is invalid and will be ignored.",
@@ -117,10 +127,17 @@ def load_runtime_state(state_key: str) -> dict[str, Any] | None:
             },
             exc_info=True,
         )
+        with _runtime_state_cache_lock:
+            _runtime_state_cache.pop(state_key, None)
         return None
+
+    with _runtime_state_cache_lock:
+        _runtime_state_cache[state_key] = dict(normalized_payload)
+    return normalized_payload
 
 
 def save_runtime_state(state_key: str, payload: Mapping[str, object]) -> bool:
+    normalized_payload = dict(payload)
     try:
         with _connect() as connection:
             _ensure_schema(connection)
@@ -133,7 +150,7 @@ def save_runtime_state(state_key: str, payload: Mapping[str, object]) -> bool:
                         state_payload = EXCLUDED.state_payload,
                         updated_at = EXCLUDED.updated_at
                     """,
-                    (state_key, json.dumps(dict(payload), sort_keys=True)),
+                    (state_key, json.dumps(normalized_payload, sort_keys=True)),
                 )
             connection.commit()
     except Exception as exc:
@@ -150,4 +167,6 @@ def save_runtime_state(state_key: str, payload: Mapping[str, object]) -> bool:
         )
         return False
 
+    with _runtime_state_cache_lock:
+        _runtime_state_cache[state_key] = dict(normalized_payload)
     return True
