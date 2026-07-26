@@ -313,7 +313,7 @@ export function initializeStorageBackendControls() {
                 }),
                 "success",
             );
-            await refreshReindexStatus();
+            void refreshReindexStatus();
             window.setTimeout(() => {
                 window.location.reload();
             }, storageBackendReloadDelayMs);
